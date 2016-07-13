@@ -1,7 +1,10 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public class TestScript : MonoBehaviour {
+public class CharacterSheet : ScriptableObject {
+
+	int hp;
+	int sp;
 
 	// Use this for initialization
 	void Start () {
@@ -10,7 +13,6 @@ public class TestScript : MonoBehaviour {
 	
 	// Update is called once per frame
 	void Update () {
-		if(Input.GetKeyDown("d"))
-			Destroy(gameObject);
+	
 	}
 }

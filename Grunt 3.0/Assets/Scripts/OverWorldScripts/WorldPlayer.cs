@@ -1,8 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public enum WorldPlayerState {Grounded, Airborne, TakeAction}
-
 public class WorldPlayer : MonoBehaviour {
 
 	public static WorldPlayer self;
@@ -10,7 +8,11 @@ public class WorldPlayer : MonoBehaviour {
 	public float jumpingSpeed;
 	public float playerGravity;
 
+	float totalInvincibleTime = 30;
+	float currentInvincibleTime = 0;
+
 	WorldPlayerState currentWorldPlayerState = WorldPlayerState.Grounded;
+	CharacterSheet mainCharacterSheet;
 	Rigidbody rBody;
 
 	// Use this for initialization
@@ -18,6 +20,7 @@ public class WorldPlayer : MonoBehaviour {
 	{
 		self = this;
 		rBody = GetComponent<Rigidbody>();
+		mainCharacterSheet = new CharacterSheet();
 	}
 	
 	// Update is called once per frame
@@ -30,11 +33,13 @@ public class WorldPlayer : MonoBehaviour {
 					_movePlayer();
 					_jump();
 					_checkAirborne();
+					_checkInvincibleTime();
 					break;
 
 				case WorldPlayerState.Airborne:
 					_movePlayer();
 					_checkAirborne();
+					_checkInvincibleTime();
 					break;
 			}
 		}
@@ -56,8 +61,16 @@ public class WorldPlayer : MonoBehaviour {
 					Door DoorScript = other.gameObject.GetComponent<Door> ();
 					Engine.self._initiateSceneChange (DoorScript.nextArea, DoorScript.doorEnumVal);
 					break;
-				}
+
+				case "Enemy":
+					if(currentInvincibleTime <= 0)
+					{
+						other.transform.localPosition += Vector3.up * 2;
+						Engine.self._goToBattle();
+					}
+					break;
 			}
+		}
 	}
 
 	void _movePlayer()
@@ -87,4 +100,22 @@ public class WorldPlayer : MonoBehaviour {
 		}
 	}
 
+	public void _makeInvincible()
+	{
+		currentInvincibleTime = totalInvincibleTime;
+	}
+
+	void _checkInvincibleTime()
+	{
+		
+		if(currentInvincibleTime > 0)
+		{
+			currentInvincibleTime -= 1;
+		}
+	}
+
+	public CharacterSheet _getSheet()
+	{
+		return mainCharacterSheet;
+	}
 }

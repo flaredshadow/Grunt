@@ -2,40 +2,44 @@
 using System.Collections;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
+using System.Collections.Generic;
 
+public enum GameState {BeginGame, Dialogue, CutScene, OverWorldPlay, BattlePlay, EnterScene, ExitScene, Ending}
+public enum BattleState {PlayerDecide, PlayerAttack, EnemyDecide, EnemyAttack, PlayerWin, PlayerLose, Flee}
+public enum doorEnum{A, B, C, ReturnFromBattle, None}
+public enum WorldPlayerState {Grounded, Airborne, TakeAction}
+public enum rankEnum {Rat, Bat, Boar, Falcon, Wolf, Pterodactyl, Bear}
 
-public enum GameState {PickFile, Dialogue, CutScene, OverWorldPlay, BattlePlay, EnterScene, ExitScene, Ending}
 public class Engine : MonoBehaviour {
 
 	public static Engine self;
 
-	public GameObject worldPlayer;
+	public GameObject worldPlayer, battleCharacterPrefab;
 	public Camera cam;
 	public Image transitionImage;
 
-	GameState currentGameState = GameState.PickFile;
-	string currentScene;
-	string nextScene;
+	GameState currentGameState = GameState.BeginGame;
+	List<CharacterSheet> playerSheets = new List<CharacterSheet> ();
+	string currentSceneName, currentWorldSceneName, nextSceneName, coreSceneName = "CoreScene", pickFileSceneName = "IntroScene", battleSceneName = "BattleScene";
 	doorEnum nextDoorEnum = doorEnum.None;
+	int minAdditionalEnemies, maxAdditionalEnemies;
+	rankEnum[] sceneEnemyRanks;
 
-	string coreSceneName = "CoreScene";
-	string pickFileSceneName = "IntroScene";
-	string battleSceneName = "BattleScene";
-	float spaceFromDoor = .551f;
-
-	float transitionSpeed = .03f;
+	float spaceFromDoor = .551f, transitionSpeed = .03f;
 
 	// Use this for initialization
 	void Start () {
 		self = this;
+		currentSceneName = coreSceneName;
+		currentWorldSceneName = currentSceneName;
 	}
 	
 	// Update is called once per frame
 	void Update () {
 		switch(currentGameState)
 		{
-			case GameState.PickFile:
-				nextScene = pickFileSceneName;
+			case GameState.BeginGame:
+				nextSceneName = pickFileSceneName;
 				_goToScene();
 				currentGameState = GameState.Dialogue;
 				break;
@@ -48,39 +52,48 @@ public class Engine : MonoBehaviour {
 			case GameState.BattlePlay:
 				break;
 			case GameState.EnterScene:
-				transitionImage.color -= new Color(0, 0, 0, transitionSpeed); // shrink the transitionImage, transition Scaling time will vary with the Screen width
-				if(!currentScene.Equals(battleSceneName))
+				if(transitionImage.color.a == 1) // checking if the alpha has not been subtracted from at all, this acts like a "Do this exactly one time" condition
 				{
-					if(nextDoorEnum == doorEnum.None)
+					SceneManager.SetActiveScene(SceneManager.GetSceneByName(currentSceneName));//active scene determines what scene instantiated objects belong to
+					if(!currentSceneName.Equals(battleSceneName)) //if not in a battle, then find correct door to spawn in front of
 					{
-						worldPlayer.transform.localPosition = new Vector3(0, 1, 0);//should become return destination point
+						_spawnByDoor();//if no doorEnum is set then default spawnpoint is used (look inside the function for default spawn vector-position)
 					}
 					else
 					{
-						foreach(GameObject doorIter in GameObject.FindGameObjectsWithTag("Door"))
-						{
-							if(doorIter.GetComponent<Door>().doorEnumVal == nextDoorEnum)
-							{
-								worldPlayer.transform.localPosition = doorIter.transform.localPosition + doorIter.transform.forward * spaceFromDoor - doorIter.transform.up*.5f;
-								break;
-							}
-						}
+						_camToBattle();
+						worldPlayer.SetActive(false);
+						_initializeBattle();
 					}
 				}
-				if(transitionImage.color.a <= 0)
+
+				transitionImage.color -= new Color(0, 0, 0, transitionSpeed); // fade out the transitionImage
+
+				if(transitionImage.color.a <= 0) //once the screen is clear we resume standard gameplay (Time flows and currentGameState is either OverWorldPlay or BattlePlay)
 				{
 					transitionImage.transform.parent.gameObject.SetActive(false);
 					Time.timeScale = 1;
-					_setCurrentGameState(GameState.OverWorldPlay);
+					if(!currentSceneName.Equals(battleSceneName))
+					{//Debug.Log("Worlding");
+						_setCurrentGameState(GameState.OverWorldPlay);
+					}
+					else
+					{//Debug.Log("Battling");
+						_setCurrentGameState(GameState.BattlePlay);
+					}
 				}
 				break;
 			case GameState.ExitScene://timescale should already be equal to 0
-				transitionImage.color += new Color(0, 0, 0, transitionSpeed); // grow the transitionImage, transition Scaling time will vary with the Screen width
-				if(transitionImage.color.a  >= 1)
+				transitionImage.color += new Color(0, 0, 0, transitionSpeed); // fade in the transitionImage
+				if(transitionImage.color.a  >= 1) // once the screen is pitch-black we will transition the level, this way it doesn't look choppy
 				{
-					_camToWorldPlayer();
+					transitionImage.color = new Color (transitionImage.color.r, transitionImage.color.g, transitionImage.color.b, 1);
+					if(!nextSceneName.Equals(battleSceneName)) // only activate the worldplayer and snap on the camera if the game is not going into a battle
+					{
+						_camToWorldPlayer();
+						worldPlayer.SetActive(true); // the worldPlayer needs to be active for the Camera's sake, depend on state machines to make the worldPlayer time-locked
+					}
 					_deactivateScene();
-					worldPlayer.SetActive(true); // the worldPlayer needs to be active for the Camera's sake, depend on state machines to make the worldPlayer time-locked
 					_goToScene();//change the scene when the screen is completely covered
 				}
 				break;
@@ -102,33 +115,40 @@ public class Engine : MonoBehaviour {
 
 	public void _goToScene()
 	{
-		//SceneManager.UnloadScene(currentScene);
-
 		bool foundScene = false;
-		for(int i = 0; i < SceneManager.sceneCount; i++)
+		for(int i = 0; i < SceneManager.sceneCount; i++)// check to see if the level is waiting to be resumed
 		{
-			if(nextScene.Equals(SceneManager.GetSceneAt(i).name))
+			if(nextSceneName.Equals(SceneManager.GetSceneAt(i).name))
 			{
 				_reactivateScene();
 				foundScene = true;
 				break;
 			}
 		} 
-		if(foundScene == false)
+
+		if(foundScene == false)// if the level to be loaded wasn't found amongst the visited level, then load a fresh copy
 		{
-			SceneManager.LoadScene(nextScene, LoadSceneMode.Additive);
+			SceneManager.LoadScene(nextSceneName, LoadSceneMode.Additive);
 		}
-		currentScene = nextScene;
-		nextScene = "";
-		if(!currentScene.Equals(battleSceneName))
+
+		if(currentSceneName.Equals(battleSceneName))// if we are leaving a battle, unload the battle scene entirely
 		{
-			_setCurrentGameState(GameState.EnterScene);
+			SceneManager.UnloadScene(currentSceneName);
 		}
+
+		if(!nextSceneName.Equals(battleSceneName))//if we aren't goint to a battle, update the overworld location
+		{
+			currentWorldSceneName = nextSceneName;
+		}
+			
+		currentSceneName = nextSceneName;
+		nextSceneName = "";
+		_setCurrentGameState(GameState.EnterScene);
 	}
 
 	public void _reactivateScene()
 	{
-		foreach(GameObject go in SceneManager.GetSceneByName(nextScene).GetRootGameObjects())
+		foreach(GameObject go in SceneManager.GetSceneByName(nextSceneName).GetRootGameObjects())
 		{
 			go.SetActive(true);
 		}
@@ -155,12 +175,75 @@ public class Engine : MonoBehaviour {
 
 	public void _initiateSceneChange(string givenNextScene, doorEnum givenNextDoorEnum)//called to prep for ExitScene game state
 	{
-		Vector2 transitionStartingSize = new Vector2(.001f, .001f);
-		nextScene = givenNextScene;
+		_prepTransition();
+		nextSceneName = givenNextScene;
 		nextDoorEnum = givenNextDoorEnum;
+		_setCurrentGameState(GameState.ExitScene);//the ExitScene game state will ultimately call the _goToScene() function
+	}
+
+	public void _goToBattle()
+	{
+		_prepTransition();
+		nextSceneName = battleSceneName;
+		_setCurrentGameState(GameState.ExitScene);
+	}
+
+	void _prepTransition()
+	{
 		transitionImage.color = new Color(transitionImage.color.r, transitionImage.color.g, transitionImage.color.b, 0);
 		transitionImage.transform.parent.gameObject.SetActive(true);
 		Time.timeScale = 0;
-		_setCurrentGameState(GameState.ExitScene);
+	}
+
+	void _spawnByDoor()
+	{
+		if(nextDoorEnum == doorEnum.None)
+		{
+			worldPlayer.transform.localPosition = new Vector3(0, 1, 0);//should become return destination point
+		}
+		else
+		{
+			foreach(GameObject doorIter in GameObject.FindGameObjectsWithTag("Door"))
+			{
+				if(doorIter.GetComponent<Door>().doorEnumVal == nextDoorEnum)
+				{
+					worldPlayer.transform.localPosition = doorIter.transform.localPosition + doorIter.transform.forward * spaceFromDoor - doorIter.transform.up*.5f;
+					break;
+				}
+			}
+		}
+	}
+
+	void _camToBattle()
+	{
+		cam.transform.SetParent(null);
+		cam.transform.localPosition = new Vector3(0, 5, -14);
+	}
+
+	public string _getCurrentWorldScene()
+	{
+		return currentWorldSceneName;
+	}
+
+	void _initializeBattle()
+	{
+		int totalEnemies = 1 + Random.Range(minAdditionalEnemies, maxAdditionalEnemies);
+		float characterSpacing = 3;
+		float spawnHeight = 1;
+		for(int i = 0; i < playerSheets.Count; i++)//populate enemies
+		{
+			Instantiate(battleCharacterPrefab, new Vector3((i+1) * -characterSpacing, spawnHeight, 0), Quaternion.identity);
+		}
+		for(int i = 0; i < totalEnemies; i++)//populate enemies
+		{
+			Instantiate(battleCharacterPrefab, new Vector3((i+1) * characterSpacing, spawnHeight, 0), Quaternion.identity);
+		}
+	}
+
+	public void _setLevelEnemies(int givenMinAddEnemies, int givenMaxAddEnemies, rankEnum[] givenEnemyRanks)
+	{
+		minAdditionalEnemies = givenMinAddEnemies;
+		maxAdditionalEnemies = givenMaxAddEnemies;
+		sceneEnemyRanks = givenEnemyRanks;
 	}
 }
