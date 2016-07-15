@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 
+[System.Serializable]
 public class WorldPlayer : MonoBehaviour {
 
 	public static WorldPlayer self;
@@ -20,7 +21,12 @@ public class WorldPlayer : MonoBehaviour {
 	{
 		self = this;
 		rBody = GetComponent<Rigidbody>();
-		mainCharacterSheet = new CharacterSheet();
+		mainCharacterSheet = ScriptableObject.CreateInstance<CharacterSheet>();
+		GameSave currentSaveInst = Engine.self._getCurrentSaveInstance();
+		if(currentSaveInst != null)
+		{
+			currentSaveInst._uploadValues();
+		}
 	}
 	
 	// Update is called once per frame

@@ -3,10 +3,13 @@ using System.Collections;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 using System.Collections.Generic;
+using System.IO;
+using System.Runtime.Serialization.Formatters.Binary;
+using System.Runtime.Serialization;
 
 public enum GameState {BeginGame, Dialogue, CutScene, OverWorldPlay, BattlePlay, EnterScene, ExitScene, Ending}
 public enum BattleState {PlayerDecide, PlayerAttack, EnemyDecide, EnemyAttack, PlayerWin, PlayerLose, Flee}
-public enum doorEnum{A, B, C, ReturnFromBattle, None}
+public enum doorEnum{A, B, C, ReturnFromBattle, SavePoint, None}
 public enum WorldPlayerState {Grounded, Airborne, TakeAction}
 public enum rankEnum {Rat, Bat, Boar, Falcon, Wolf, Pterodactyl, Bear}
 
@@ -19,6 +22,8 @@ public class Engine : MonoBehaviour {
 	public Image transitionImage;
 
 	GameState currentGameState = GameState.BeginGame;
+	int currentFileNumber;
+	GameSave currentSaveInstance;
 	List<CharacterSheet> playerSheets = new List<CharacterSheet> ();
 	string currentSceneName, currentWorldSceneName, nextSceneName, coreSceneName = "CoreScene", pickFileSceneName = "IntroScene", battleSceneName = "BattleScene";
 	doorEnum nextDoorEnum = doorEnum.None;
@@ -39,6 +44,7 @@ public class Engine : MonoBehaviour {
 		switch(currentGameState)
 		{
 			case GameState.BeginGame:
+				Debug.Log(Application.persistentDataPath);
 				nextSceneName = pickFileSceneName;
 				_goToScene();
 				currentGameState = GameState.Dialogue;
@@ -48,6 +54,11 @@ public class Engine : MonoBehaviour {
 			case GameState.CutScene:
 				break;
 			case GameState.OverWorldPlay:
+				if(Input.GetKeyDown("t"))
+				{
+					_saveFile();
+					Debug.Log("Saved");
+				}
 				break;
 			case GameState.BattlePlay:
 				break;
@@ -201,7 +212,7 @@ public class Engine : MonoBehaviour {
 		{
 			worldPlayer.transform.localPosition = new Vector3(0, 1, 0);//should become return destination point
 		}
-		else
+		else if(nextDoorEnum != doorEnum.SavePoint)
 		{
 			foreach(GameObject doorIter in GameObject.FindGameObjectsWithTag("Door"))
 			{
@@ -230,7 +241,7 @@ public class Engine : MonoBehaviour {
 		int totalEnemies = 1 + Random.Range(minAdditionalEnemies, maxAdditionalEnemies);
 		float characterSpacing = 3;
 		float spawnHeight = 1;
-		for(int i = 0; i < playerSheets.Count; i++)//populate enemies
+		for(int i = 0; i < playerSheets.Count; i++)//populate player characters
 		{
 			Instantiate(battleCharacterPrefab, new Vector3((i+1) * -characterSpacing, spawnHeight, 0), Quaternion.identity);
 		}
@@ -245,5 +256,39 @@ public class Engine : MonoBehaviour {
 		minAdditionalEnemies = givenMinAddEnemies;
 		maxAdditionalEnemies = givenMaxAddEnemies;
 		sceneEnemyRanks = givenEnemyRanks;
+	}
+
+	public bool _isInPickFileScene()
+	{
+		return currentWorldSceneName.Equals(pickFileSceneName);
+	}
+
+	public void _setCurrentFile(int givenFileNum)
+	{
+		currentFileNumber = givenFileNum;
+	}
+
+	public void _loadFile()
+	{
+		BinaryFormatter bf = new BinaryFormatter();
+		FileStream fStream = File.Open(Application.persistentDataPath + "/saveFile" + currentFileNumber + ".gd", FileMode.Open);
+		currentSaveInstance = (GameSave)bf.Deserialize(fStream);
+		fStream.Close();
+	}
+
+	public void _saveFile()
+	{
+		BinaryFormatter bf = new BinaryFormatter();
+		//Application.persistentDataPath is a string, so if you wanted you can put that into debug.log if you want to know where save games are located
+		FileStream fStream = File.Create (Application.persistentDataPath + "/saveFile" + currentFileNumber + ".gd"); //you can call it anything you want
+		GameSave gs = new GameSave();
+		gs._recordValues();
+		bf.Serialize(fStream, gs);//serialize recordedValues
+		fStream.Close();
+	}
+
+	public GameSave _getCurrentSaveInstance()
+	{
+		return currentSaveInstance;
 	}
 }
