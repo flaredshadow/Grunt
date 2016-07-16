@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
 
 [System.Serializable]
 public class CharacterSheet
@@ -9,6 +10,7 @@ public class CharacterSheet
 	public string characterName;
 	public formEnum form;
 	public rankEnum rank;
+	public List<attackEnum> attacks = new List<attackEnum>();
 
 	// Use this for initialization
 	void Start () {
@@ -38,6 +40,10 @@ public class CharacterSheet
 				characterName = "Rat";
 				form = formEnum.Animal;
 				rank = rankEnum.Rat;
+				attacks.Add(attackEnum.SquirmingClaws);
+				attacks.Add(attackEnum.PlagueBite);
+				attacks.Add(attackEnum.SewerStench);
+				attacks.Add(attackEnum.PiedPiper);
 				break;
 		}
 	}

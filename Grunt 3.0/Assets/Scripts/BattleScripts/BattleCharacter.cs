@@ -13,4 +13,14 @@ public class BattleCharacter : MonoBehaviour {
 	void Update () {
 	
 	}
+
+	public void _setSheet(CharacterSheet givenSheet)
+	{
+		sheet = givenSheet;
+	}
+
+	public CharacterSheet _getSheet()
+	{
+		return sheet;
+	}
 }

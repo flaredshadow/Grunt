@@ -13,22 +13,50 @@ public enum doorEnum{A, B, C, ReturnFromBattle, SavePoint, None}
 public enum WorldPlayerStateEnum {Grounded, Airborne, TakeAction}
 public enum formEnum{Animal, Monster, Machine};
 public enum rankEnum {Rat, Bat, Boar, Falcon, Wolf, Pterodactyl, Bear, Zombie, Toaster}
+public enum attackEnum {
+	MultiTest, AllyTest, Tackle, LoseAChurn, ParalysisBeam, Spawn,
+	SquirmingClaws, PlagueBite, SewerStench, PiedPiper,
+	Swoop, ScentOfBlood, EchoScreech, NightFlight,
+	TuskFling, BodySlam, CannonBall, TruffleSearch, ThreeLittlePigs,
+	TalonDrop, FeatherFatality, KneeSmash, MysticGale, Hurricane, FinistMagic
+};
 
 public class Engine : MonoBehaviour {
 
 	public static Engine self;
 
-	public GameObject worldPlayer, battleCharacterPrefab;
+	public GameObject worldPlayer, battleCharacterPrefab, buttonPrefab;
 	public Camera cam;
 	public Image transitionImage;
 
 	GameStateEnum currentGameState = GameStateEnum.BeginGame;
+
+	public GameStateEnum CurrentGameState {
+		get {
+			return currentGameState;
+		}
+		set {
+			currentGameState = value;
+		}
+	}
+
 	int currentFileNumber, minAdditionalEnemies, maxAdditionalEnemies, playerCoins = 0;
 	GameSave currentSaveInstance;
+
+	public GameSave CurrentSaveInstance {
+		get {
+			return currentSaveInstance;
+		}
+		set {
+			currentSaveInstance = value;
+		}
+	}
+
 	List<CharacterSheet> playerSheets = new List<CharacterSheet> ();
 	CharacterSheet mainCharacterSheet;
 	string currentSceneName, currentWorldSceneName, nextSceneName, coreSceneName = "CoreScene", pickFileSceneName = "IntroScene", battleSceneName = "BattleScene";
 	doorEnum nextDoorEnum = doorEnum.None;
+	rankEnum firstEnemyRank;
 	rankEnum[] sceneEnemyRanks;
 
 	float spaceFromDoor = .551f, transitionSpeed = .03f;
@@ -46,7 +74,7 @@ public class Engine : MonoBehaviour {
 		switch(currentGameState)
 		{
 			case GameStateEnum.BeginGame:
-				Debug.Log(Application.persistentDataPath);
+				//Debug.Log(Application.persistentDataPath);
 				break;
 			case GameStateEnum.Dialogue:
 				break;
@@ -89,11 +117,12 @@ public class Engine : MonoBehaviour {
 					Time.timeScale = 1;
 					if(!currentSceneName.Equals(battleSceneName))
 					{//Debug.Log("Worlding");
-						_setCurrentGameState(GameStateEnum.OverWorldPlay);
+						CurrentGameState = GameStateEnum.OverWorldPlay;
 					}
 					else
 					{//Debug.Log("Battling");
-						_setCurrentGameState(GameStateEnum.BattlePlay);
+						CurrentGameState = GameStateEnum.BattlePlay;
+						BattleManager.self._setCurrentBattleState(BattleStateEnum.PlayerDecide);
 					}
 				}
 				break;
@@ -115,16 +144,6 @@ public class Engine : MonoBehaviour {
 				break;
 		}
 	
-	}
-
-	public GameStateEnum _getCurrentGameState()
-	{
-		return currentGameState;
-	}
-
-	public void _setCurrentGameState(GameStateEnum givenState)
-	{
-		currentGameState = givenState;
 	}
 
 	public void _goToScene()
@@ -157,7 +176,7 @@ public class Engine : MonoBehaviour {
 			
 		currentSceneName = nextSceneName;
 		nextSceneName = "";
-		_setCurrentGameState(GameStateEnum.EnterScene);
+		CurrentGameState = GameStateEnum.EnterScene;
 	}
 
 	public void _reactivateScene()
@@ -192,14 +211,14 @@ public class Engine : MonoBehaviour {
 		_prepTransition();
 		nextSceneName = givenNextScene;
 		nextDoorEnum = givenNextDoorEnum;
-		_setCurrentGameState(GameStateEnum.ExitScene);//the ExitScene game state will ultimately call the _goToScene() function
+		CurrentGameState = GameStateEnum.ExitScene;//the ExitScene game state will ultimately call the _goToScene() function
 	}
 
 	public void _goToBattle()
 	{
 		_prepTransition();
 		nextSceneName = battleSceneName;
-		_setCurrentGameState(GameStateEnum.ExitScene);
+		CurrentGameState = GameStateEnum.ExitScene;
 	}
 
 	void _prepTransition()
@@ -246,12 +265,30 @@ public class Engine : MonoBehaviour {
 		float spawnHeight = 1;
 		for(int i = 0; i < playerSheets.Count; i++)//populate player characters
 		{
-			Instantiate(battleCharacterPrefab, new Vector3((i+1) * -characterSpacing, spawnHeight, 0), Quaternion.identity);
+			GameObject playerGO = (GameObject)Instantiate(battleCharacterPrefab, new Vector3((i+1) * -characterSpacing, spawnHeight, 0), Quaternion.identity);
+			BattleCharacter bc = playerGO.GetComponent<BattleCharacter>();
+			bc._setSheet(playerSheets[i]);
+			BattleManager.self._addPlayerCharacter(bc);
+			if(i == 0)// need condition in other for loop to check if enemy should be first turn instead. 
+			{
+				BattleManager.self._setCurrentCharacter(bc);
+			}
 		}
 		for(int i = 0; i < totalEnemies; i++)//populate enemies
 		{
-			Instantiate(battleCharacterPrefab, new Vector3((i+1) * characterSpacing, spawnHeight, 0), Quaternion.identity);
+			GameObject enemyGO = (GameObject)Instantiate(battleCharacterPrefab, new Vector3((i+1) * characterSpacing, spawnHeight, 0), Quaternion.identity);
+			BattleCharacter bc = enemyGO.GetComponent<BattleCharacter>();
+			BattleManager.self._addEnemyCharacter(bc);
+			if(i == 0)
+			{
+				CharacterSheet sh = new CharacterSheet();
+				sh._initRank(firstEnemyRank);
+				bc._setSheet(sh);
+			}
 		}
+
+		//need to determine who goes first
+		
 	}
 
 	public void _setLevelEnemies(int givenMinAddEnemies, int givenMaxAddEnemies, rankEnum[] givenEnemyRanks)
@@ -274,6 +311,7 @@ public class Engine : MonoBehaviour {
 		MemoryStream ms = new MemoryStream(System.Convert.FromBase64String(a));
 		currentSaveInstance = bf.Deserialize(ms) as GameSave;
 		_initiateSceneChange(currentSaveInstance._getSavedSceneName(), doorEnum.SavePoint);
+		file.Close();
 	}
 
 	public void _saveFile()
@@ -287,16 +325,6 @@ public class Engine : MonoBehaviour {
 		string a = System.Convert.ToBase64String(ms.ToArray());//64 bit obfuscation
 		file.WriteLine(a);
 		file.Close();
-	}
-
-	public GameSave _getCurrentSaveInstance()
-	{
-		return currentSaveInstance;
-	}
-
-	public void _setCurrentSaveInstance(GameSave givenGameSave)
-	{
-		currentSaveInstance = givenGameSave;
 	}
 
 	public void _addSheetToParty(CharacterSheet givenSheet)
@@ -326,5 +354,10 @@ public class Engine : MonoBehaviour {
 	public void _setPlayerSheets(List<CharacterSheet> givenSheets)
 	{
 		playerSheets = givenSheets;
+	}
+
+	public void _setFirstEnemyRank(rankEnum givenRank)
+	{
+		firstEnemyRank = givenRank;
 	}
 }

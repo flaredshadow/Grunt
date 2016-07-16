@@ -1,10 +1,14 @@
 ﻿using UnityEngine;
-using System.Collections;
+using System.Collections.Generic;
+using UnityEngine.UI;
 
 public class BattleManager : MonoBehaviour {
 
 	public static BattleManager self;
 	BattleStateEnum currentBattleState;
+	BattleCharacter currentCharacter;
+	List<BattleCharacter> playerCharacters = new List<BattleCharacter>();
+	List<BattleCharacter> enemyCharacters = new List<BattleCharacter>();
 
 	// Use this for initialization
 	void Start ()
@@ -14,12 +18,12 @@ public class BattleManager : MonoBehaviour {
 	
 	// Update is called once per frame
 	void Update () {
-		if(Engine.self._getCurrentGameState() == GameStateEnum.BattlePlay)
+		if(Engine.self.CurrentGameState == GameStateEnum.BattlePlay)
 		{
 			switch(currentBattleState)
 			{
 				case BattleStateEnum.PlayerDecide:
-					
+					//Instantiate(Engine.self.b
 					break;
 			}
 
@@ -29,5 +33,25 @@ public class BattleManager : MonoBehaviour {
 				Engine.self._initiateSceneChange(Engine.self._getCurrentWorldScene(), doorEnum.ReturnFromBattle);
 			}
 		}
+	}
+
+	public void _setCurrentBattleState(BattleStateEnum givenState)
+	{
+		currentBattleState = givenState;
+	}
+
+	public void _addPlayerCharacter(BattleCharacter givenPlayerCharacter)
+	{
+		playerCharacters.Add(givenPlayerCharacter);
+	}
+
+	public void _addEnemyCharacter(BattleCharacter givenEnemyCharacter)
+	{
+		enemyCharacters.Add(givenEnemyCharacter);
+	}
+
+	public void _setCurrentCharacter(BattleCharacter givenCharacter)
+	{
+		currentCharacter = givenCharacter;
 	}
 }

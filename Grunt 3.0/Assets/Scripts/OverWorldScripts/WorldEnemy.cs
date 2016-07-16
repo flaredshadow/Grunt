@@ -3,6 +3,8 @@ using System.Collections;
 
 public class WorldEnemy : MonoBehaviour {
 
+	public rankEnum rank;
+
 	// Use this for initialization
 	void Start () {
 	
@@ -11,5 +13,10 @@ public class WorldEnemy : MonoBehaviour {
 	// Update is called once per frame
 	void Update () {
 	
+	}
+
+	public rankEnum _getWorldEnemyRank()
+	{
+		return rank;
 	}
 }

@@ -20,13 +20,13 @@ public class WorldPlayer : MonoBehaviour {
 	{
 		self = this;
 		rBody = GetComponent<Rigidbody>();
-		GameSave currentSaveInst = Engine.self._getCurrentSaveInstance();
+		GameSave currentSaveInst = Engine.self.CurrentSaveInstance;
 		currentSaveInst._uploadValues();//load in the player file once, at the beginning of the game
 	}
 	
 	// Update is called once per frame
 	void Update () {
-		if(Engine.self._getCurrentGameState() == GameStateEnum.OverWorldPlay)
+		if(Engine.self.CurrentGameState == GameStateEnum.OverWorldPlay)
 		{
 			switch(currentWorldPlayerState)
 			{
@@ -54,7 +54,7 @@ public class WorldPlayer : MonoBehaviour {
 
 	void OnTriggerEnter (Collider other)
 	{
-		if(Engine.self._getCurrentGameState() == GameStateEnum.OverWorldPlay)
+		if(Engine.self.CurrentGameState == GameStateEnum.OverWorldPlay)
 		{
 			switch(other.gameObject.tag)
 			{	
@@ -67,6 +67,7 @@ public class WorldPlayer : MonoBehaviour {
 					if(currentInvincibleTime <= 0)
 					{
 						other.transform.localPosition += Vector3.up * 2;
+						Engine.self._setFirstEnemyRank(other.gameObject.GetComponent<WorldEnemy>()._getWorldEnemyRank());//make first battle enemy always match the overworld enemy
 						Engine.self._goToBattle();
 					}
 					break;

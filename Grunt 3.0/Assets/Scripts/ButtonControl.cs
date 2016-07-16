@@ -13,7 +13,7 @@ public class ButtonControl : MonoBehaviour {
 	// Use this for initialization
 	void Start () {
 		buttonComponent = GetComponent<Button>();
-		if(Engine.self._getCurrentGameState() == GameStateEnum.BeginGame)
+		if(Engine.self.CurrentGameState == GameStateEnum.BeginGame)
 		{
 			if(File.Exists(Application.persistentDataPath + "/saveFile"+fileNumber+".gd"))
 			{
@@ -31,14 +31,13 @@ public class ButtonControl : MonoBehaviour {
 	// Update is called once per frame
 	void Update ()
 	{
-		//buttons have no interactivity if the game state is not either Dialogue or BeginGame
-		buttonComponent.enabled = Engine.self._getCurrentGameState() == GameStateEnum.Dialogue || Engine.self._getCurrentGameState() == GameStateEnum.BeginGame;
 	}
 
 	public void _loadFileClick()
 	{
 		Engine.self._setCurrentFile(fileNumber);
 		Engine.self._loadFile();
+		buttonComponent.enabled = false;
 	}
 
 	public void _newFileClick()
@@ -47,13 +46,18 @@ public class ButtonControl : MonoBehaviour {
 		CharacterSheet charSheet = new CharacterSheet();//initial party has 1 character
 		Engine.self._addSheetToParty(charSheet);
 		GameSave gs = new GameSave(Engine.self._getPlayerSheets());//start a new save instance with 1 CharacterSheet in it
-		Engine.self._setCurrentSaveInstance(gs);
+		Engine.self.CurrentSaveInstance = gs;
 		foreach(Button b in FindObjectsOfType<Button>())
 		{
 			b.onClick.RemoveAllListeners();
 			ButtonControl bControl = b.gameObject.GetComponent<ButtonControl>();
 			Text bText = b.GetComponentInChildren<Text>();
-			b.onClick.AddListener(delegate{Engine.self._initiateSceneChange("StartingAreaScene", doorEnum.None);});
+			b.onClick.AddListener(
+				delegate
+				{
+					Engine.self._initiateSceneChange("StartingAreaScene", doorEnum.None);
+					b.enabled = false;
+				});
 			switch(bControl.fileNumber)
 			{
 				case 1:
