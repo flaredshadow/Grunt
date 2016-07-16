@@ -7,11 +7,12 @@ using System.IO;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Runtime.Serialization;
 
-public enum GameState {BeginGame, Dialogue, CutScene, OverWorldPlay, BattlePlay, EnterScene, ExitScene, Ending}
-public enum BattleState {PlayerDecide, PlayerAttack, EnemyDecide, EnemyAttack, PlayerWin, PlayerLose, Flee}
+public enum GameStateEnum {BeginGame, Dialogue, CutScene, OverWorldPlay, BattlePlay, EnterScene, ExitScene, Ending}
+public enum BattleStateEnum {PlayerDecide, PlayerAttack, EnemyDecide, EnemyAttack, PlayerWin, PlayerLose, Flee}
 public enum doorEnum{A, B, C, ReturnFromBattle, SavePoint, None}
-public enum WorldPlayerState {Grounded, Airborne, TakeAction}
-public enum rankEnum {Rat, Bat, Boar, Falcon, Wolf, Pterodactyl, Bear}
+public enum WorldPlayerStateEnum {Grounded, Airborne, TakeAction}
+public enum formEnum{Animal, Monster, Machine};
+public enum rankEnum {Rat, Bat, Boar, Falcon, Wolf, Pterodactyl, Bear, Zombie, Toaster}
 
 public class Engine : MonoBehaviour {
 
@@ -21,13 +22,13 @@ public class Engine : MonoBehaviour {
 	public Camera cam;
 	public Image transitionImage;
 
-	GameState currentGameState = GameState.BeginGame;
-	int currentFileNumber;
+	GameStateEnum currentGameState = GameStateEnum.BeginGame;
+	int currentFileNumber, minAdditionalEnemies, maxAdditionalEnemies, playerCoins = 0;
 	GameSave currentSaveInstance;
 	List<CharacterSheet> playerSheets = new List<CharacterSheet> ();
+	CharacterSheet mainCharacterSheet;
 	string currentSceneName, currentWorldSceneName, nextSceneName, coreSceneName = "CoreScene", pickFileSceneName = "IntroScene", battleSceneName = "BattleScene";
 	doorEnum nextDoorEnum = doorEnum.None;
-	int minAdditionalEnemies, maxAdditionalEnemies;
 	rankEnum[] sceneEnemyRanks;
 
 	float spaceFromDoor = .551f, transitionSpeed = .03f;
@@ -37,32 +38,34 @@ public class Engine : MonoBehaviour {
 		self = this;
 		currentSceneName = coreSceneName;
 		currentWorldSceneName = currentSceneName;
+		SceneManager.LoadScene(pickFileSceneName, LoadSceneMode.Additive);
 	}
 	
 	// Update is called once per frame
 	void Update () {
 		switch(currentGameState)
 		{
-			case GameState.BeginGame:
+			case GameStateEnum.BeginGame:
 				Debug.Log(Application.persistentDataPath);
-				nextSceneName = pickFileSceneName;
-				_goToScene();
-				currentGameState = GameState.Dialogue;
 				break;
-			case GameState.Dialogue:
+			case GameStateEnum.Dialogue:
 				break;
-			case GameState.CutScene:
+			case GameStateEnum.CutScene:
 				break;
-			case GameState.OverWorldPlay:
+			case GameStateEnum.OverWorldPlay:
 				if(Input.GetKeyDown("t"))
 				{
 					_saveFile();
 					Debug.Log("Saved");
 				}
+				if(Input.GetKeyDown("m"))
+				{
+					Debug.Log(mainCharacterSheet.rank);
+				}
 				break;
-			case GameState.BattlePlay:
+			case GameStateEnum.BattlePlay:
 				break;
-			case GameState.EnterScene:
+			case GameStateEnum.EnterScene:
 				if(transitionImage.color.a == 1) // checking if the alpha has not been subtracted from at all, this acts like a "Do this exactly one time" condition
 				{
 					SceneManager.SetActiveScene(SceneManager.GetSceneByName(currentSceneName));//active scene determines what scene instantiated objects belong to
@@ -86,15 +89,15 @@ public class Engine : MonoBehaviour {
 					Time.timeScale = 1;
 					if(!currentSceneName.Equals(battleSceneName))
 					{//Debug.Log("Worlding");
-						_setCurrentGameState(GameState.OverWorldPlay);
+						_setCurrentGameState(GameStateEnum.OverWorldPlay);
 					}
 					else
 					{//Debug.Log("Battling");
-						_setCurrentGameState(GameState.BattlePlay);
+						_setCurrentGameState(GameStateEnum.BattlePlay);
 					}
 				}
 				break;
-			case GameState.ExitScene://timescale should already be equal to 0
+			case GameStateEnum.ExitScene://timescale should already be equal to 0
 				transitionImage.color += new Color(0, 0, 0, transitionSpeed); // fade in the transitionImage
 				if(transitionImage.color.a  >= 1) // once the screen is pitch-black we will transition the level, this way it doesn't look choppy
 				{
@@ -108,18 +111,18 @@ public class Engine : MonoBehaviour {
 					_goToScene();//change the scene when the screen is completely covered
 				}
 				break;
-			case GameState.Ending:
+			case GameStateEnum.Ending:
 				break;
 		}
 	
 	}
 
-	public GameState _getCurrentGameState()
+	public GameStateEnum _getCurrentGameState()
 	{
 		return currentGameState;
 	}
 
-	public void _setCurrentGameState(GameState givenState)
+	public void _setCurrentGameState(GameStateEnum givenState)
 	{
 		currentGameState = givenState;
 	}
@@ -154,7 +157,7 @@ public class Engine : MonoBehaviour {
 			
 		currentSceneName = nextSceneName;
 		nextSceneName = "";
-		_setCurrentGameState(GameState.EnterScene);
+		_setCurrentGameState(GameStateEnum.EnterScene);
 	}
 
 	public void _reactivateScene()
@@ -189,14 +192,14 @@ public class Engine : MonoBehaviour {
 		_prepTransition();
 		nextSceneName = givenNextScene;
 		nextDoorEnum = givenNextDoorEnum;
-		_setCurrentGameState(GameState.ExitScene);//the ExitScene game state will ultimately call the _goToScene() function
+		_setCurrentGameState(GameStateEnum.ExitScene);//the ExitScene game state will ultimately call the _goToScene() function
 	}
 
 	public void _goToBattle()
 	{
 		_prepTransition();
 		nextSceneName = battleSceneName;
-		_setCurrentGameState(GameState.ExitScene);
+		_setCurrentGameState(GameStateEnum.ExitScene);
 	}
 
 	void _prepTransition()
@@ -258,11 +261,6 @@ public class Engine : MonoBehaviour {
 		sceneEnemyRanks = givenEnemyRanks;
 	}
 
-	public bool _isInPickFileScene()
-	{
-		return currentWorldSceneName.Equals(pickFileSceneName);
-	}
-
 	public void _setCurrentFile(int givenFileNum)
 	{
 		currentFileNumber = givenFileNum;
@@ -271,24 +269,62 @@ public class Engine : MonoBehaviour {
 	public void _loadFile()
 	{
 		BinaryFormatter bf = new BinaryFormatter();
-		FileStream fStream = File.Open(Application.persistentDataPath + "/saveFile" + currentFileNumber + ".gd", FileMode.Open);
-		currentSaveInstance = (GameSave)bf.Deserialize(fStream);
-		fStream.Close();
+		StreamReader file = new StreamReader(Application.persistentDataPath + "/saveFile" + currentFileNumber + ".gd");
+		string a = file.ReadToEnd();
+		MemoryStream ms = new MemoryStream(System.Convert.FromBase64String(a));
+		currentSaveInstance = bf.Deserialize(ms) as GameSave;
+		_initiateSceneChange(currentSaveInstance._getSavedSceneName(), doorEnum.SavePoint);
 	}
 
 	public void _saveFile()
 	{
 		BinaryFormatter bf = new BinaryFormatter();
-		//Application.persistentDataPath is a string, so if you wanted you can put that into debug.log if you want to know where save games are located
-		FileStream fStream = File.Create (Application.persistentDataPath + "/saveFile" + currentFileNumber + ".gd"); //you can call it anything you want
+		StreamWriter file = new StreamWriter (Application.persistentDataPath + "/saveFile" + currentFileNumber + ".gd");
+		MemoryStream ms = new MemoryStream();
 		GameSave gs = new GameSave();
 		gs._recordValues();
-		bf.Serialize(fStream, gs);//serialize recordedValues
-		fStream.Close();
+		bf.Serialize(ms, gs);//serialize recordedValues
+		string a = System.Convert.ToBase64String(ms.ToArray());//64 bit obfuscation
+		file.WriteLine(a);
+		file.Close();
 	}
 
 	public GameSave _getCurrentSaveInstance()
 	{
 		return currentSaveInstance;
+	}
+
+	public void _setCurrentSaveInstance(GameSave givenGameSave)
+	{
+		currentSaveInstance = givenGameSave;
+	}
+
+	public void _addSheetToParty(CharacterSheet givenSheet)
+	{
+		if(playerSheets.Count == 0)
+		{
+			mainCharacterSheet = givenSheet;
+		}
+		playerSheets.Add(givenSheet);
+	}
+
+	public CharacterSheet _getMainCharacterSheet()
+	{
+		return mainCharacterSheet;
+	}
+
+	public void _setMainCharacterSheet(CharacterSheet givenMainCharacterSheet)
+	{
+		mainCharacterSheet = givenMainCharacterSheet;
+	}
+
+	public List<CharacterSheet> _getPlayerSheets()
+	{
+		return playerSheets;
+	}
+
+	public void _setPlayerSheets(List<CharacterSheet> givenSheets)
+	{
+		playerSheets = givenSheets;
 	}
 }

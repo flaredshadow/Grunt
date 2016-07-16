@@ -4,7 +4,7 @@ using System.Collections;
 public class BattleManager : MonoBehaviour {
 
 	public static BattleManager self;
-	BattleState currentBattleState;
+	BattleStateEnum currentBattleState;
 
 	// Use this for initialization
 	void Start ()
@@ -14,11 +14,11 @@ public class BattleManager : MonoBehaviour {
 	
 	// Update is called once per frame
 	void Update () {
-		if(Engine.self._getCurrentGameState() == GameState.BattlePlay)
+		if(Engine.self._getCurrentGameState() == GameStateEnum.BattlePlay)
 		{
 			switch(currentBattleState)
 			{
-				case BattleState.PlayerDecide:
+				case BattleStateEnum.PlayerDecide:
 					
 					break;
 			}

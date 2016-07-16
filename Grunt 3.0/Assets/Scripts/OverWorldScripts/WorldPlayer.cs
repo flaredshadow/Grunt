@@ -12,8 +12,7 @@ public class WorldPlayer : MonoBehaviour {
 	float totalInvincibleTime = 30;
 	float currentInvincibleTime = 0;
 
-	WorldPlayerState currentWorldPlayerState = WorldPlayerState.Grounded;
-	CharacterSheet mainCharacterSheet;
+	WorldPlayerStateEnum currentWorldPlayerState = WorldPlayerStateEnum.Grounded;
 	Rigidbody rBody;
 
 	// Use this for initialization
@@ -21,28 +20,24 @@ public class WorldPlayer : MonoBehaviour {
 	{
 		self = this;
 		rBody = GetComponent<Rigidbody>();
-		mainCharacterSheet = ScriptableObject.CreateInstance<CharacterSheet>();
 		GameSave currentSaveInst = Engine.self._getCurrentSaveInstance();
-		if(currentSaveInst != null)
-		{
-			currentSaveInst._uploadValues();
-		}
+		currentSaveInst._uploadValues();//load in the player file once, at the beginning of the game
 	}
 	
 	// Update is called once per frame
 	void Update () {
-		if(Engine.self._getCurrentGameState() == GameState.OverWorldPlay)
+		if(Engine.self._getCurrentGameState() == GameStateEnum.OverWorldPlay)
 		{
 			switch(currentWorldPlayerState)
 			{
-				case WorldPlayerState.Grounded:
+				case WorldPlayerStateEnum.Grounded:
 					_movePlayer();
 					_jump();
 					_checkAirborne();
 					_checkInvincibleTime();
 					break;
 
-				case WorldPlayerState.Airborne:
+				case WorldPlayerStateEnum.Airborne:
 					_movePlayer();
 					_checkAirborne();
 					_checkInvincibleTime();
@@ -59,7 +54,7 @@ public class WorldPlayer : MonoBehaviour {
 
 	void OnTriggerEnter (Collider other)
 	{
-		if(Engine.self._getCurrentGameState() == GameState.OverWorldPlay)
+		if(Engine.self._getCurrentGameState() == GameStateEnum.OverWorldPlay)
 		{
 			switch(other.gameObject.tag)
 			{	
@@ -98,11 +93,11 @@ public class WorldPlayer : MonoBehaviour {
 		float castDistance = .5f;
 		if(!Physics.Raycast(transform.position, Vector3.down, out onGround, castDistance))
 		{
-			currentWorldPlayerState = WorldPlayerState.Airborne;
+			currentWorldPlayerState = WorldPlayerStateEnum.Airborne;
 		}
 		else
 		{
-			currentWorldPlayerState = WorldPlayerState.Grounded;
+			currentWorldPlayerState = WorldPlayerStateEnum.Grounded;
 		}
 	}
 
@@ -118,10 +113,5 @@ public class WorldPlayer : MonoBehaviour {
 		{
 			currentInvincibleTime -= 1;
 		}
-	}
-
-	public CharacterSheet _getSheet()
-	{
-		return mainCharacterSheet;
 	}
 }
