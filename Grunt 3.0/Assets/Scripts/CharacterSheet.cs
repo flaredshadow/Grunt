@@ -12,6 +12,7 @@ public class CharacterSheet
 	public formEnum form;
 	public rankEnum rank;
 	public List<Attack> attacks = new List<Attack>();
+	public List<Attack> spells = new List<Attack>();
 
 	// Use this for initialization
 	void Start () {
@@ -42,20 +43,24 @@ public class CharacterSheet
 				form = formEnum.Animal;
 				rank = rankEnum.Rat;
 				attacks.Add(new SquirmingClaws());
-				attacks.Add(new PlagueBite());
-				attacks.Add(new SewerStench());
+				spells.Add(new PlagueBite());
+				spells.Add(new SewerStench());
 				break;
 		}
 	}
 
-	public List<Dropdown.OptionData> _attacksToOptions()
+	public List<Dropdown.OptionData> _attacksToOptions(List<Attack> givenAttackList)
 	{
 		List<Dropdown.OptionData> odList = new List<Dropdown.OptionData>();
-		foreach(Attack atk in attacks)
+		foreach(Attack atk in givenAttackList)
 		{
-			odList.Add(new Dropdown.OptionData(){text = atk.AttackName});
+			string attackText = atk.AttackName;
+			if(givenAttackList == spells)
+			{
+				attackText += " : " + atk.SpCost + " SP";
+			}
+			odList.Add(new Dropdown.OptionData(){text = attackText});
 		}
 		return odList;
 	}
-
 }

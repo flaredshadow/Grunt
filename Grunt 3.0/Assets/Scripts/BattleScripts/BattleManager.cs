@@ -38,12 +38,14 @@ public class BattleManager : MonoBehaviour {
 		}
 	}
 
+	Item itemToBeUsed;
+
 	List<BattleCharacter> targetEnemies = new List<BattleCharacter>();
 	List<BattleCharacter> targetAllies = new List<BattleCharacter>();
 
 	Vector3 mainDDPosition = new Vector3(0, 20, 0);
 	Vector3 buttonOffsetPosition = new Vector3(0, 40, 0);
-	Vector3 ddOffsetPosition = new Vector3(50, 0, 0);//to be used as sideways adjustment for Spells, Items, and Fleeing dropdowns
+	Vector3 ddOffsetPosition = new Vector3(200, 0, 0);//to be used as sideways adjustment for Spells, Items, and Fleeing dropdowns
 
 	List<BattleCharacter> allyCharacters = new List<BattleCharacter>();
 	List<BattleCharacter> enemyCharacters = new List<BattleCharacter>();
@@ -68,6 +70,15 @@ public class BattleManager : MonoBehaviour {
 					break;
 				case BattleStateEnum.InitPlayerAttack:
 					_destroyAllButtonsAndDropDowns();
+					if(currentCharacter.Sheet.spells.Contains(activeAttack))
+					{
+						currentCharacter.Sheet.sp -= activeAttack.SpCost;
+					}
+
+					if(itemToBeUsed != null)
+					{
+						Engine.self._removeItem(itemToBeUsed, 1);
+					}
 					currentBattleState = BattleStateEnum.PlayerAttack;
 					break;
 			}
@@ -86,41 +97,81 @@ public class BattleManager : MonoBehaviour {
 
 		Dropdown abilityDD = (Instantiate(Engine.self.DropDownPrefab, mainDDPosition, Quaternion.identity) as GameObject).GetComponent<Dropdown>();
 		abilityDD.transform.SetParent(primaryCanvas.transform, false);
-		abilityDD.AddOptions(currentCharacter.Sheet._attacksToOptions());
+		abilityDD.AddOptions(currentCharacter.Sheet._attacksToOptions(currentCharacter.Sheet.attacks));
+
+		Dropdown spellDD = (Instantiate(Engine.self.DropDownPrefab, mainDDPosition + ddOffsetPosition, Quaternion.identity) as GameObject).GetComponent<Dropdown>();
+		spellDD.transform.SetParent(primaryCanvas.transform, false);
+		spellDD.AddOptions(currentCharacter.Sheet._attacksToOptions(currentCharacter.Sheet.spells));
+
+		Dropdown itemDD = (Instantiate(Engine.self.DropDownPrefab, mainDDPosition - ddOffsetPosition, Quaternion.identity) as GameObject).GetComponent<Dropdown>();
+		itemDD.transform.SetParent(primaryCanvas.transform, false);
+		itemDD.AddOptions(Engine.self._battleItemsToOptions(false, false));
 
 		Button abilityButton = (Instantiate(Engine.self.ButtonPrefab, mainDDPosition + buttonOffsetPosition, Quaternion.identity) as GameObject).GetComponent<Button>();
 		abilityButton.GetComponentInChildren<Text>().text = "Abilities";
 		abilityButton.transform.SetParent(primaryCanvas.transform, false);
 
+		Vector3 spellButtonPosition = mainDDPosition + buttonOffsetPosition + ddOffsetPosition;
+		Button spellButton = (Instantiate(Engine.self.ButtonPrefab, spellButtonPosition, Quaternion.identity) as GameObject).GetComponent<Button>();
+		spellButton.GetComponentInChildren<Text>().text = "Spells";
+		spellButton.transform.SetParent(primaryCanvas.transform, false);
+
+		Vector3 itemButtonPosition = mainDDPosition + buttonOffsetPosition - ddOffsetPosition;
+		Button itemButton = (Instantiate(Engine.self.ButtonPrefab, itemButtonPosition, Quaternion.identity) as GameObject).GetComponent<Button>();
+		itemButton.GetComponentInChildren<Text>().text = "Items";
+		itemButton.transform.SetParent(primaryCanvas.transform, false);
+
 		abilityButton.onClick.AddListener(
 			delegate
 			{
-				_destroyAllButtonsAndDropDowns();
-				Attack attackInQuestion = currentCharacter.Sheet.attacks[abilityDD.value];
+				_activateOption(currentCharacter.Sheet.attacks[abilityDD.value], primaryCanvas);
+			});
 
-				if(attackInQuestion.targetType == attackTargetEnum.ChooseEnemy)
+		spellButton.onClick.AddListener(
+			delegate
+			{
+				if(currentCharacter.Sheet.sp >= currentCharacter.Sheet.spells[spellDD.value].SpCost)
 				{
-					
-					foreach(BattleCharacter iterEnemy in enemyCharacters)
-					{
-						_generateTargetChoiceButton(iterEnemy, attackInQuestion, primaryCanvas);
-					}
-					_generateBackButton(attackInQuestion, primaryCanvas);
+						_activateOption(currentCharacter.Sheet.spells[spellDD.value], primaryCanvas);
 				}
-				else if(attackInQuestion.targetType == attackTargetEnum.ChooseAlly)
+				else
 				{
-					foreach(BattleCharacter iterAlly in allyCharacters)
-					{
-						_generateTargetChoiceButton(iterAlly, attackInQuestion, primaryCanvas);
-					}
-					_generateBackButton(attackInQuestion, primaryCanvas);
-				}
-				else // non-choosing attacks immediately initiate execution of the attack
-				{
-					activeAttack = attackInQuestion;
-					currentBattleState = BattleStateEnum.InitPlayerAttack;
+					Engine.self.AudioSource.PlayOneShot(Engine.self.BuzzClip);
 				}
 			});
+		abilityButton.onClick.AddListener(
+			delegate
+			{
+				itemToBeUsed = Engine.self.PlayerBattleItems[itemDD.value];
+				_activateOption(itemToBeUsed.ItemAttack, primaryCanvas);
+			});
+	}
+
+	void _activateOption(Attack attackInQuestion, Canvas givenCanvas)
+	{
+		_destroyAllButtonsAndDropDowns();
+		if(attackInQuestion.TargetType == attackTargetEnum.ChooseEnemy)
+		{
+
+			foreach(BattleCharacter iterEnemy in enemyCharacters)
+			{
+				_generateTargetChoiceButton(iterEnemy, attackInQuestion, givenCanvas);
+			}
+			_generateBackButton(attackInQuestion, givenCanvas);
+		}
+		else if(attackInQuestion.TargetType == attackTargetEnum.ChooseAlly)
+		{
+			foreach(BattleCharacter iterAlly in allyCharacters)
+			{
+				_generateTargetChoiceButton(iterAlly, attackInQuestion, givenCanvas);
+			}
+			_generateBackButton(attackInQuestion, givenCanvas);
+		}
+		else // non-choosing attacks immediately initiate execution of the attack
+		{
+			activeAttack = attackInQuestion;
+			currentBattleState = BattleStateEnum.InitPlayerAttack;
+		}
 	}
 
 	public void _addPlayerCharacter(BattleCharacter givenPlayerCharacter)
@@ -160,7 +211,7 @@ public class BattleManager : MonoBehaviour {
 				if(enemyCharacters.Contains(givenTarget))
 				{
 					targetEnemies.Add(givenTarget);
-					if(selectedAttack.numberOfTargets == targetEnemies.Count || targetEnemies.Count == enemyCharacters.Count)
+					if(selectedAttack.NumberOfTargets == targetEnemies.Count || targetEnemies.Count == enemyCharacters.Count)
 					{
 						activeAttack = selectedAttack;
 						currentBattleState = BattleStateEnum.InitPlayerAttack;
@@ -169,7 +220,7 @@ public class BattleManager : MonoBehaviour {
 				else
 				{
 					targetAllies.Add(givenTarget);
-					if(selectedAttack.numberOfTargets == targetAllies.Count || targetAllies.Count == allyCharacters.Count)
+					if(selectedAttack.NumberOfTargets == targetAllies.Count || targetAllies.Count == allyCharacters.Count)
 					{
 						activeAttack = selectedAttack;
 						currentBattleState = BattleStateEnum.InitPlayerAttack;

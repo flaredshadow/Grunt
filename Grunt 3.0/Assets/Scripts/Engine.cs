@@ -42,12 +42,33 @@ public class Engine : MonoBehaviour
 
 	public Camera cam;
 	public Image transitionImage;
+	public AudioSource audioSource;
+
+	public AudioSource AudioSource {
+		get {
+			return audioSource;
+		}
+		set {
+			audioSource = value;
+		}
+	}
+
+	public AudioClip buzzClip;
+
+	public AudioClip BuzzClip {
+		get {
+			return buzzClip;
+		}
+		set {
+			buzzClip = value;
+		}
+	}
 
 	//non-prefab variables, and their getters and setters
 
-	GameStateEnum currentGameState = GameStateEnum.BeginGame;
-
 	#region non-Prefab variables
+
+	GameStateEnum currentGameState = GameStateEnum.BeginGame;
 
 	public GameStateEnum CurrentGameState {
 		get {
@@ -93,6 +114,17 @@ public class Engine : MonoBehaviour
 		}
 		set {
 			playerCoins = value;
+		}
+	}
+
+	List<Item> playerBattleItems = new List<Item>();
+
+	public List<Item> PlayerBattleItems {
+		get {
+			return playerBattleItems;
+		}
+		set {
+			playerBattleItems = value;
 		}
 	}
 
@@ -431,5 +463,50 @@ public class Engine : MonoBehaviour
 			mainCharacterSheet = givenSheet;
 		}
 		playerSheets.Add (givenSheet);
+	}
+
+	public List<Dropdown.OptionData> _battleItemsToOptions(bool showCosts, bool buying)
+	{
+		List<Dropdown.OptionData> odList = new List<Dropdown.OptionData>();
+		foreach(Item pBItem in playerBattleItems)
+		{
+			string itemText = pBItem.ItemName + ", " + pBItem.Amount;
+			if(showCosts == true)
+			{
+				itemText += " : " + pBItem.PurchaseValue + " Gold";//need to incorporate buying bool
+			}
+			odList.Add(new Dropdown.OptionData(){text = itemText});
+		}
+		return odList;
+	}
+
+	public void _addItem(Item givenItem)
+	{
+		foreach(Item itm in playerBattleItems)
+		{
+			if(itm.GetType() == givenItem.GetType())
+			{
+				itm.Amount += givenItem.Amount;
+				break;
+			}
+		}
+
+		playerBattleItems.Add(givenItem);
+	}
+
+	public bool _removeItem(Item givenItem, int removalAmount)//returns false when more trying to remove more of an item than you have
+	{
+		if(removalAmount > givenItem.Amount)
+		{
+			return false;
+		}
+
+		givenItem.Amount -= removalAmount;
+		if(removalAmount == 0)
+		{
+			playerBattleItems.Remove(givenItem);
+		}
+
+		return true;
 	}
 }

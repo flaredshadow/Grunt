@@ -71,6 +71,11 @@ public class WorldPlayer : MonoBehaviour {
 						Engine.self._goToBattle();
 					}
 					break;
+
+				case "Item":
+					Engine.self._addItem(other.GetComponent<WorldItem>().ItemInstance);
+					Destroy(other.gameObject);
+					break;
 			}
 		}
 	}

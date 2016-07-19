@@ -4,7 +4,7 @@ using System.Collections;
 [System.Serializable]
 public class Attack
 {
-	public string attackName;
+	string attackName;
 
 	public string AttackName {
 		get {
@@ -15,7 +15,7 @@ public class Attack
 		}
 	}
 
-	public int baseDamage;
+	int baseDamage;
 
 	public int BaseDamage {
 		get {
@@ -26,7 +26,7 @@ public class Attack
 		}
 	}
 
-	public int spCost;
+	int spCost;
 
 	public int SpCost {
 		get {
@@ -37,7 +37,7 @@ public class Attack
 		}
 	}
 
-	public int numberOfTargets;
+	int numberOfTargets;
 
 	public int NumberOfTargets {
 		get {
@@ -48,7 +48,7 @@ public class Attack
 		}
 	}
 
-	public attackTargetEnum targetType;
+	attackTargetEnum targetType;
 
 	public attackTargetEnum TargetType {
 		get {
@@ -65,11 +65,11 @@ public class SquirmingClaws : Attack
 {
 	public SquirmingClaws()
 	{
-		attackName = "Squirming Claws";
-		baseDamage = 1;
-		spCost = 0;
-		numberOfTargets = 3;
-		targetType = attackTargetEnum.ChooseEnemy;
+		AttackName = "Squirming Claws";
+		BaseDamage = 1;
+		SpCost = 0;
+		NumberOfTargets = 3;
+		TargetType = attackTargetEnum.ChooseEnemy;
 	}
 }
 
@@ -78,11 +78,11 @@ public class PlagueBite : Attack
 {
 	public PlagueBite()
 	{
-		attackName = "Plague Bite";
-		baseDamage = 2;
-		spCost = 0;
-		numberOfTargets = 1;
-		targetType = attackTargetEnum.FirstEnemy;
+		AttackName = "Plague Bite";
+		BaseDamage = 2;
+		SpCost = 99;
+		NumberOfTargets = 1;
+		TargetType = attackTargetEnum.FirstEnemy;
 	}
 }
 
@@ -91,10 +91,10 @@ public class SewerStench : Attack
 {
 	public SewerStench()
 	{
-		attackName = "Sewer Stench";
-		baseDamage = 0;
-		spCost = 0;
-		numberOfTargets = 1;
-		targetType = attackTargetEnum.Self;
+		AttackName = "Sewer Stench";
+		BaseDamage = 0;
+		SpCost = 2;
+		NumberOfTargets = 1;
+		TargetType = attackTargetEnum.Self;
 	}
 }
