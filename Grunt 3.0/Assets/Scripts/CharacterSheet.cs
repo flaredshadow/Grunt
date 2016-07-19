@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
+using UnityEngine.UI;
 
 [System.Serializable]
 public class CharacterSheet
@@ -10,7 +11,7 @@ public class CharacterSheet
 	public string characterName;
 	public formEnum form;
 	public rankEnum rank;
-	public List<attackEnum> attacks = new List<attackEnum>();
+	public List<Attack> attacks = new List<Attack>();
 
 	// Use this for initialization
 	void Start () {
@@ -40,11 +41,21 @@ public class CharacterSheet
 				characterName = "Rat";
 				form = formEnum.Animal;
 				rank = rankEnum.Rat;
-				attacks.Add(attackEnum.SquirmingClaws);
-				attacks.Add(attackEnum.PlagueBite);
-				attacks.Add(attackEnum.SewerStench);
-				attacks.Add(attackEnum.PiedPiper);
+				attacks.Add(new SquirmingClaws());
+				attacks.Add(new PlagueBite());
+				attacks.Add(new SewerStench());
 				break;
 		}
 	}
+
+	public List<Dropdown.OptionData> _attacksToOptions()
+	{
+		List<Dropdown.OptionData> odList = new List<Dropdown.OptionData>();
+		foreach(Attack atk in attacks)
+		{
+			odList.Add(new Dropdown.OptionData(){text = atk.AttackName});
+		}
+		return odList;
+	}
+
 }

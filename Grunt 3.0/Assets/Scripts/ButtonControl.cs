@@ -35,17 +35,17 @@ public class ButtonControl : MonoBehaviour {
 
 	public void _loadFileClick()
 	{
-		Engine.self._setCurrentFile(fileNumber);
+		Engine.self.CurrentFileNumber = fileNumber;
 		Engine.self._loadFile();
 		buttonComponent.enabled = false;
 	}
 
 	public void _newFileClick()
 	{
-		Engine.self._setCurrentFile(fileNumber);
+		Engine.self.CurrentFileNumber = fileNumber;
 		CharacterSheet charSheet = new CharacterSheet();//initial party has 1 character
 		Engine.self._addSheetToParty(charSheet);
-		GameSave gs = new GameSave(Engine.self._getPlayerSheets());//start a new save instance with 1 CharacterSheet in it
+		GameSave gs = new GameSave(Engine.self.PlayerSheets);//start a new save instance with 1 CharacterSheet in it
 		Engine.self.CurrentSaveInstance = gs;
 		foreach(Button b in FindObjectsOfType<Button>())
 		{

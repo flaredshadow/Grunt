@@ -67,7 +67,7 @@ public class WorldPlayer : MonoBehaviour {
 					if(currentInvincibleTime <= 0)
 					{
 						other.transform.localPosition += Vector3.up * 2;
-						Engine.self._setFirstEnemyRank(other.gameObject.GetComponent<WorldEnemy>()._getWorldEnemyRank());//make first battle enemy always match the overworld enemy
+						Engine.self.FirstEnemyRank = other.gameObject.GetComponent<WorldEnemy>().Rank;//make first battle enemy always match the overworld enemy
 						Engine.self._goToBattle();
 					}
 					break;

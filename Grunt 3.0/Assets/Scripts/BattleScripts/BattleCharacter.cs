@@ -5,6 +5,15 @@ public class BattleCharacter : MonoBehaviour {
 
 	CharacterSheet sheet;
 
+	public CharacterSheet Sheet {
+		get {
+			return sheet;
+		}
+		set {
+			sheet = value;
+		}
+	}
+
 	// Use this for initialization
 	void Start () {
 	}
@@ -12,15 +21,5 @@ public class BattleCharacter : MonoBehaviour {
 	// Update is called once per frame
 	void Update () {
 	
-	}
-
-	public void _setSheet(CharacterSheet givenSheet)
-	{
-		sheet = givenSheet;
-	}
-
-	public CharacterSheet _getSheet()
-	{
-		return sheet;
 	}
 }

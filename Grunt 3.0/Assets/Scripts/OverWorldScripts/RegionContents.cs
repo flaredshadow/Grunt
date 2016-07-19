@@ -19,6 +19,8 @@ public class RegionContents : MonoBehaviour {
 
 	void OnEnable()
 	{
-		Engine.self._setLevelEnemies(minAdditionalEnemies, maxAdditionalEnemies, sceneEnemyRanks);
+		Engine.self.MinAdditionalEnemies = minAdditionalEnemies;
+		Engine.self.MaxAdditionalEnemies = maxAdditionalEnemies;
+		Engine.self.SceneEnemyRanks = sceneEnemyRanks;
 	}
 }
