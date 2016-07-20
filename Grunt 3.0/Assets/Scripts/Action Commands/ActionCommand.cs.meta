@@ -1,0 +1,18 @@
+fileFormatVersion: 2
+guid: dac5b704a200f654d9dcd5bf5004f6ce
+timeCreated: 1468963239
+licenseType: Free
+MonoImporter:
+  serializedVersion: 2
+  defaultReferences:
+  - zUp: {fileID: 21300000, guid: 274769939fc32164ebdd4c09c08535f9, type: 3}
+  - zDown: {fileID: 21300002, guid: 274769939fc32164ebdd4c09c08535f9, type: 3}
+  - xUp: {fileID: 21300004, guid: 274769939fc32164ebdd4c09c08535f9, type: 3}
+  - xDown: {fileID: 21300006, guid: 274769939fc32164ebdd4c09c08535f9, type: 3}
+  - cUp: {fileID: 21300008, guid: 274769939fc32164ebdd4c09c08535f9, type: 3}
+  - cDown: {fileID: 21300010, guid: 274769939fc32164ebdd4c09c08535f9, type: 3}
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

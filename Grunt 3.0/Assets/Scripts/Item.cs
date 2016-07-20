@@ -1,7 +1,8 @@
 ﻿using UnityEngine;
 using System.Collections;
+using System;
 
-[System.Serializable]
+[Serializable]
 public class Item
 {
 	string itemName;
@@ -49,7 +50,7 @@ public class Item
 	}
 }
 
-[System.Serializable]
+[Serializable]
 public class Potion : Item
 {
 	public Potion()

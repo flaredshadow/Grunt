@@ -1,7 +1,8 @@
 ﻿using UnityEngine;
 using System.Collections;
+using System;
 
-[System.Serializable]
+[Serializable]
 public class Attack
 {
 	string attackName;
@@ -58,9 +59,20 @@ public class Attack
 			targetType = value;
 		}
 	}
+
+	Action attackAction;
+
+	public Action AttackAction {
+		get {
+			return attackAction;
+		}
+		set {
+			attackAction = value;
+		}
+	}
 }
 
-[System.Serializable]
+[Serializable]
 public class SquirmingClaws : Attack
 {
 	public SquirmingClaws()
@@ -68,12 +80,13 @@ public class SquirmingClaws : Attack
 		AttackName = "Squirming Claws";
 		BaseDamage = 1;
 		SpCost = 0;
-		NumberOfTargets = 3;
+		NumberOfTargets = 1;
 		TargetType = attackTargetEnum.ChooseEnemy;
+		AttackAction = BattleManager.self._squirmingClaws;
 	}
 }
 
-[System.Serializable]
+[Serializable]
 public class PlagueBite : Attack
 {
 	public PlagueBite()
@@ -83,10 +96,11 @@ public class PlagueBite : Attack
 		SpCost = 99;
 		NumberOfTargets = 1;
 		TargetType = attackTargetEnum.FirstEnemy;
+		AttackAction = BattleManager.self._plagueBite;
 	}
 }
 
-[System.Serializable]
+[Serializable]
 public class SewerStench : Attack
 {
 	public SewerStench()
@@ -96,5 +110,6 @@ public class SewerStench : Attack
 		SpCost = 2;
 		NumberOfTargets = 1;
 		TargetType = attackTargetEnum.Self;
+		AttackAction = BattleManager.self._sewerStench;
 	}
 }

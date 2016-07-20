@@ -9,6 +9,7 @@ using System.Runtime.Serialization;
 
 public enum GameStateEnum {BeginGame, Dialogue, CutScene, OverWorldPlay, BattlePlay, EnterScene, ExitScene, Ending}
 public enum BattleStateEnum {InitPlayerDecide, PlayerDecide, InitPlayerAttack, PlayerAttack, EnemyDecide, EnemyAttack, PlayerWin, PlayerLose, Flee}
+public enum CharacterAttackStateEnum {InitAttack, Move, ActionCommand,  ApplyAttack}
 public enum doorEnum {A, B, C, ReturnFromBattle, SavePoint, None}
 public enum WorldPlayerStateEnum {Grounded, Airborne, TakeAction}
 public enum formEnum {Animal, Monster, Machine}
@@ -17,10 +18,19 @@ public enum attackTargetEnum {FirstEnemy, ChooseEnemy, Self, FirstAlly, ChooseAl
 
 public class Engine : MonoBehaviour
 {
-
 	public static Engine self;
 
-	public GameObject worldPlayer, battleCharacterPrefab, buttonPrefab, dropDownPrefab;
+	public GameObject worldPlayer, battleCharacterPrefab, buttonPrefab, dropDownPrefab, rapidCommandPrefab, damagePrefab;
+	public Canvas coreCanvas;
+
+	public Canvas CoreCanvas {
+		get {
+			return coreCanvas;
+		}
+		set {
+			coreCanvas = value;
+		}
+	}
 
 	public GameObject ButtonPrefab {
 		get {
@@ -37,6 +47,24 @@ public class Engine : MonoBehaviour
 		}
 		set {
 			dropDownPrefab = value;
+		}
+	}
+
+	public GameObject RapidCommandPrefab {
+		get {
+			return rapidCommandPrefab;
+		}
+		set {
+			rapidCommandPrefab = value;
+		}
+	}
+
+	public GameObject DamagePrefab {
+		get {
+			return damagePrefab;
+		}
+		set {
+			damagePrefab = value;
 		}
 	}
 
@@ -63,6 +91,8 @@ public class Engine : MonoBehaviour
 			buzzClip = value;
 		}
 	}
+
+	public Sprite zUp, zDown, xUp, xDown, cUp, cDown;
 
 	//non-prefab variables, and their getters and setters
 
@@ -230,6 +260,7 @@ public class Engine : MonoBehaviour
 	// Use this for initialization
 	void Start ()
 	{
+		Screen.SetResolution(1600, 600, true);
 		self = this;
 		currentSceneName = coreSceneName;
 		currentWorldSceneName = currentSceneName;
@@ -398,10 +429,10 @@ public class Engine : MonoBehaviour
 	void _initializeBattle ()
 	{
 		int totalEnemies = 1 + Random.Range (minAdditionalEnemies, maxAdditionalEnemies);
-		float characterSpacing = 4;
+		float characterSpacing = 5f;
 		float spawnHeight = 1;
 		for (int i = 0; i < playerSheets.Count; i++) {//populate player characters
-			GameObject playerGO = (GameObject)Instantiate (battleCharacterPrefab, new Vector3 ((i + 1) * -characterSpacing, spawnHeight, 0), Quaternion.identity);
+			GameObject playerGO = (GameObject)Instantiate (battleCharacterPrefab, new Vector3((i + 1) * -characterSpacing, spawnHeight, 0), Quaternion.identity);
 			BattleCharacter bc = playerGO.GetComponent<BattleCharacter> ();
 			bc.Sheet = playerSheets [i];
 			BattleManager.self._addPlayerCharacter (bc);
@@ -410,7 +441,7 @@ public class Engine : MonoBehaviour
 			}
 		}
 		for (int i = 0; i < totalEnemies; i++) {//populate enemies
-			GameObject enemyGO = (GameObject)Instantiate (battleCharacterPrefab, new Vector3 ((i + 1) * characterSpacing, spawnHeight, 0), Quaternion.identity);
+			GameObject enemyGO = (GameObject)Instantiate (battleCharacterPrefab, new Vector3((i + 1) * characterSpacing, spawnHeight, 0), Quaternion.identity);
 			BattleCharacter bc = enemyGO.GetComponent<BattleCharacter> ();
 			BattleManager.self._addEnemyCharacter (bc);
 			if (i == 0) {

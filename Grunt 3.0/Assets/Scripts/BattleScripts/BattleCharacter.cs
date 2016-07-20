@@ -14,12 +14,50 @@ public class BattleCharacter : MonoBehaviour {
 		}
 	}
 
+	GameObject hitGameObject;
+
+	public GameObject HitGameObject {
+		get {
+			return hitGameObject;
+		}
+		set {
+			hitGameObject = value;
+		}
+	}
+
+	int bonusPow;
+
+	public int BonusPow {
+		get {
+			return bonusPow;
+		}
+		set {
+			bonusPow = value;
+		}
+	}
+
+	int bonusDef;
+
+	public int BonusDef {
+		get {
+			return bonusDef;
+		}
+		set {
+			bonusDef = value;
+		}
+	}
+
 	// Use this for initialization
 	void Start () {
 	}
 	
 	// Update is called once per frame
 	void Update () {
-	
+		hitGameObject = null;
+	}
+
+	void OnTriggerEnter(Collider other)
+	{
+		hitGameObject = other.gameObject;
 	}
 }
