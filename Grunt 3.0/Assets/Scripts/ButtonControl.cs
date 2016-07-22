@@ -62,7 +62,14 @@ public class ButtonControl : MonoBehaviour {
 			{
 				case 1:
 					bText.text = "Animal";
-					b.onClick.AddListener(delegate{charSheet._initRank(rankEnum.Rat);});
+					b.onClick.AddListener(
+						delegate
+							{
+								CharacterSheet charSheet2 = new CharacterSheet();// only for testing purposes
+								Engine.self._addSheetToParty(charSheet2);// only for testing purposes
+								charSheet._initRank(rankEnum.Rat);
+								charSheet2._initRank(rankEnum.Rat);// only for testing purposes
+							});
 					break;
 				case 2:
 					bText.text = "Monster";

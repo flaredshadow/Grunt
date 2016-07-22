@@ -2,7 +2,7 @@
 using System.Collections;
 
 public class BattleCharacter : MonoBehaviour {
-
+	//*********** Status Conditions should be stored in here, not in the Sheet
 	CharacterSheet sheet;
 
 	public CharacterSheet Sheet {

@@ -11,7 +11,7 @@ public class CharacterSheet
 	public string characterName;
 	public formEnum form;
 	public rankEnum rank;
-	public List<Attack> attacks = new List<Attack>();
+	public List<Attack> abilities = new List<Attack>();
 	public List<Attack> spells = new List<Attack>();
 
 	// Use this for initialization
@@ -29,7 +29,7 @@ public class CharacterSheet
 		switch(givenRank)
 		{
 			case rankEnum.Rat:
-				hp = 10;
+				hp = 1;
 				maxHp = 10;
 				sp = 10;
 				maxSp = 10;
@@ -42,7 +42,7 @@ public class CharacterSheet
 				characterName = "Rat";
 				form = formEnum.Animal;
 				rank = rankEnum.Rat;
-				attacks.Add(new SquirmingClaws());
+				abilities.Add(new SquirmingClaws());
 				spells.Add(new PlagueBite());
 				spells.Add(new SewerStench());
 				break;

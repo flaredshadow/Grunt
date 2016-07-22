@@ -63,6 +63,50 @@ public class BattleManager : MonoBehaviour {
 		}
 	}
 
+	List<BattleCharacter> playerCharacters = new List<BattleCharacter>();
+
+	public List<BattleCharacter> PlayerCharacters {
+		get {
+			return playerCharacters;
+		}
+		set {
+			playerCharacters = value;
+		}
+	}
+
+	List<BattleCharacter> enemyCharacters = new List<BattleCharacter>();
+
+	public List<BattleCharacter> EnemyCharacters {
+		get {
+			return enemyCharacters;
+		}
+		set {
+			enemyCharacters = value;
+		}
+	}
+
+	int expEarned = 0;
+
+	public int ExpEarned {
+		get {
+			return expEarned;
+		}
+		set {
+			expEarned = value;
+		}
+	}
+
+	bool preGotNextCharInLine;
+
+	public bool PreGotNextCharInLine {
+		get {
+			return preGotNextCharInLine;
+		}
+		set {
+			preGotNextCharInLine = value;
+		}
+	}
+
 	#endregion
 
 	Item itemToBeUsed;
@@ -70,17 +114,15 @@ public class BattleManager : MonoBehaviour {
 	float waitTime = 0;
 	float waitStartTime = 0;
 
-	List<BattleCharacter> targetEnemies = new List<BattleCharacter>();
-	List<BattleCharacter> targetAllies = new List<BattleCharacter>();
+	List<BattleCharacter> targetUnfriendlies = new List<BattleCharacter>();
+	List<BattleCharacter> targetFriendlies = new List<BattleCharacter>();
 
 	Vector3 mainDDPosition = new Vector3(0, 20, 0);
 	Vector3 buttonOffsetPosition = new Vector3(0, 40, 0);
 	Vector3 ddOffsetPosition = new Vector3(200, 0, 0);//to be used as sideways adjustment for Spells, Items, and Fleeing dropdowns
+	Vector3 tombStoneHeight = new Vector3(0, 17.75f, 0);
 
-	List<BattleCharacter> allyCharacters = new List<BattleCharacter>();
-	List<BattleCharacter> enemyCharacters = new List<BattleCharacter>();
-
-	float walkSpeed = 5;
+	float walkSpeed = 10;
 
 	// Use this for initialization
 	void Start ()
@@ -90,8 +132,8 @@ public class BattleManager : MonoBehaviour {
 	
 	// Update is called once per frame
 	void Update () {
-		if(Engine.self.CurrentGameState == GameStateEnum.BattlePlay)
-		{
+		if(Engine.self.CurrentGameState == GameStateEnum.BattlePlay && (Time.time - waitStartTime > waitTime))
+		{//Debug.Log(currentBattleState);
 			switch(currentBattleState)
 			{
 				case BattleStateEnum.InitPlayerDecide:
@@ -116,9 +158,82 @@ public class BattleManager : MonoBehaviour {
 					currentCharacterAttackState = CharacterAttackStateEnum.InitAttack;
 					break;
 				case BattleStateEnum.PlayerAttack:
-					if(Time.time - waitStartTime > waitTime)
+					activeAttack.AttackAction();
+					break;
+				case BattleStateEnum.EnemyDecide:
+					currentCharacterAttackState = CharacterAttackStateEnum.InitAttack;
+					activeAttack = currentCharacter.Sheet.abilities[0];
+					targetUnfriendlies.Add(playerCharacters[0]);
+					currentBattleState = BattleStateEnum.EnemyAttack;
+					break;
+				case BattleStateEnum.EnemyAttack:
+					activeAttack.AttackAction();
+				break;
+				case BattleStateEnum.SpawnTombStones:
+					targetUnfriendlies.Clear();
+					targetFriendlies.Clear();
+					activeAttack = null;
+					bool madeTombStones = false;
+					foreach(BattleCharacter playerC in playerCharacters)
 					{
-						activeAttack.AttackAction();
+						if(playerC.Sheet.hp <= 0)
+						{
+							Instantiate(Engine.self.TombStonePrefab, playerC.transform.localPosition + tombStoneHeight, Quaternion.identity);
+							madeTombStones = true;
+						}
+					}
+					foreach(BattleCharacter enemyC in enemyCharacters)
+					{
+						if(enemyC.Sheet.hp <= 0)
+						{
+							Instantiate(Engine.self.TombStonePrefab, enemyC.transform.localPosition + tombStoneHeight, Quaternion.identity);
+							madeTombStones = true;
+						}
+					}
+					currentBattleState = BattleStateEnum.AdjustLineUp;
+					if(madeTombStones)
+					{
+						_setWait(TombStone.popTime + 1f);//if you don't wait long enough then the enemy will try to attack while the tombstone is still there
+					}
+					else
+					{
+						_setWait(.4f);
+					}
+					break;
+				case BattleStateEnum.AdjustLineUp :
+					bool lineUpComplete = true;
+
+					foreach(BattleCharacter enemyC in enemyCharacters)
+					{
+						_goToStart(enemyC);
+						if(enemyC.transform.localPosition.x != Engine.self._getLineUpPosition(enemyC).x)
+						{
+							lineUpComplete = false;
+						}
+					}
+
+					foreach(BattleCharacter playerC in playerCharacters)
+					{
+						_goToStart(playerC);
+						if(playerC.transform.localPosition.x != Engine.self._getLineUpPosition(playerC).x)
+						{
+							lineUpComplete = false;
+						}
+					}
+					if(lineUpComplete == true)
+					{
+						if(playerCharacters.Count == 0)
+						{
+							currentBattleState = BattleStateEnum.PlayerLose;
+						}
+						else if(enemyCharacters.Count == 0)
+						{
+							currentBattleState = BattleStateEnum.PlayerWin;
+						}
+						else
+						{
+							_initNextTurn();
+						}
 					}
 					break;
 			}
@@ -128,6 +243,53 @@ public class BattleManager : MonoBehaviour {
 				WorldPlayer.self._makeInvincible();
 				Engine.self._initiateSceneChange(Engine.self.CurrentWorldSceneName, doorEnum.ReturnFromBattle);
 			}
+		}
+	}
+
+	void _initNextTurn()
+	{
+		_setWait(1f);
+		if(PreGotNextCharInLine == false)
+		{
+			currentCharacter = _getNextInLineForTurn(currentCharacter);
+		}
+		PreGotNextCharInLine = false;
+		if(enemyCharacters.IndexOf(currentCharacter) > -1)
+		{
+			currentBattleState = BattleStateEnum.EnemyDecide;
+		}
+		else if(playerCharacters.IndexOf(currentCharacter) > -1)
+		{
+			currentBattleState = BattleStateEnum.InitPlayerDecide;
+		}
+		else
+		{
+			Debug.Log("Char not found in either list!");
+		}
+	}
+
+	public BattleCharacter _getNextInLineForTurn(BattleCharacter givenChar)
+	{
+		if(enemyCharacters.IndexOf(givenChar) == enemyCharacters.Count-1)
+		{
+			return playerCharacters[0];
+		}
+		else if(playerCharacters.IndexOf(givenChar) == playerCharacters.Count-1)
+		{
+			return enemyCharacters[0];
+		}
+		else if(enemyCharacters.IndexOf(givenChar) > -1)
+		{
+			return enemyCharacters[enemyCharacters.IndexOf(givenChar)+1];
+		}
+		else if(playerCharacters.IndexOf(givenChar) > -1)
+		{
+			return playerCharacters[playerCharacters.IndexOf(givenChar)+1];
+		}
+		else
+		{
+			Debug.Log("error  _getNextInLineForTurn");
+			return null;
 		}
 	}
 
@@ -142,7 +304,7 @@ public class BattleManager : MonoBehaviour {
 
 		Dropdown abilityDD = (Instantiate(Engine.self.DropDownPrefab, mainDDPosition, Quaternion.identity) as GameObject).GetComponent<Dropdown>();
 		abilityDD.transform.SetParent(Engine.self.CoreCanvas.transform, false);
-		abilityDD.AddOptions(currentCharacter.Sheet._attacksToOptions(currentCharacter.Sheet.attacks));
+		abilityDD.AddOptions(currentCharacter.Sheet._attacksToOptions(currentCharacter.Sheet.abilities));
 
 		Dropdown spellDD = (Instantiate(Engine.self.DropDownPrefab, mainDDPosition + ddOffsetPosition, Quaternion.identity) as GameObject).GetComponent<Dropdown>();
 		spellDD.transform.SetParent(Engine.self.CoreCanvas.transform, false);
@@ -169,9 +331,9 @@ public class BattleManager : MonoBehaviour {
 		abilityButton.onClick.AddListener(
 			delegate
 			{
-				if(currentCharacter.Sheet.attacks.Count > 0)
+				if(currentCharacter.Sheet.abilities.Count > 0)
 				{
-					_activateOption(currentCharacter.Sheet.attacks[abilityDD.value]);
+					_activateOption(currentCharacter.Sheet.abilities[abilityDD.value]);
 				}
 				else
 				{
@@ -220,7 +382,7 @@ public class BattleManager : MonoBehaviour {
 		}
 		else if(attackInQuestion.TargetType == attackTargetEnum.ChooseAlly)
 		{
-			foreach(BattleCharacter iterAlly in allyCharacters)
+			foreach(BattleCharacter iterAlly in playerCharacters)
 			{
 				_generateTargetChoiceButton(iterAlly, attackInQuestion);
 			}
@@ -231,16 +393,6 @@ public class BattleManager : MonoBehaviour {
 			activeAttack = attackInQuestion;
 			currentBattleState = BattleStateEnum.InitPlayerAttack;
 		}
-	}
-
-	public void _addPlayerCharacter(BattleCharacter givenPlayerCharacter)
-	{
-		allyCharacters.Add(givenPlayerCharacter);
-	}
-
-	public void _addEnemyCharacter(BattleCharacter givenEnemyCharacter)
-	{
-		enemyCharacters.Add(givenEnemyCharacter);
 	}
 
 	void _destroyAllButtonsAndDropDowns()
@@ -269,8 +421,8 @@ public class BattleManager : MonoBehaviour {
 			{
 				if(enemyCharacters.Contains(givenTarget))
 				{
-					targetEnemies.Add(givenTarget);
-					if(selectedAttack.NumberOfTargets == targetEnemies.Count || targetEnemies.Count == enemyCharacters.Count)
+					targetUnfriendlies.Add(givenTarget);
+					if(selectedAttack.NumberOfTargets == targetUnfriendlies.Count || targetUnfriendlies.Count == enemyCharacters.Count)
 					{
 						activeAttack = selectedAttack;
 						currentBattleState = BattleStateEnum.InitPlayerAttack;
@@ -278,8 +430,8 @@ public class BattleManager : MonoBehaviour {
 				}
 				else
 				{
-					targetAllies.Add(givenTarget);
-					if(selectedAttack.NumberOfTargets == targetAllies.Count || targetAllies.Count == allyCharacters.Count)
+					targetFriendlies.Add(givenTarget);
+					if(selectedAttack.NumberOfTargets == targetFriendlies.Count || targetFriendlies.Count == playerCharacters.Count)
 					{
 						activeAttack = selectedAttack;
 						currentBattleState = BattleStateEnum.InitPlayerAttack;
@@ -300,15 +452,15 @@ public class BattleManager : MonoBehaviour {
 		backButton.onClick.AddListener(
 			delegate
 			{
-				if(targetEnemies.Count > 0)
+				if(targetUnfriendlies.Count > 0)
 				{
-					_generateTargetChoiceButton(targetEnemies[targetEnemies.Count-1], selectedAttack);
-					targetEnemies.RemoveAt(targetEnemies.Count-1);
+					_generateTargetChoiceButton(targetUnfriendlies[targetUnfriendlies.Count-1], selectedAttack);
+					targetUnfriendlies.RemoveAt(targetUnfriendlies.Count-1);
 				}
-				else if(targetAllies.Count > 0)
+				else if(targetFriendlies.Count > 0)
 				{
-					_generateTargetChoiceButton(targetAllies[targetAllies.Count-1], selectedAttack);
-					targetEnemies.RemoveAt(targetAllies.Count-1);
+					_generateTargetChoiceButton(targetFriendlies[targetFriendlies.Count-1], selectedAttack);
+					targetUnfriendlies.RemoveAt(targetFriendlies.Count-1);
 				}
 				else
 				{
@@ -319,19 +471,43 @@ public class BattleManager : MonoBehaviour {
 		);
 	}
 
-	void _damageTarget(BattleCharacter targ, int baseAndBonusDamage)
+	void _damageTarget(BattleCharacter targ, int givenDamage)
 	{
-		int damageDealt = baseAndBonusDamage; // later this will be modified by weakness/resistance
+		int damageDealt = givenDamage; // later this will be modified by weakness/resistance
 		int damageTaken = Mathf.Max(1, damageDealt - (targ.Sheet.def + targ.BonusDef));
 		targ.Sheet.hp -= damageTaken;
-		Debug.Log("test");
 		Vector3 damagePosition = RectTransformUtility.WorldToScreenPoint(Engine.self.cam, targ.transform.localPosition);
 		Damage damageScript = (Instantiate(Engine.self.DamagePrefab) as GameObject).GetComponent<Damage>();
-		float scaledXPivot = enemyCharacters.IndexOf(targ) * -.055f;
-		damageScript.GetComponent<RectTransform>().pivot = new Vector2(scaledXPivot, .15f);
+		if(playerCharacters.Contains(targ))
+		{
+			damageScript.scaleDirection = -1;
+		}
 		damageScript.transform.localPosition = damagePosition;
 		damageScript.transform.SetParent(Engine.self.CoreCanvas.transform, true);
-		damageScript.transform.localScale = new Vector3(1, 1, 0);//when setting the parent, true keeps the position correct, but enlargers the scale, this is an easy fix
+		damageScript.transform.localScale = Vector3.zero;//when setting the parent, true keeps the position correct, but enlargers the scale, this is an easy fix
+		damageScript.GetComponentInChildren<Text>().text = damageTaken.ToString();
+	}
+
+	void _goToStart(BattleCharacter givenBC)
+	{
+		Vector3 lineUpPos = Engine.self._getLineUpPosition(givenBC);
+		float currentX = givenBC.transform.localPosition.x;
+		givenBC.GetComponent<Rigidbody>().velocity = (lineUpPos - givenBC.transform.position).normalized * walkSpeed;
+		if(Mathf.Abs(currentX - lineUpPos.x) <= .2f)
+		{
+			givenBC.transform.localPosition = lineUpPos;
+			givenBC.GetComponent<Rigidbody>().velocity = Vector3.zero;
+			if(currentBattleState == BattleStateEnum.PlayerAttack || currentBattleState == BattleStateEnum.EnemyAttack)
+			{
+				currentBattleState = BattleStateEnum.SpawnTombStones;
+				bool shouldFlipPlayer = currentCharacter.transform.localRotation.y != 0 && playerCharacters.Contains(currentCharacter);
+				bool shouldFlipEnemy = currentCharacter.transform.localRotation.y != 180 && enemyCharacters.Contains(currentCharacter);
+				if(shouldFlipPlayer || shouldFlipEnemy)
+				{
+					currentCharacter.transform.Rotate(0, 180, 0);
+				}
+			}
+		}
 	}
 
 	public void _squirmingClaws()//need to decide how to handle flying target eventually
@@ -340,14 +516,17 @@ public class BattleManager : MonoBehaviour {
 		switch(currentCharacterAttackState)
 		{
 			case CharacterAttackStateEnum.InitAttack:
-				ActionCommand command = (Instantiate(Engine.self.RapidCommandPrefab, Vector3.one, Quaternion.identity) as GameObject).GetComponent<ActionCommand>();
-				command.transform.SetParent(Engine.self.CoreCanvas.transform, false);
-				command.ActionKey = "z";
-				currentCharacter.GetComponent<Rigidbody>().velocity = Vector3.right * walkSpeed;
-				currentCharacterAttackState = CharacterAttackStateEnum.Move;
+				if(playerCharacters.Contains(currentCharacter))
+				{
+					ActionCommand command = (Instantiate(Engine.self.RapidCommandPrefab, Vector3.one, Quaternion.identity) as GameObject).GetComponent<ActionCommand>();
+					command.transform.SetParent(Engine.self.CoreCanvas.transform, false);
+					command.ActionKey = "z";
+				}
+				currentCharacter.GetComponent<Rigidbody>().velocity = currentCharacter.transform.right * walkSpeed;
+				currentCharacterAttackState = CharacterAttackStateEnum.MovePreAction;
 				break;
-			case CharacterAttackStateEnum.Move:
-				if(currentCharacter.HitGameObject == targetEnemies[0].gameObject)
+			case CharacterAttackStateEnum.MovePreAction:
+				if(currentCharacter.HitGameObject == targetUnfriendlies[0].gameObject)
 				{
 					_setWait(3);
 					currentCharacter.GetComponent<Rigidbody>().velocity = Vector3.zero;
@@ -358,22 +537,66 @@ public class BattleManager : MonoBehaviour {
 				// if GetKeyDown(anykey) && !Getkeydown(z)
 				currentCharacterAttackState = CharacterAttackStateEnum.ApplyAttack;
 				bonus = bonus/6; // 6 is an arbitrarily choesn number
-				Debug.Log("Divided bonus : " + bonus);
+				//Debug.Log("Divided bonus : " + bonus + " additional swings");
 				break;
 			case CharacterAttackStateEnum.ApplyAttack:
+				bool mystics = true;
+
+				if(mystics == true)
+				{
+					_damageTarget(currentCharacter, 1);
+					_setWait(Damage.popTime + .25f);
+					currentCharacterAttackState = CharacterAttackStateEnum.HandleFail;
+					break;
+				}
+
 				if(bonus > -1)
 				{
-					bonus = -1;
-					_damageTarget(enemyCharacters[3], baseDamage);//////change targetAllies to targetPlayers to prevent confusion
-					_setWait(1);
+					bonus -= 1;
+					//currentCharacter.transform.localPosition = Vector2.one;
+					_damageTarget(targetUnfriendlies[0], baseDamage + currentCharacter.Sheet.pow);
+					_setWait(Damage.popTime + 1f);
 				}
+				else
+				{
+					currentCharacter.transform.Rotate(0, 180, 0);
+					_setWait(.25f); // small wait to visually seperate attacking from returning
+					currentCharacterAttackState = CharacterAttackStateEnum.MovePostAction;
+				}
+				break;
+			case CharacterAttackStateEnum.HandleFail:
+				currentCharacter.transform.Rotate(0, 180, 0);
+				currentCharacterAttackState = CharacterAttackStateEnum.MovePostAction;
+				break;
+			case CharacterAttackStateEnum.MovePostAction:
+				_goToStart(currentCharacter);
 				break;
 		}
 	}
 
 	public void _plagueBite()
 	{
-
+		int baseDamage = 1;
+		switch(currentCharacterAttackState)
+		{
+			case CharacterAttackStateEnum.InitAttack:
+				currentCharacterAttackState = CharacterAttackStateEnum.ApplyAttack;
+				break;
+			case CharacterAttackStateEnum.MovePreAction:
+				break;
+			case CharacterAttackStateEnum.ActionCommand:
+				break;
+			case CharacterAttackStateEnum.ApplyAttack:
+				_damageTarget(targetUnfriendlies[0], baseDamage + currentCharacter.Sheet.pow);
+				//_damageTarget(targetUnfriendlies[1], baseDamage + currentCharacter.Sheet.pow);
+				//_damageTarget(targetUnfriendlies[2], baseDamage + currentCharacter.Sheet.pow);
+				_setWait(Damage.popTime + 1f);
+				currentCharacterAttackState = CharacterAttackStateEnum.MovePostAction;
+				break;
+			case CharacterAttackStateEnum.MovePostAction:
+				_goToStart(currentCharacter);
+				break;
+		}
 	}
 
 	public void _sewerStench()

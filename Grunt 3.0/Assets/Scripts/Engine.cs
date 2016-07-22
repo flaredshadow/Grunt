@@ -8,8 +8,8 @@ using System.Runtime.Serialization.Formatters.Binary;
 using System.Runtime.Serialization;
 
 public enum GameStateEnum {BeginGame, Dialogue, CutScene, OverWorldPlay, BattlePlay, EnterScene, ExitScene, Ending}
-public enum BattleStateEnum {InitPlayerDecide, PlayerDecide, InitPlayerAttack, PlayerAttack, EnemyDecide, EnemyAttack, PlayerWin, PlayerLose, Flee}
-public enum CharacterAttackStateEnum {InitAttack, Move, ActionCommand,  ApplyAttack}
+public enum BattleStateEnum {InitPlayerDecide, PlayerDecide, InitPlayerAttack, PlayerAttack, EnemyDecide, EnemyAttack, PlayerWin, PlayerLose, Flee, SpawnTombStones, AdjustLineUp}
+public enum CharacterAttackStateEnum {InitAttack, MovePreAction, ActionCommand,  ApplyAttack, HandleFail, MovePostAction}
 public enum doorEnum {A, B, C, ReturnFromBattle, SavePoint, None}
 public enum WorldPlayerStateEnum {Grounded, Airborne, TakeAction}
 public enum formEnum {Animal, Monster, Machine}
@@ -20,7 +20,8 @@ public class Engine : MonoBehaviour
 {
 	public static Engine self;
 
-	public GameObject worldPlayer, battleCharacterPrefab, buttonPrefab, dropDownPrefab, rapidCommandPrefab, damagePrefab;
+	#region Prefab variables
+	public GameObject worldPlayer, battleCharacterPrefab, buttonPrefab, dropDownPrefab, rapidCommandPrefab, damagePrefab, tombStonePrefab;
 	public Canvas coreCanvas;
 
 	public Canvas CoreCanvas {
@@ -68,6 +69,15 @@ public class Engine : MonoBehaviour
 		}
 	}
 
+	public GameObject TombStonePrefab {
+		get {
+			return tombStonePrefab;
+		}
+		set {
+			tombStonePrefab = value;
+		}
+	}
+
 	public Camera cam;
 	public Image transitionImage;
 	public AudioSource audioSource;
@@ -94,7 +104,7 @@ public class Engine : MonoBehaviour
 
 	public Sprite zUp, zDown, xUp, xDown, cUp, cDown;
 
-	//non-prefab variables, and their getters and setters
+	#endregion
 
 	#region non-Prefab variables
 
@@ -250,6 +260,28 @@ public class Engine : MonoBehaviour
 		}
 		set {
 			sceneEnemyRanks = value;
+		}
+	}
+
+	float characterSpacing = 5f;
+
+	public float CharacterSpacing {
+		get {
+			return characterSpacing;
+		}
+		set {
+			characterSpacing = value;
+		}
+	}
+
+	float spawnHeight = .5f;
+
+	public float SpawnHeight {
+		get {
+			return spawnHeight;
+		}
+		set {
+			spawnHeight = value;
 		}
 	}
 
@@ -426,24 +458,44 @@ public class Engine : MonoBehaviour
 		cam.transform.localPosition = new Vector3 (0, 5, -14);
 	}
 
+	public Vector3 _getLineUpPosition(BattleCharacter givenBC)
+	{
+		Vector3 lineUpPos = new Vector3(0, spawnHeight + givenBC.GetComponent<Collider>().bounds.extents.y, 0);
+		if(BattleManager.self.PlayerCharacters.Contains(givenBC))
+		{
+			lineUpPos.x = (BattleManager.self.PlayerCharacters.IndexOf(givenBC) + 1) * -characterSpacing;
+			return lineUpPos;
+		}
+		else
+		{
+			lineUpPos.x = (BattleManager.self.EnemyCharacters.IndexOf(givenBC) + 1) * characterSpacing;
+			return lineUpPos;
+		}
+	}
 	void _initializeBattle ()
 	{
+		Time.timeScale = 1;// needed to make physics adjustments during transitionFade
 		int totalEnemies = 1 + Random.Range (minAdditionalEnemies, maxAdditionalEnemies);
-		float characterSpacing = 5f;
-		float spawnHeight = 1;
-		for (int i = 0; i < playerSheets.Count; i++) {//populate player characters
-			GameObject playerGO = (GameObject)Instantiate (battleCharacterPrefab, new Vector3((i + 1) * -characterSpacing, spawnHeight, 0), Quaternion.identity);
-			BattleCharacter bc = playerGO.GetComponent<BattleCharacter> ();
+		for (int i = 0; i < playerSheets.Count; i++)
+		{
+			//populate player characters
+			BattleCharacter bc = (Instantiate (battleCharacterPrefab) as GameObject).GetComponent<BattleCharacter>();
 			bc.Sheet = playerSheets [i];
-			BattleManager.self._addPlayerCharacter (bc);
-			if (i == 0) {// need condition in other for loop to check if enemy should be first turn instead. 
+			BattleManager.self.PlayerCharacters.Add(bc);
+			bc.transform.localPosition = _getLineUpPosition(bc);
+			if (i == 0)
+			{
+				// need condition in other for loop to check if enemy should be first turn instead. 
 				BattleManager.self.CurrentCharacter = bc;
 			}
 		}
-		for (int i = 0; i < totalEnemies; i++) {//populate enemies
-			GameObject enemyGO = (GameObject)Instantiate (battleCharacterPrefab, new Vector3((i + 1) * characterSpacing, spawnHeight, 0), Quaternion.identity);
-			BattleCharacter bc = enemyGO.GetComponent<BattleCharacter> ();
-			BattleManager.self._addEnemyCharacter (bc);
+		for (int i = 0; i < totalEnemies; i++)
+		{
+			//populate enemies
+			BattleCharacter bc = (Instantiate (battleCharacterPrefab) as GameObject).GetComponent<BattleCharacter>();
+			bc.transform.Rotate(0, 180, 0);
+			BattleManager.self.EnemyCharacters.Add(bc);
+			bc.transform.localPosition = _getLineUpPosition(bc);
 			if (i == 0) {
 				CharacterSheet firstSheet = new CharacterSheet ();
 				firstSheet._initRank (firstEnemyRank);

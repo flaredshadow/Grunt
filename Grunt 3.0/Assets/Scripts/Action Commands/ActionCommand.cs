@@ -72,16 +72,17 @@ public class ActionCommand : MonoBehaviour
 	// Update is called once per frame
 	void Update ()
 	{
-		if(BattleManager.self.CurrentBattleState == BattleStateEnum.PlayerAttack && BattleManager.self.CurrentCharacterAttackState < CharacterAttackStateEnum.ApplyAttack)
+		if(BattleManager.self.CurrentBattleState == BattleStateEnum.PlayerAttack)
 		{
 			if(BattleManager.self.CurrentCharacterAttackState == CharacterAttackStateEnum.ActionCommand)
 			{
 				_checkPress();
 			}
-		}
-		else
-		{
-			Destroy(gameObject);
+
+			if(BattleManager.self.CurrentCharacterAttackState == CharacterAttackStateEnum.ApplyAttack)
+			{
+				Destroy(gameObject);
+			}
 		}
 	}
 

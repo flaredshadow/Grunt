@@ -93,9 +93,9 @@ public class PlagueBite : Attack
 	{
 		AttackName = "Plague Bite";
 		BaseDamage = 2;
-		SpCost = 99;
-		NumberOfTargets = 1;
-		TargetType = attackTargetEnum.FirstEnemy;
+		SpCost = 0;
+		NumberOfTargets = 3;
+		TargetType = attackTargetEnum.ChooseEnemy;
 		AttackAction = BattleManager.self._plagueBite;
 	}
 }
