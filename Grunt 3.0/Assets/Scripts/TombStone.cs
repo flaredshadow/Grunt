@@ -14,13 +14,17 @@ public class TombStone : MonoBehaviour {
 	}
 	
 	// Update is called once per frame
-	void Update () {
+	void Update ()
+	{
 	
 	}
 
 	void OnTriggerEnter (Collider other)
 	{
-		deadCharacter = other.gameObject;
+		if(other.GetComponent<BattleCharacter>() != null)
+		{
+			deadCharacter = other.gameObject;
+		}
 	}
 
 	void OnDestroy()
@@ -30,14 +34,13 @@ public class TombStone : MonoBehaviour {
 		if(BattleManager.self.CurrentCharacter == deadCharacter.GetComponent<BattleCharacter>() && BattleManager.self.PreGotNextCharInLine == false)
 		{
 			BattleManager.self.PreGotNextCharInLine = true;
-			int k = 0;
 			while(BattleManager.self.CurrentCharacter.Sheet.hp <= 0)
-			{Debug.Log("k = " + k);
+			{
 				BattleManager.self.CurrentCharacter = BattleManager.self._getNextInLineForTurn(bc);
 				if(BattleManager.self.CurrentCharacter == deadCharacter.GetComponent<BattleCharacter>())
 				{
-					break;
 					Debug.Log("Everyone is dead");
+					break;
 				}
 			}
 		}
@@ -54,6 +57,4 @@ public class TombStone : MonoBehaviour {
 			
 		Destroy(deadCharacter);
 	}
-
-
 }

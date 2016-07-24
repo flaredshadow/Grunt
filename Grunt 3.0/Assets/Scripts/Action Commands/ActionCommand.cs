@@ -26,6 +26,17 @@ public class ActionCommand : MonoBehaviour
 		}
 	}
 
+	float destroyTime = 999;
+
+	public float DestroyTime {
+		get {
+			return destroyTime;
+		}
+		set {
+			destroyTime = value;
+		}
+	}
+
 	Sprite upSprite;
 
 	public Sprite UpSprite {
@@ -49,7 +60,7 @@ public class ActionCommand : MonoBehaviour
 	}
 
 	// Use this for initialization
-	public void Start ()
+	void Start ()
 	{
 		commandImage = GetComponent<Image>();
 		switch(actionKey)
@@ -67,6 +78,7 @@ public class ActionCommand : MonoBehaviour
 				downSprite = Engine.self.cDown;
 				break;
 		}
+		commandImage.sprite = upSprite;
 	}
 	
 	// Update is called once per frame
@@ -74,8 +86,9 @@ public class ActionCommand : MonoBehaviour
 	{
 		if(BattleManager.self.CurrentBattleState == BattleStateEnum.PlayerAttack)
 		{
-			if(BattleManager.self.CurrentCharacterAttackState == CharacterAttackStateEnum.ActionCommand)
+			if(BattleManager.self.CurrentCharacterAttackState == CharacterAttackStateEnum.ActionCommand && BattleManager.self._notWaiting())
 			{
+				Destroy(gameObject, destroyTime);
 				_checkPress();
 			}
 

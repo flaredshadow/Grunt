@@ -8,7 +8,7 @@ using System.Runtime.Serialization.Formatters.Binary;
 using System.Runtime.Serialization;
 
 public enum GameStateEnum {BeginGame, Dialogue, CutScene, OverWorldPlay, BattlePlay, EnterScene, ExitScene, Ending}
-public enum BattleStateEnum {InitPlayerDecide, PlayerDecide, InitPlayerAttack, PlayerAttack, EnemyDecide, EnemyAttack, PlayerWin, PlayerLose, Flee, SpawnTombStones, AdjustLineUp}
+public enum BattleStateEnum {InitPlayerDecide, PlayerDecide, InitPlayerAttack, PlayerAttack, EnemyDecide, EnemyAttack, PlayerWin, PlayerLose, Flee, InitKill, AdjustLineUp}
 public enum CharacterAttackStateEnum {InitAttack, MovePreAction, ActionCommand,  ApplyAttack, HandleFail, MovePostAction}
 public enum doorEnum {A, B, C, ReturnFromBattle, SavePoint, None}
 public enum WorldPlayerStateEnum {Grounded, Airborne, TakeAction}
@@ -21,7 +21,7 @@ public class Engine : MonoBehaviour
 	public static Engine self;
 
 	#region Prefab variables
-	public GameObject worldPlayer, battleCharacterPrefab, buttonPrefab, dropDownPrefab, rapidCommandPrefab, damagePrefab, tombStonePrefab;
+	public GameObject worldPlayer, battleCharacterPrefab, buttonPrefab, dropDownPrefab, rapidCommandPrefab, damagePrefab, tombStonePrefab, playerHudPrefab, explosionPrefab;
 	public Canvas coreCanvas;
 
 	public Canvas CoreCanvas {
@@ -75,6 +75,15 @@ public class Engine : MonoBehaviour
 		}
 		set {
 			tombStonePrefab = value;
+		}
+	}
+
+	public GameObject PlayerHudPrefab {
+		get {
+			return playerHudPrefab;
+		}
+		set {
+			playerHudPrefab = value;
 		}
 	}
 
