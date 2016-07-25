@@ -4,7 +4,7 @@ using UnityEngine.UI;
 
 public class PlayerHud : MonoBehaviour {
 
-	public Text nameLabel, levelLabel, hpLabel, spLabel, expLabel;
+	public Text nameLabel, levelLabel, hpLabel, spLabel;
 
 	CharacterSheet sheet;
 
@@ -20,7 +20,7 @@ public class PlayerHud : MonoBehaviour {
 	// Use this for initialization
 	void Start ()
 	{
-		//_refreshLabels();
+		
 	}
 	
 	// Update is called once per frame
@@ -32,8 +32,8 @@ public class PlayerHud : MonoBehaviour {
 	{
 		nameLabel.text = sheet.characterName;
 		levelLabel.text = "Level : " + sheet.level;
-		hpLabel.text = "HP : " + sheet.hp + " / " + sheet.maxHp;
-		spLabel.text = "SP : " + sheet.sp + " / " + sheet.maxSp;
-		expLabel.text = "Exp : " + sheet.exp + " / " + sheet.maxExp;
+		hpLabel.text = "HP : " + sheet.hp;
+		spLabel.text = "SP : " + sheet.sp;
+		//expLabel.text = "Exp : " + sheet.exp + " / " + sheet.maxExp;
 	}
 }

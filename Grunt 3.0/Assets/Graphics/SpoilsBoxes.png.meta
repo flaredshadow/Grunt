@@ -1,12 +1,9 @@
 fileFormatVersion: 2
-guid: 39102129089b5cc4ea13867617fd57d3
-timeCreated: 1469388108
+guid: 090b80b545ea3ef4fb6ee4596d865d5e
+timeCreated: 1469379159
 licenseType: Free
 TextureImporter:
-  fileIDToRecycleName:
-    21300000: HudBox_0
-    21300002: HudBox_1
-    21300004: HudBox_2
+  fileIDToRecycleName: {}
   serializedVersion: 2
   mipmaps:
     mipMapMode: 0
@@ -33,7 +30,7 @@ TextureImporter:
   maxTextureSize: 2048
   textureSettings:
     filterMode: 0
-    aniso: 16
+    aniso: -1
     mipBias: -1
     wrapMode: 1
   nPOTScale: 0
@@ -52,44 +49,7 @@ TextureImporter:
   textureType: 8
   buildTargetSettings: []
   spriteSheet:
-    sprites:
-    - name: HudBox_0
-      rect:
-        serializedVersion: 2
-        x: 0
-        y: 68
-        width: 56
-        height: 4
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      outline: []
-    - name: HudBox_1
-      rect:
-        serializedVersion: 2
-        x: 0
-        y: 3
-        width: 56
-        height: 65
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      outline:
-      - - {x: -28, y: 32.5}
-        - {x: -28, y: -32.5}
-        - {x: 28, y: -32.5}
-        - {x: 28, y: 32.5}
-    - name: HudBox_2
-      rect:
-        serializedVersion: 2
-        x: 0
-        y: 0
-        width: 56
-        height: 3
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      outline: []
+    sprites: []
     outline: []
   spritePackingTag: 
   userData: 

@@ -464,7 +464,7 @@ public class Engine : MonoBehaviour
 	void _camToBattle ()
 	{
 		cam.transform.SetParent (null);
-		cam.transform.localPosition = new Vector3 (0, 5, -14);
+		cam.transform.localPosition = new Vector3 (0, 7, -14);
 	}
 
 	public Vector3 _getLineUpPosition(BattleCharacter givenBC)

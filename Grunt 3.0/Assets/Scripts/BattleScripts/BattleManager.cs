@@ -269,7 +269,6 @@ public class BattleManager : MonoBehaviour {
 					}
 					break;
 				case BattleStateEnum.PlayerWin:
-					//if(!FindObjectOfType<Victor
 					break;
 			}
 
@@ -584,7 +583,7 @@ public class BattleManager : MonoBehaviour {
 				}
 				break;
 			case CharacterAttackStateEnum.ApplyAttack:
-				bool mystics = true;
+				bool mystics = false;
 
 				if(mystics == true)
 				{
