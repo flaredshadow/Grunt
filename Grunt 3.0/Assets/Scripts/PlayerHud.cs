@@ -4,7 +4,7 @@ using UnityEngine.UI;
 
 public class PlayerHud : MonoBehaviour {
 
-	public Text nameLabel, levelLabel, hpLabel, spLabel;
+	public Text nameLabel, levelLabel, hpLabel, spLabel, expLabel, powLabel, defLabel;
 
 	CharacterSheet sheet;
 
@@ -24,16 +24,24 @@ public class PlayerHud : MonoBehaviour {
 	}
 	
 	// Update is called once per frame
-	void Update () {
-	
+	void Update ()
+	{
+		_updateLabels();
 	}
 
-	public void _updateLabels()
+	void _updateLabels()
 	{
 		nameLabel.text = sheet.characterName;
 		levelLabel.text = "Level : " + sheet.level;
 		hpLabel.text = "HP : " + sheet.hp;
 		spLabel.text = "SP : " + sheet.sp;
-		//expLabel.text = "Exp : " + sheet.exp + " / " + sheet.maxExp;
+		if(expLabel != null)
+		{
+			hpLabel.text += " / " + sheet.maxHp;
+			spLabel.text += " / " + sheet.maxSp;
+			expLabel.text = "EXP : " + sheet.exp + " / " + sheet.maxExp;
+			powLabel.text = "POW : " + sheet.pow;
+			defLabel.text = "DEF : " + sheet.def;
+		}
 	}
 }

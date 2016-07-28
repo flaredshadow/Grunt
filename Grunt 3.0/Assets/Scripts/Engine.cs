@@ -7,7 +7,7 @@ using System.IO;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Runtime.Serialization;
 
-public enum GameStateEnum {BeginGame, Dialogue, CutScene, OverWorldPlay, BattlePlay, EnterScene, ExitScene, Ending}
+public enum GameStateEnum {BeginGame, Dialogue, Paused, CutScene, OverWorldPlay, BattlePlay, EnterScene, ExitScene, Ending}
 public enum BattleStateEnum {InitPlayerDecide, PlayerDecide, InitPlayerAttack, PlayerAttack, EnemyDecide, EnemyAttack, PlayerWin, PlayerLose, Flee, InitKill, AdjustLineUp}
 public enum CharacterAttackStateEnum {InitAttack, MovePreAction, ActionCommand,  ApplyAttack, HandleFail, MovePostAction}
 public enum doorEnum {A, B, C, ReturnFromBattle, SavePoint, None}
@@ -21,7 +21,9 @@ public class Engine : MonoBehaviour
 	public static Engine self;
 
 	#region Prefab variables
-	public GameObject worldPlayer, battleCharacterPrefab, buttonPrefab, dropDownPrefab, rapidCommandPrefab, damagePrefab, tombStonePrefab, playerHudPrefab, explosionPrefab;
+	public GameObject worldPlayer, battleCharacterPrefab, buttonPrefab, dropDownPrefab, rapidCommandPrefab, damagePrefab, tombStonePrefab, playerHudPrefab, explosionPrefab,
+	spoilsPrefab, pauseMenuPrefab;
+
 	public Canvas coreCanvas;
 
 	public Canvas CoreCanvas {
@@ -464,7 +466,7 @@ public class Engine : MonoBehaviour
 	void _camToBattle ()
 	{
 		cam.transform.SetParent (null);
-		cam.transform.localPosition = new Vector3 (0, 7, -14);
+		cam.transform.localPosition = new Vector3 (0, 6, -14);
 	}
 
 	public Vector3 _getLineUpPosition(BattleCharacter givenBC)

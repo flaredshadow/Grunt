@@ -28,20 +28,22 @@ public class WorldPlayer : MonoBehaviour {
 	void Update () {
 		if(Engine.self.CurrentGameState == GameStateEnum.OverWorldPlay)
 		{
+			_movePlayer();
+			_checkAirborne();
+			_checkInvincibleTime();
 			switch(currentWorldPlayerState)
 			{
 				case WorldPlayerStateEnum.Grounded:
-					_movePlayer();
 					_jump();
-					_checkAirborne();
-					_checkInvincibleTime();
 					break;
 
 				case WorldPlayerStateEnum.Airborne:
-					_movePlayer();
-					_checkAirborne();
-					_checkInvincibleTime();
 					break;
+			}
+
+			if(Input.GetKeyDown("p"))
+			{
+				_pause();
 			}
 		}
 	
@@ -105,6 +107,13 @@ public class WorldPlayer : MonoBehaviour {
 		{
 			currentWorldPlayerState = WorldPlayerStateEnum.Grounded;
 		}
+	}
+
+	void _pause()
+	{
+		Engine.self.CurrentGameState = GameStateEnum.Paused;
+		Time.timeScale = 0;
+		Instantiate(Engine.self.pauseMenuPrefab).transform.SetParent(Engine.self.CoreCanvas.transform, false);
 	}
 
 	public void _makeInvincible()

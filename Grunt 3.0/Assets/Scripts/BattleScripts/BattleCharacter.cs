@@ -68,7 +68,6 @@ public class BattleCharacter : MonoBehaviour {
 		hud.transform.SetParent(Engine.self.CoreCanvas.transform, true);
 		hud.transform.localScale = Vector3.one;
 		hud.Sheet = sheet;
-		hud._updateLabels();
 	}
 	
 	// Update is called once per frame

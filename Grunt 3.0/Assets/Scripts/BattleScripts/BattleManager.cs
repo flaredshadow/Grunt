@@ -261,6 +261,8 @@ public class BattleManager : MonoBehaviour {
 						else if(enemyCharacters.Count == 0)
 						{
 							currentBattleState = BattleStateEnum.PlayerWin;
+							GameObject spoilsDisplay = Instantiate(Engine.self.spoilsPrefab);
+							spoilsDisplay.transform.SetParent(Engine.self.coreCanvas.transform, false);
 						}
 						else
 						{
