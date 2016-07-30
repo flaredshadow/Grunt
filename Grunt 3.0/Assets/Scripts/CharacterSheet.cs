@@ -7,7 +7,7 @@ using UnityEngine.UI;
 public class CharacterSheet
 {
 
-	public int exp = 0, maxExp = 10, maxExpGrowth = 3, level = 1, hp, maxHp, sp, maxSp, pow, def, electivePoints = 0, hpGain, spGain, powGain, defGain;
+	public int exp = 0, maxExp = 10, maxExpGrowth = 3, level = 1, hp, maxHp, sp, maxSp, pow, def, electivePoints = 0, hpGain, spGain, powGain, defGain, electivePointsGain;
 	public string characterName;
 	public formEnum form;
 	public rankEnum rank;
@@ -39,6 +39,7 @@ public class CharacterSheet
 				spGain = 2;
 				powGain = 1;
 				defGain = 1;
+				electivePointsGain = 2;
 				characterName = "Rat";
 				form = formEnum.Animal;
 				rank = rankEnum.Rat;
@@ -62,5 +63,16 @@ public class CharacterSheet
 			odList.Add(new Dropdown.OptionData(){text = attackText});
 		}
 		return odList;
+	}
+
+	public void _levelUp()
+	{
+		maxHp += hpGain;
+		hp = maxHp;
+		maxSp += spGain;
+		sp = maxSp;
+		pow += powGain;
+		def += defGain;
+		electivePoints = electivePointsGain;
 	}
 }

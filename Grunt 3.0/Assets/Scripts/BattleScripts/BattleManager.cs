@@ -85,7 +85,7 @@ public class BattleManager : MonoBehaviour {
 		}
 	}
 
-	int expEarned = 0;
+	int expEarned = 99;
 
 	public int ExpEarned {
 		get {
@@ -96,7 +96,7 @@ public class BattleManager : MonoBehaviour {
 		}
 	}
 
-	int coinsEarned = 0;
+	int coinsEarned = 5;
 
 	public int CoinsEarned {
 		get {

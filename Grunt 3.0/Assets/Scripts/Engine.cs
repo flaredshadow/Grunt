@@ -8,10 +8,12 @@ using System.Runtime.Serialization.Formatters.Binary;
 using System.Runtime.Serialization;
 
 public enum GameStateEnum {BeginGame, Dialogue, Paused, CutScene, OverWorldPlay, BattlePlay, EnterScene, ExitScene, Ending}
-public enum BattleStateEnum {InitPlayerDecide, PlayerDecide, InitPlayerAttack, PlayerAttack, EnemyDecide, EnemyAttack, PlayerWin, PlayerLose, Flee, InitKill, AdjustLineUp}
+public enum BattleStateEnum {InitPlayerDecide, PlayerDecide, InitPlayerAttack, PlayerAttack, EnemyDecide, EnemyAttack, PlayerWin, PlayerLose, Flee, InitKill, AdjustLineUp, Wait}
 public enum CharacterAttackStateEnum {InitAttack, MovePreAction, ActionCommand,  ApplyAttack, HandleFail, MovePostAction}
-public enum doorEnum {A, B, C, ReturnFromBattle, SavePoint, None}
 public enum WorldPlayerStateEnum {Grounded, Airborne, TakeAction}
+public enum SpoilsStateEnum {AddExp, AddCoins, LevelUp, Wait};
+
+public enum doorEnum {A, B, C, ReturnFromBattle, SavePoint, None}
 public enum formEnum {Animal, Monster, Machine}
 public enum rankEnum {Rat, Bat, Boar, Falcon, Wolf, Pterodactyl, Bear, Zombie, Toaster}
 public enum attackTargetEnum {FirstEnemy, ChooseEnemy, Self, FirstAlly, ChooseAlly, AllEnemies, AllAllies, AllCharacters}
@@ -22,7 +24,7 @@ public class Engine : MonoBehaviour
 
 	#region Prefab variables
 	public GameObject worldPlayer, battleCharacterPrefab, buttonPrefab, dropDownPrefab, rapidCommandPrefab, damagePrefab, tombStonePrefab, playerHudPrefab, explosionPrefab,
-	spoilsPrefab, pauseMenuPrefab;
+	spoilsPrefab, pauseMenuPrefab, plusPrefab;
 
 	public Canvas coreCanvas;
 
