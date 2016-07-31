@@ -29,7 +29,14 @@ public class PlayerHud : MonoBehaviour {
 	// Update is called once per frame
 	void Update ()
 	{
-		_updateLabels();
+		if(Engine.self.CurrentGameState == GameStateEnum.EnterScene && !Engine.self.CurrentSceneName.Equals(Engine.self.BattleSceneName))
+		{
+			Destroy(gameObject);
+		}
+		else
+		{
+			_updateLabels();
+		}
 	}
 
 	void _updateLabels()

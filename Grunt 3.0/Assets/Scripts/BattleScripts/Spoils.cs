@@ -36,21 +36,28 @@ public class Spoils : MonoBehaviour {
 	// Update is called once per frame
 	void Update ()
 	{
-		expEarnedLabel.text = "EXP Earned : " + BattleManager.self.ExpEarned;
-		coinsEarnedLabel.text = "Coins Earned : " + BattleManager.self.CoinsEarned;
-
-		switch(currentSpoilsState)
+		if(Engine.self.CurrentGameState == GameStateEnum.BattlePlay)
 		{
-			case SpoilsStateEnum.AddExp:
-				_addExp();
-				break;
-			case SpoilsStateEnum.AddCoins:
-				_addCoins();
-				break;
-			case SpoilsStateEnum.LevelUp:
-				break;
-			case SpoilsStateEnum.Wait:
-				break;
+			expEarnedLabel.text = "EXP Earned : " + BattleManager.self.ExpEarned;
+			coinsEarnedLabel.text = "Coins Earned : " + BattleManager.self.CoinsEarned;
+
+			switch(currentSpoilsState)
+			{
+				case SpoilsStateEnum.AddExp:
+					_addExp();
+					break;
+				case SpoilsStateEnum.AddCoins:
+					_addCoins();
+					break;
+				case SpoilsStateEnum.LevelUp:
+					break;
+				case SpoilsStateEnum.Wait:
+					break;
+			}
+		}
+		else if(Engine.self.CurrentGameState == GameStateEnum.EnterScene)
+		{
+			Destroy(gameObject);
 		}
 	}
 
@@ -113,7 +120,8 @@ public class Spoils : MonoBehaviour {
 		}
 		else
 		{
-			//return to overworld
+			Engine.self.Fleeing = false;
+			Engine.self._initiateSceneChange(Engine.self.CurrentWorldSceneName, doorEnum.ReturnFromBattle);
 		}
 	}
 }

@@ -1,11 +1,15 @@
 ﻿using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
+using System;
+using System.Runtime.Serialization.Formatters.Binary;
+using System.IO;
 
 [System.Serializable]
 public class GameSave {
 
 	public float worldPlayerX, worldPlayerY, worldPlayerZ;
+	public int savedCoins;
 	public string savedSceneName;
 
 	public string SavedSceneName {
@@ -22,11 +26,11 @@ public class GameSave {
 
 	public GameSave()
 	{
-	}
-
-	public GameSave(List<CharacterSheet> givenPlaterSheets)
-	{
-		savedPlayerSheets = givenPlaterSheets;
+		//for some reason these had to be static, otherwise weird ...ctor error
+		worldPlayerX = Engine.firstSpawnPoint.x;
+		worldPlayerY = Engine.firstSpawnPoint.y;
+		worldPlayerZ = Engine.firstSpawnPoint.z;
+		savedSceneName = Engine.startingSceneName;
 	}
 
 	// Use this for initialization
@@ -45,17 +49,31 @@ public class GameSave {
 		worldPlayerY = WorldPlayer.self.gameObject.transform.position.y;
 		worldPlayerZ = WorldPlayer.self.gameObject.transform.position.z;
 		savedSceneName = Engine.self.CurrentWorldSceneName;
-		savedPlayerSheets = Engine.self.PlayerSheets;
-		mainCharacterIndex = savedPlayerSheets.IndexOf(Engine.self.MainCharacterSheet);
+		savedCoins = Engine.self.PlayerCoins;
+		savedPlayerSheets = DeepClone<List<CharacterSheet>>(Engine.self.PlayerSheets);
+		mainCharacterIndex = Engine.self.PlayerSheets.IndexOf(Engine.self.MainCharacterSheet);
 		//Debug.Log("values put in GameSave instance");
 	}
 
 	public void _uploadValues()
 	{
-		//savedSceneName is handled elsewhere
+		//savedSceneName is handled in Engine's _loadFile
 		WorldPlayer.self.gameObject.transform.position = new Vector3(worldPlayerX, worldPlayerY, worldPlayerZ);
-		Engine.self.PlayerSheets = savedPlayerSheets;
-		Engine.self.MainCharacterSheet = savedPlayerSheets[mainCharacterIndex];
+		Engine.self.PlayerCoins = savedCoins;
+		Engine.self.PlayerSheets = DeepClone<List<CharacterSheet>>(savedPlayerSheets);
+		Engine.self.MainCharacterSheet = Engine.self.PlayerSheets[mainCharacterIndex];
 		//Debug.Log("values uploaded, but maybe worldPlayer being inactive meant no change");
+	}
+
+	public static T DeepClone<T> (T obj)
+	{
+		using (MemoryStream ms = new MemoryStream())
+		{
+			BinaryFormatter formatter = new BinaryFormatter ();
+			formatter.Serialize (ms, obj);
+			ms.Position = 0;
+
+			return (T)formatter.Deserialize (ms);
+		}
 	}
 }

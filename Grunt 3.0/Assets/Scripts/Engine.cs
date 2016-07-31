@@ -21,6 +21,9 @@ public enum attackTargetEnum {FirstEnemy, ChooseEnemy, Self, FirstAlly, ChooseAl
 public class Engine : MonoBehaviour
 {
 	public static Engine self;
+	public static Vector3 firstSpawnPoint = Vector3.up;
+	public static string startingSceneName = "StartingAreaScene";
+	public static List<string> visitedScenes = new List<string>();
 
 	#region Prefab variables
 	public GameObject worldPlayer, battleCharacterPrefab, buttonPrefab, dropDownPrefab, rapidCommandPrefab, damagePrefab, tombStonePrefab, playerHudPrefab, explosionPrefab,
@@ -243,6 +246,33 @@ public class Engine : MonoBehaviour
 		}
 	}
 
+	public string StartingSceneName {
+		get {
+			return startingSceneName;
+		}
+		set {
+			startingSceneName = value;
+		}
+	}
+
+	public string CoreSceneName {
+		get {
+			return coreSceneName;
+		}
+		set {
+			coreSceneName = value;
+		}
+	}
+
+	public string BattleSceneName {
+		get {
+			return battleSceneName;
+		}
+		set {
+			battleSceneName = value;
+		}
+	}
+
 	doorEnum nextDoorEnum = doorEnum.None;
 
 	public doorEnum NextDoorEnum {
@@ -251,6 +281,17 @@ public class Engine : MonoBehaviour
 		}
 		set {
 			nextDoorEnum = value;
+		}
+	}
+
+	GameObject encounterOverworldEnemy;
+
+	public GameObject EncounterOverworldEnemy {
+		get {
+			return encounterOverworldEnemy;
+		}
+		set {
+			encounterOverworldEnemy = value;
 		}
 	}
 
@@ -298,6 +339,17 @@ public class Engine : MonoBehaviour
 		}
 	}
 
+	bool fleeing = false;
+
+	public bool Fleeing {
+		get {
+			return fleeing;
+		}
+		set {
+			fleeing = value;
+		}
+	}
+
 	#endregion
 
 	float spaceFromDoor = .551f, transitionSpeed = .03f;
@@ -305,10 +357,12 @@ public class Engine : MonoBehaviour
 	// Use this for initialization
 	void Start ()
 	{
-		Screen.SetResolution(1600, 600, true);
 		self = this;
 		currentSceneName = coreSceneName;
 		currentWorldSceneName = currentSceneName;
+		visitedScenes.Add(currentWorldSceneName);
+		currentSaveInstance = new GameSave();//start a new save instance with CharacterSheets as null
+		Screen.SetResolution(1600, 600, true);
 		SceneManager.LoadScene (pickFileSceneName, LoadSceneMode.Additive);
 	}
 	
@@ -337,9 +391,18 @@ public class Engine : MonoBehaviour
 			case GameStateEnum.EnterScene:
 				if (transitionImage.color.a == 1) { // checking if the alpha has not been subtracted from at all, this acts like a "Do this exactly one time" condition
 					SceneManager.SetActiveScene (SceneManager.GetSceneByName (currentSceneName));//active scene determines what scene instantiated objects belong to
-					if (!currentSceneName.Equals (battleSceneName)) { //if not in a battle, then find correct door to spawn in front of
+					if (!currentSceneName.Equals (battleSceneName))
+					{
+						if(fleeing == true)
+						{
+							WorldPlayer.self._makeInvincible();
+							Engine.self.fleeing = false;
+						}
+						//if not in a battle, then find correct door to spawn in front of
 						_spawnByDoor ();//if no doorEnum is set then default spawnpoint is used (look inside the function for default spawn vector-position)
-					} else {
+					}
+					else
+					{
 						_camToBattle ();
 						worldPlayer.SetActive (false);
 						_initializeBattle ();
@@ -351,9 +414,12 @@ public class Engine : MonoBehaviour
 				if (transitionImage.color.a <= 0) { //once the screen is clear we resume standard gameplay (Time flows and currentGameState is either OverWorldPlay or BattlePlay)
 					transitionImage.transform.parent.gameObject.SetActive (false);
 					Time.timeScale = 1;
-					if (!currentSceneName.Equals (battleSceneName)) {//Debug.Log("Worlding");
+					if (!currentSceneName.Equals (battleSceneName))
+					{
 						CurrentGameState = GameStateEnum.OverWorldPlay;
-					} else {//Debug.Log("Battling");
+					}
+					else
+					{
 						CurrentGameState = GameStateEnum.BattlePlay;
 						BattleManager.self.CurrentBattleState = BattleStateEnum.InitPlayerDecide;
 					}
@@ -363,12 +429,16 @@ public class Engine : MonoBehaviour
 				transitionImage.color += new Color (0, 0, 0, transitionSpeed); // fade in the transitionImage
 				if (transitionImage.color.a >= 1) { // once the screen is pitch-black we will transition the level, this way it doesn't look choppy
 					transitionImage.color = new Color (transitionImage.color.r, transitionImage.color.g, transitionImage.color.b, 1);
-					if (!nextSceneName.Equals (battleSceneName)) { // only activate the worldplayer and snap on the camera if the game is not going into a battle
+					if (!nextSceneName.Equals (battleSceneName))
+					{
+						// only activate the worldplayer and snap on the camera if the game is not going into a battle
 						_camToWorldPlayer ();
 						worldPlayer.SetActive (true); // the worldPlayer needs to be active for the Camera's sake, depend on state machines to make the worldPlayer time-locked
+						BattleManager.self._resetVariables();
 					}
 					_deactivateNonCoreObjects ();
 					_goToScene ();//change the scene when the screen is completely covered
+					BattleManager.self.CurrentBattleState = null;
 				}
 				break;
 			case GameStateEnum.Ending:
@@ -379,27 +449,59 @@ public class Engine : MonoBehaviour
 
 	public void _goToScene ()
 	{
-		bool foundScene = false;
-		for (int i = 0; i < SceneManager.sceneCount; i++) {// check to see if the level is waiting to be resumed
-			if (nextSceneName.Equals (SceneManager.GetSceneAt (i).name)) {
-				_reactivateScene ();
-				foundScene = true;
-				break;
-			}
-		} 
+		if(!visitedScenes.Contains(nextSceneName))
+		{
+			visitedScenes.Add(nextSceneName);
+		}
 
-		if (foundScene == false) {// if the level to be loaded wasn't found amongst the visited level, then load a fresh copy
+		if(BattleManager.self.CurrentBattleState == BattleStateEnum.PlayerLose)
+		{
+			List<string> keptScenes = new List<string>();
+			foreach(string visitedSceneIter in visitedScenes)
+			{
+				if(!visitedSceneIter.Equals(coreSceneName))
+				{
+					SceneManager.UnloadScene (visitedSceneIter);
+				}
+				else
+				{
+					keptScenes.Add(visitedSceneIter);
+				}
+			}
+
+			visitedScenes = keptScenes;
 			SceneManager.LoadScene (nextSceneName, LoadSceneMode.Additive);
 		}
+		else
+		{
+			bool foundScene = false;
+			for (int i = 0; i < SceneManager.sceneCount; i++) {// check to see if the level is waiting to be resumed
+				if (nextSceneName.Equals (SceneManager.GetSceneAt (i).name)) {
+					_reactivateScene ();
+					foundScene = true;
+					break;
+				}
+			} 
 
-		if (currentSceneName.Equals (battleSceneName)) {// if we are leaving a battle, unload the battle scene entirely
-			SceneManager.UnloadScene (currentSceneName);
+			if (foundScene == false)
+			{
+				// if the level to be loaded wasn't found amongst the visited level, then load a fresh copy
+				SceneManager.LoadScene (nextSceneName, LoadSceneMode.Additive);
+			}
+
+			if (currentSceneName.Equals (battleSceneName))
+			{
+				// if we are leaving a battle, unload the battle scene entirely
+				SceneManager.UnloadScene (currentSceneName);
+			}
+
+			if (!nextSceneName.Equals (battleSceneName))
+			{
+				//if we aren't goint to a battle, update the overworld location
+				currentWorldSceneName = nextSceneName;
+			}
 		}
 
-		if (!nextSceneName.Equals (battleSceneName)) {//if we aren't goint to a battle, update the overworld location
-			currentWorldSceneName = nextSceneName;
-		}
-			
 		currentSceneName = nextSceneName;
 		nextSceneName = "";
 		CurrentGameState = GameStateEnum.EnterScene;
@@ -454,8 +556,14 @@ public class Engine : MonoBehaviour
 	void _spawnByDoor ()
 	{
 		if (nextDoorEnum == doorEnum.None) {
-			worldPlayer.transform.localPosition = new Vector3 (0, 1, 0);//should become return destination point
-		} else if (nextDoorEnum != doorEnum.SavePoint) {
+			worldPlayer.transform.localPosition = firstSpawnPoint;
+		}
+		else if (nextDoorEnum == doorEnum.SavePoint)
+		{
+			worldPlayer.transform.position = new Vector3(currentSaveInstance.worldPlayerX, currentSaveInstance.worldPlayerY, currentSaveInstance.worldPlayerZ);
+		}
+		else
+		{
 			foreach (GameObject doorIter in GameObject.FindGameObjectsWithTag("Door")) {
 				if (doorIter.GetComponent<Door> ().doorEnumVal == nextDoorEnum) {
 					worldPlayer.transform.localPosition = doorIter.transform.localPosition + doorIter.transform.forward * spaceFromDoor - doorIter.transform.up * .5f;
@@ -545,9 +653,8 @@ public class Engine : MonoBehaviour
 		BinaryFormatter bf = new BinaryFormatter ();
 		StreamWriter file = new StreamWriter (Application.persistentDataPath + "/saveFile" + currentFileNumber + ".gd");
 		MemoryStream ms = new MemoryStream ();
-		GameSave gs = new GameSave ();
-		gs._recordValues ();
-		bf.Serialize (ms, gs);//serialize recordedValues
+		currentSaveInstance._recordValues ();
+		bf.Serialize (ms, currentSaveInstance);//serialize recordedValues
 		string a = System.Convert.ToBase64String (ms.ToArray ());//64 bit obfuscation
 		file.WriteLine (a);
 		file.Close ();

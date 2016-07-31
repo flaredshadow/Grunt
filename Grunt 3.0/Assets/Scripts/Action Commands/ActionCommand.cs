@@ -86,7 +86,7 @@ public class ActionCommand : MonoBehaviour
 	{
 		if(BattleManager.self.CurrentBattleState == BattleStateEnum.PlayerAttack)
 		{
-			if(BattleManager.self.CurrentCharacterAttackState == CharacterAttackStateEnum.ActionCommand && BattleManager.self._notWaiting())
+			if(BattleManager.self.CurrentCharacterAttackState == CharacterAttackStateEnum.ActionCommand)
 			{
 				Destroy(gameObject, destroyTime);
 				_checkPress();

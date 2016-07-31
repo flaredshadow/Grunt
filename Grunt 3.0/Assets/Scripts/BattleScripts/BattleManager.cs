@@ -2,20 +2,33 @@
 using System.Collections.Generic;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
+using System;
 
+[System.Serializable]
 public class BattleManager : MonoBehaviour {
 
 	public static BattleManager self;
 
 	#region get/set variables
-	BattleStateEnum currentBattleState;
+	BattleStateEnum? currentBattleState;
 
-	public BattleStateEnum CurrentBattleState {
+	public BattleStateEnum? CurrentBattleState {
 		get {
 			return currentBattleState;
 		}
 		set {
 			currentBattleState = value;
+		}
+	}
+
+	BattleStateEnum? postWaitBattleState;
+
+	public BattleStateEnum? PostWaitBattleState {
+		get {
+			return postWaitBattleState;
+		}
+		set {
+			postWaitBattleState = value;
 		}
 	}
 
@@ -85,7 +98,7 @@ public class BattleManager : MonoBehaviour {
 		}
 	}
 
-	int expEarned = 99;
+	int expEarned = 30;
 
 	public int ExpEarned {
 		get {
@@ -96,7 +109,7 @@ public class BattleManager : MonoBehaviour {
 		}
 	}
 
-	int coinsEarned = 5;
+	int coinsEarned = 0;
 
 	public int CoinsEarned {
 		get {
@@ -133,9 +146,6 @@ public class BattleManager : MonoBehaviour {
 
 	Item itemToBeUsed;
 
-	float waitTime = 0;
-	float waitStartTime = 0;
-
 	List<BattleCharacter> targetUnfriendlies = new List<BattleCharacter>();
 	List<BattleCharacter> targetFriendlies = new List<BattleCharacter>();
 
@@ -145,16 +155,46 @@ public class BattleManager : MonoBehaviour {
 
 	float walkSpeed = 10;
 
+	List<Action> attackActionsList = new List<Action>();
+
+	public List<Action> AttackActionsList {
+		get {
+			return attackActionsList;
+		}
+		set {
+			attackActionsList = value;
+		}
+	}
+
 	// Use this for initialization
 	void Start ()
 	{
 		self = this;
+		attackActionsList.Add(_squirmingClaws);
+		attackActionsList.Add(_plagueBite);
+		attackActionsList.Add(_sewerStench);
+	}
+
+	public void _resetVariables()//does not reset the states, maybe it should?
+	{
+		playerCharacters.Clear();
+		enemyCharacters.Clear();
+		activeAttack = null;
+		bonus = 0;
+		coinsEarned = 0;
+		currentCharacter = null;
+		expEarned = 0;
+		itemsEarned.Clear();
+		preGotNextCharInLine = false;
+		itemToBeUsed = null;
+		targetFriendlies.Clear();
+		targetUnfriendlies.Clear();
 	}
 	
 	// Update is called once per frame
 	void Update () {
-		if(Engine.self.CurrentGameState == GameStateEnum.BattlePlay && _notWaiting())
-		{//Debug.Log(currentBattleState);
+		if(Engine.self.CurrentGameState == GameStateEnum.BattlePlay)
+		{
 			switch(currentBattleState)
 			{
 				case BattleStateEnum.InitPlayerDecide:
@@ -174,12 +214,11 @@ public class BattleManager : MonoBehaviour {
 					{
 						Engine.self._removeItem(itemToBeUsed, 1);
 					}
-					_setWait(.5f);//slight pause before executing any attack
-					currentBattleState = BattleStateEnum.PlayerAttack;
+					_setWait(BattleStateEnum.PlayerAttack, .5f);//slight pause before executing any attack
 					currentCharacterAttackState = CharacterAttackStateEnum.InitAttack;
 					break;
 				case BattleStateEnum.PlayerAttack:
-					activeAttack.AttackAction();
+					attackActionsList[activeAttack.AttackActionIndex]();
 					break;
 				case BattleStateEnum.EnemyDecide:
 					currentCharacterAttackState = CharacterAttackStateEnum.InitAttack;
@@ -188,7 +227,7 @@ public class BattleManager : MonoBehaviour {
 					currentBattleState = BattleStateEnum.EnemyAttack;
 					break;
 				case BattleStateEnum.EnemyAttack:
-					activeAttack.AttackAction();
+					attackActionsList[activeAttack.AttackActionIndex]();
 				break;
 				case BattleStateEnum.InitKill:
 					targetUnfriendlies.Clear();
@@ -220,14 +259,14 @@ public class BattleManager : MonoBehaviour {
 							madeExplosion = true;
 						}
 					}
-					currentBattleState = BattleStateEnum.AdjustLineUp;
+
 					if(madeExplosion)
 					{
-						_setWait(TombStone.popTime + 1f);//if you don't wait long enough then the enemy will try to attack while the tombstone is still there
+								_setWait(BattleStateEnum.AdjustLineUp, TombStone.popTime + 1f);//if you don't wait long enough then the enemy will try to attack while the tombstone is still there
 					}
 					else
 					{
-						_setWait(.4f);
+								_setWait(BattleStateEnum.AdjustLineUp, .4f);
 					}
 					break;
 				case BattleStateEnum.AdjustLineUp :
@@ -257,6 +296,9 @@ public class BattleManager : MonoBehaviour {
 						if(playerCharacters.Count == 0)
 						{
 							currentBattleState = BattleStateEnum.PlayerLose;
+							Engine.self.CurrentSaveInstance._uploadValues();
+
+							Engine.self._initiateSceneChange (Engine.self.CurrentSaveInstance.SavedSceneName, doorEnum.SavePoint);
 						}
 						else if(enemyCharacters.Count == 0)
 						{
@@ -271,25 +313,18 @@ public class BattleManager : MonoBehaviour {
 					}
 					break;
 				case BattleStateEnum.PlayerWin:
+					Destroy(Engine.self.EncounterOverworldEnemy);
 					break;
-			}
-
-			if(Input.GetKeyDown("q"))
-			{
-				WorldPlayer.self._makeInvincible();
-				Engine.self._initiateSceneChange(Engine.self.CurrentWorldSceneName, doorEnum.ReturnFromBattle);
+				case BattleStateEnum.PlayerLose:
+					break;
+				case BattleStateEnum.Wait:
+					break;
 			}
 		}
 	}
 
-	public bool _notWaiting()
-	{
-		return (Time.time - waitStartTime > waitTime);
-	}
-
 	void _initNextTurn()
 	{
-		_setWait(1f);
 		if(PreGotNextCharInLine == false)
 		{
 			currentCharacter = _getNextInLineForTurn(currentCharacter);
@@ -297,11 +332,11 @@ public class BattleManager : MonoBehaviour {
 		PreGotNextCharInLine = false;
 		if(enemyCharacters.IndexOf(currentCharacter) > -1)
 		{
-			currentBattleState = BattleStateEnum.EnemyDecide;
+			_setWait(BattleStateEnum.EnemyDecide, 1f);
 		}
 		else if(playerCharacters.IndexOf(currentCharacter) > -1)
 		{
-			currentBattleState = BattleStateEnum.InitPlayerDecide;
+			_setWait(BattleStateEnum.InitPlayerDecide, 1f);
 		}
 		else
 		{
@@ -334,10 +369,17 @@ public class BattleManager : MonoBehaviour {
 		}
 	}
 
-	void _setWait(float givenTime)
+	void _setWait(BattleStateEnum? givenNextState, float waitTime)
 	{
-		waitTime = givenTime;
-		waitStartTime = Time.time;
+		currentBattleState = BattleStateEnum.Wait;
+		postWaitBattleState = givenNextState;
+		Invoke("_finishWait", waitTime);
+	}
+
+	void _finishWait()
+	{
+		currentBattleState = postWaitBattleState;
+		postWaitBattleState = null;
 	}
 
 	void _initPlayerChoices()
@@ -571,7 +613,7 @@ public class BattleManager : MonoBehaviour {
 			case CharacterAttackStateEnum.MovePreAction:
 				if(currentCharacter.HitGameObject == targetUnfriendlies[0].gameObject)
 				{
-					_setWait(1);
+					_setWait(currentBattleState, 1);
 					currentCharacter.GetComponent<Rigidbody>().velocity = Vector3.zero;
 					currentCharacterAttackState = CharacterAttackStateEnum.ActionCommand;
 				}
@@ -585,12 +627,12 @@ public class BattleManager : MonoBehaviour {
 				}
 				break;
 			case CharacterAttackStateEnum.ApplyAttack:
-				bool mystics = false;
+				bool mystics = true;
 
 				if(mystics == true)
 				{
 					_damageTarget(currentCharacter, 1);
-					_setWait(Damage.popTime + .25f);
+					_setWait(currentBattleState, Damage.popTime + .25f);
 					currentCharacterAttackState = CharacterAttackStateEnum.HandleFail;
 					break;
 				}
@@ -598,14 +640,13 @@ public class BattleManager : MonoBehaviour {
 				if(bonus > -1)
 				{
 					bonus -= 1;
-					//currentCharacter.transform.localPosition = Vector2.one;
 					_damageTarget(targetUnfriendlies[0], baseDamage + currentCharacter.Sheet.pow);
-					_setWait(Damage.popTime + 1f);
+					_setWait(currentBattleState, Damage.popTime + 1f);
 				}
 				else
 				{
 					currentCharacter.transform.Rotate(0, 180, 0);
-					_setWait(.25f); // small wait to visually seperate attacking from returning
+					_setWait(currentBattleState, .25f); // small wait to visually seperate attacking from returning
 					currentCharacterAttackState = CharacterAttackStateEnum.MovePostAction;
 				}
 				break;
@@ -635,7 +676,7 @@ public class BattleManager : MonoBehaviour {
 				_damageTarget(targetUnfriendlies[0], baseDamage + currentCharacter.Sheet.pow);
 				//_damageTarget(targetUnfriendlies[1], baseDamage + currentCharacter.Sheet.pow);
 				//_damageTarget(targetUnfriendlies[2], baseDamage + currentCharacter.Sheet.pow);
-				_setWait(Damage.popTime + 1f);
+				_setWait(currentBattleState, Damage.popTime + 1f);
 				currentCharacterAttackState = CharacterAttackStateEnum.MovePostAction;
 				break;
 			case CharacterAttackStateEnum.MovePostAction:

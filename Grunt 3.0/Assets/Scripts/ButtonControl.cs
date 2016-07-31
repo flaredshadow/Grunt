@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 using System.IO;
@@ -45,8 +46,7 @@ public class ButtonControl : MonoBehaviour {
 		Engine.self.CurrentFileNumber = fileNumber;
 		CharacterSheet charSheet = new CharacterSheet();//initial party has 1 character
 		Engine.self._addSheetToParty(charSheet);
-		GameSave gs = new GameSave(Engine.self.PlayerSheets);//start a new save instance with 1 CharacterSheet in it
-		Engine.self.CurrentSaveInstance = gs;
+
 		foreach(Button b in FindObjectsOfType<Button>())
 		{
 			b.onClick.RemoveAllListeners();
@@ -55,7 +55,7 @@ public class ButtonControl : MonoBehaviour {
 			b.onClick.AddListener(
 				delegate
 				{
-					Engine.self._initiateSceneChange("StartingAreaScene", doorEnum.None);
+						Engine.self._initiateSceneChange(Engine.self.StartingSceneName, doorEnum.None);
 					b.enabled = false;
 				});
 			switch(bControl.fileNumber)
@@ -65,18 +65,24 @@ public class ButtonControl : MonoBehaviour {
 					b.onClick.AddListener(
 						delegate
 							{
+								charSheet._initRank(rankEnum.Rat);
+								Engine.self.CurrentSaveInstance.savedPlayerSheets = GameSave.DeepClone<List<CharacterSheet>>(Engine.self.PlayerSheets); // damn deep clones
+								/***********
 								CharacterSheet charSheet2 = new CharacterSheet();// only for testing purposes
 								Engine.self._addSheetToParty(charSheet2);// only for testing purposes
-								charSheet._initRank(rankEnum.Rat);
 								charSheet2._initRank(rankEnum.Rat);// only for testing purposes
+								*/
+
 							});
 					break;
 				case 2:
 					bText.text = "Monster";
+					Engine.self.CurrentSaveInstance.savedPlayerSheets = GameSave.DeepClone<List<CharacterSheet>>(Engine.self.PlayerSheets);
 					b.onClick.AddListener(delegate{charSheet._initRank(rankEnum.Zombie);});
 					break;
 				case 3:
 					bText.text = "Machine";
+					Engine.self.CurrentSaveInstance.savedPlayerSheets = GameSave.DeepClone<List<CharacterSheet>>(Engine.self.PlayerSheets);
 					b.onClick.AddListener(delegate{charSheet._initRank(rankEnum.Toaster);});
 					break;
 			}

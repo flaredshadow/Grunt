@@ -7,7 +7,8 @@ using UnityEngine.UI;
 public class CharacterSheet
 {
 
-	public int exp = 0, maxExp = 10, maxExpGrowth = 3, level = 1, hp, maxHp, sp, maxSp, pow, def, electivePoints = 0, hpGain, spGain, powGain, defGain, electivePointsGain;
+	public int exp = 0, maxExp = 10, maxExpGrowth = 3, level = 1, hp, maxHp, sp, maxSp, pow, def, electivePoints = 0,
+	hpGain, spGain, powGain, defGain, electivePointsGain, expWorth, coinWorth;
 	public string characterName;
 	public formEnum form;
 	public rankEnum rank;
@@ -41,6 +42,8 @@ public class CharacterSheet
 				defGain = 1;
 				electivePointsGain = 2;
 				characterName = "Rat";
+				expWorth = 1 * level;
+				coinWorth = 1;
 				form = formEnum.Animal;
 				rank = rankEnum.Rat;
 				abilities.Add(new SquirmingClaws());

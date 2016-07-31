@@ -9,8 +9,9 @@ public class WorldPlayer : MonoBehaviour {
 	public float jumpingSpeed;
 	public float playerGravity;
 
-	float totalInvincibleTime = 30;
-	float currentInvincibleTime = 0;
+	bool invincible = false;
+
+	float totalInvincibleTime = 3.0f;
 
 	WorldPlayerStateEnum currentWorldPlayerState = WorldPlayerStateEnum.Grounded;
 	Rigidbody rBody;
@@ -20,8 +21,7 @@ public class WorldPlayer : MonoBehaviour {
 	{
 		self = this;
 		rBody = GetComponent<Rigidbody>();
-		GameSave currentSaveInst = Engine.self.CurrentSaveInstance;
-		currentSaveInst._uploadValues();//load in the player file once, at the beginning of the game
+		Engine.self.CurrentSaveInstance._uploadValues();//load in the player file once, at the beginning of the game
 	}
 	
 	// Update is called once per frame
@@ -30,7 +30,6 @@ public class WorldPlayer : MonoBehaviour {
 		{
 			_movePlayer();
 			_checkAirborne();
-			_checkInvincibleTime();
 			switch(currentWorldPlayerState)
 			{
 				case WorldPlayerStateEnum.Grounded:
@@ -54,7 +53,7 @@ public class WorldPlayer : MonoBehaviour {
 		rBody.AddForce(Physics.gravity*playerGravity, ForceMode.Acceleration);
 	}
 
-	void OnTriggerEnter (Collider other)
+	void OnTriggerStay (Collider other)
 	{
 		if(Engine.self.CurrentGameState == GameStateEnum.OverWorldPlay)
 		{
@@ -66,9 +65,9 @@ public class WorldPlayer : MonoBehaviour {
 					break;
 
 				case "Enemy":
-					if(currentInvincibleTime <= 0)
+					if(invincible == false)
 					{
-						other.transform.localPosition += Vector3.up * 2;
+						Engine.self.EncounterOverworldEnemy = other.gameObject;
 						Engine.self.FirstEnemyRank = other.gameObject.GetComponent<WorldEnemy>().Rank;//make first battle enemy always match the overworld enemy
 						Engine.self._goToBattle();
 					}
@@ -118,15 +117,12 @@ public class WorldPlayer : MonoBehaviour {
 
 	public void _makeInvincible()
 	{
-		currentInvincibleTime = totalInvincibleTime;
+		invincible = true;
+		Invoke("_endInvincible", totalInvincibleTime);
 	}
 
-	void _checkInvincibleTime()
+	void _endInvincible()
 	{
-		
-		if(currentInvincibleTime > 0)
-		{
-			currentInvincibleTime -= 1;
-		}
+		invincible = false;
 	}
 }

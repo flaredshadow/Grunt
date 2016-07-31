@@ -60,14 +60,14 @@ public class Attack
 		}
 	}
 
-	Action attackAction;
+	int attackActionIndex;
 
-	public Action AttackAction {
+	public int AttackActionIndex {
 		get {
-			return attackAction;
+			return attackActionIndex;
 		}
 		set {
-			attackAction = value;
+			attackActionIndex = value;
 		}
 	}
 }
@@ -82,7 +82,7 @@ public class SquirmingClaws : Attack
 		SpCost = 0;
 		NumberOfTargets = 1;
 		TargetType = attackTargetEnum.ChooseEnemy;
-		AttackAction = BattleManager.self._squirmingClaws;
+		AttackActionIndex = BattleManager.self.AttackActionsList.IndexOf(BattleManager.self._squirmingClaws);
 	}
 }
 
@@ -96,7 +96,7 @@ public class PlagueBite : Attack
 		SpCost = 0;
 		NumberOfTargets = 3;
 		TargetType = attackTargetEnum.ChooseEnemy;
-		AttackAction = BattleManager.self._plagueBite;
+		AttackActionIndex = BattleManager.self.AttackActionsList.IndexOf(BattleManager.self._plagueBite);
 	}
 }
 
@@ -110,6 +110,6 @@ public class SewerStench : Attack
 		SpCost = 2;
 		NumberOfTargets = 1;
 		TargetType = attackTargetEnum.Self;
-		AttackAction = BattleManager.self._sewerStench;
+		AttackActionIndex = BattleManager.self.AttackActionsList.IndexOf(BattleManager.self._sewerStench);
 	}
 }

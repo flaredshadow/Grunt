@@ -48,7 +48,8 @@ public class TombStone : MonoBehaviour {
 		if(BattleManager.self.EnemyCharacters.Contains(bc))
 		{
 			BattleManager.self.EnemyCharacters.Remove(bc);
-			BattleManager.self.ExpEarned += bc.Sheet.exp;
+			BattleManager.self.ExpEarned += bc.Sheet.expWorth;
+			BattleManager.self.CoinsEarned += bc.Sheet.coinWorth;
 		}
 		else
 		{

@@ -28,14 +28,22 @@ public class Pause : MonoBehaviour
 	// Update is called once per frame
 	void Update ()
 	{
-		coinLabel.text = "Coins : " + Engine.self.PlayerCoins;
-		if(Engine.self.CurrentGameState == GameStateEnum.Paused)
+		if(Engine.self.CurrentGameState == GameStateEnum.EnterScene)
 		{
-			if(Input.GetKeyDown("p"))
+			Destroy(gameObject);
+		}
+		else
+		{
+			coinLabel.text = "Coins : " + Engine.self.PlayerCoins;
+
+			if(Engine.self.CurrentGameState == GameStateEnum.Paused)
 			{
-				Destroy(gameObject);
-				Time.timeScale = 1;
-				Engine.self.CurrentGameState = GameStateEnum.OverWorldPlay;
+				if(Input.GetKeyDown("p"))
+				{
+					Destroy(gameObject);
+					Time.timeScale = 1;
+					Engine.self.CurrentGameState = GameStateEnum.OverWorldPlay;
+				}
 			}
 		}
 	}
