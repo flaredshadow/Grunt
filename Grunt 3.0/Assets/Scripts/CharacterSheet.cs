@@ -14,19 +14,11 @@ public class CharacterSheet
 	public rankEnum rank;
 	public List<Attack> abilities = new List<Attack>();
 	public List<Attack> spells = new List<Attack>();
-
-	// Use this for initialization
-	void Start () {
-	
-	}
-	
-	// Update is called once per frame
-	void Update () {
-	
-	}
+	public Attack retreat;
 
 	public void _initRank(rankEnum givenRank)
 	{
+		retreat = new Flee();
 		switch(givenRank)
 		{
 			case rankEnum.Rat:
@@ -76,6 +68,6 @@ public class CharacterSheet
 		sp = maxSp;
 		pow += powGain;
 		def += defGain;
-		electivePoints = electivePointsGain;
+		electivePoints += electivePointsGain;
 	}
 }

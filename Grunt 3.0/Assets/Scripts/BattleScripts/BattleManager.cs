@@ -173,6 +173,7 @@ public class BattleManager : MonoBehaviour {
 		attackActionsList.Add(_squirmingClaws);
 		attackActionsList.Add(_plagueBite);
 		attackActionsList.Add(_sewerStench);
+		attackActionsList.Add(_flee);
 	}
 
 	public void _resetVariables()//does not reset the states, maybe it should?
@@ -411,6 +412,11 @@ public class BattleManager : MonoBehaviour {
 		itemButton.GetComponentInChildren<Text>().text = "Items";
 		itemButton.transform.SetParent(Engine.self.CoreCanvas.transform, false);
 
+		Vector3 fleeButtonPosition = mainDDPosition + buttonOffsetPosition - ddOffsetPosition*2;
+		Button fleeButton = (Instantiate(Engine.self.ButtonPrefab, fleeButtonPosition, Quaternion.identity) as GameObject).GetComponent<Button>();
+		fleeButton.GetComponentInChildren<Text>().text = "Flee";
+		fleeButton.transform.SetParent(Engine.self.CoreCanvas.transform, false);
+
 		abilityButton.onClick.AddListener(
 			delegate
 			{
@@ -449,6 +455,11 @@ public class BattleManager : MonoBehaviour {
 					Engine.self.AudioSource.PlayOneShot(Engine.self.BuzzClip);
 				}
 			});
+		fleeButton.onClick.AddListener(
+			delegate
+				{
+					_activateOption(currentCharacter.Sheet.retreat);
+				});
 	}
 
 	void _activateOption(Attack attackInQuestion)
@@ -559,6 +570,7 @@ public class BattleManager : MonoBehaviour {
 		int damageDealt = givenDamage; // later this will be modified by weakness/resistance
 		int damageTaken = Mathf.Max(1, damageDealt - (targ.Sheet.def + targ.BonusDef));
 		targ.Sheet.hp -= damageTaken;
+		targ.Sheet.hp = Mathf.Max(0, targ.Sheet.hp);//minimum hp is 0
 		Vector3 damagePosition = RectTransformUtility.WorldToScreenPoint(Engine.self.cam, targ.transform.localPosition);
 		Damage damageScript = (Instantiate(Engine.self.DamagePrefab) as GameObject).GetComponent<Damage>();
 		if(playerCharacters.Contains(targ))
@@ -596,7 +608,6 @@ public class BattleManager : MonoBehaviour {
 
 	public void _squirmingClaws()//need to decide how to handle flying target eventually
 	{
-		int baseDamage = 1;
 		switch(currentCharacterAttackState)
 		{
 			case CharacterAttackStateEnum.InitAttack:
@@ -640,7 +651,7 @@ public class BattleManager : MonoBehaviour {
 				if(bonus > -1)
 				{
 					bonus -= 1;
-					_damageTarget(targetUnfriendlies[0], baseDamage + currentCharacter.Sheet.pow);
+					_damageTarget(targetUnfriendlies[0], activeAttack.BaseDamage + currentCharacter.Sheet.pow);
 					_setWait(currentBattleState, Damage.popTime + 1f);
 				}
 				else
@@ -662,7 +673,6 @@ public class BattleManager : MonoBehaviour {
 
 	public void _plagueBite()
 	{
-		int baseDamage = 1;
 		switch(currentCharacterAttackState)
 		{
 			case CharacterAttackStateEnum.InitAttack:
@@ -673,9 +683,9 @@ public class BattleManager : MonoBehaviour {
 			case CharacterAttackStateEnum.ActionCommand:
 				break;
 			case CharacterAttackStateEnum.ApplyAttack:
-				_damageTarget(targetUnfriendlies[0], baseDamage + currentCharacter.Sheet.pow);
-				//_damageTarget(targetUnfriendlies[1], baseDamage + currentCharacter.Sheet.pow);
-				//_damageTarget(targetUnfriendlies[2], baseDamage + currentCharacter.Sheet.pow);
+				_damageTarget(targetUnfriendlies[0], activeAttack.BaseDamage + currentCharacter.Sheet.pow);
+				//_damageTarget(targetUnfriendlies[1], activeAttack.BaseDamage + currentCharacter.Sheet.pow);
+				//_damageTarget(targetUnfriendlies[2], activeAttack.BaseDamage + currentCharacter.Sheet.pow);
 				_setWait(currentBattleState, Damage.popTime + 1f);
 				currentCharacterAttackState = CharacterAttackStateEnum.MovePostAction;
 				break;
@@ -688,5 +698,32 @@ public class BattleManager : MonoBehaviour {
 	public void _sewerStench()
 	{
 
+	}
+
+	public void _flee()
+	{
+		switch(currentCharacterAttackState)
+		{
+			case CharacterAttackStateEnum.InitAttack:
+				PrecisionCommand command = (Instantiate(Engine.self.PrecisionCommandPrefab) as GameObject).GetComponent<PrecisionCommand>();
+				command.transform.SetParent(Engine.self.CoreCanvas.transform, false);
+				command.ActionKey = "v";
+				command.DestroyTime = 99;
+				command._randomizeArrowPos();
+
+				currentCharacterAttackState = CharacterAttackStateEnum.ActionCommand;
+				break;
+			case CharacterAttackStateEnum.MovePreAction:
+				break;
+			case CharacterAttackStateEnum.ActionCommand:
+				break;
+			case CharacterAttackStateEnum.ApplyAttack:
+				_setWait(currentBattleState, Damage.popTime + 1f);
+				currentCharacterAttackState = CharacterAttackStateEnum.MovePostAction;
+				break;
+			case CharacterAttackStateEnum.MovePostAction:
+				_goToStart(currentCharacter);
+				break;
+		}
 	}
 }

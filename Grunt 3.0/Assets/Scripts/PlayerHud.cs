@@ -7,7 +7,7 @@ public class PlayerHud : MonoBehaviour {
 
 	public static int hudsLeveling = 0;
 
-	public Text nameLabel, levelLabel, hpLabel, spLabel, expLabel, powLabel, defLabel;
+	public Text nameLabel, levelLabel, hpLabel, spLabel, expLabel, powLabel, defLabel, electiveLabel;
 
 	CharacterSheet sheet;
 
@@ -52,6 +52,7 @@ public class PlayerHud : MonoBehaviour {
 			expLabel.text = "EXP : " + sheet.exp + " / " + sheet.maxExp;
 			powLabel.text = "POW : " + sheet.pow;
 			defLabel.text = "DEF : " + sheet.def;
+			electiveLabel.text = "Elective Points : " + sheet.electivePoints;
 		}
 	}
 

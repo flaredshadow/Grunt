@@ -113,3 +113,17 @@ public class SewerStench : Attack
 		AttackActionIndex = BattleManager.self.AttackActionsList.IndexOf(BattleManager.self._sewerStench);
 	}
 }
+
+[Serializable]
+public class Flee : Attack
+{
+	public Flee()
+	{
+		AttackName = "Flee";
+		BaseDamage = 0;
+		SpCost = 0;
+		NumberOfTargets = 1;
+		TargetType = attackTargetEnum.Self;
+		AttackActionIndex = BattleManager.self.AttackActionsList.IndexOf(BattleManager.self._flee);
+	}
+}

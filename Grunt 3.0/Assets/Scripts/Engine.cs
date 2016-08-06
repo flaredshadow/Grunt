@@ -26,7 +26,7 @@ public class Engine : MonoBehaviour
 	public static List<string> visitedScenes = new List<string>();
 
 	#region Prefab variables
-	public GameObject worldPlayer, battleCharacterPrefab, buttonPrefab, dropDownPrefab, rapidCommandPrefab, damagePrefab, tombStonePrefab, playerHudPrefab, explosionPrefab,
+	public GameObject worldPlayer, battleCharacterPrefab, buttonPrefab, dropDownPrefab, rapidCommandPrefab, precisionCommandPrefab, damagePrefab, tombStonePrefab, playerHudPrefab, explosionPrefab,
 	spoilsPrefab, pauseMenuPrefab, plusPrefab;
 
 	public Canvas coreCanvas;
@@ -64,6 +64,15 @@ public class Engine : MonoBehaviour
 		}
 		set {
 			rapidCommandPrefab = value;
+		}
+	}
+
+	public GameObject PrecisionCommandPrefab {
+		get {
+			return precisionCommandPrefab;
+		}
+		set {
+			precisionCommandPrefab = value;
 		}
 	}
 
@@ -118,7 +127,7 @@ public class Engine : MonoBehaviour
 		}
 	}
 
-	public Sprite zUp, zDown, xUp, xDown, cUp, cDown;
+	public Sprite zUp, zDown, xUp, xDown, cUp, cDown, vUp, vDown;
 
 	#endregion
 

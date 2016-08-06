@@ -77,6 +77,10 @@ public class ActionCommand : MonoBehaviour
 				upSprite = Engine.self.cUp;
 				downSprite = Engine.self.cDown;
 				break;
+			case "v":
+				upSprite = Engine.self.vUp;
+				downSprite = Engine.self.vDown;
+				break;
 		}
 		commandImage.sprite = upSprite;
 	}
