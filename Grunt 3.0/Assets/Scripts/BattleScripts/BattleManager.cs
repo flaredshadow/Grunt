@@ -43,14 +43,25 @@ public class BattleManager : MonoBehaviour {
 		}
 	}
 
-	CharacterAttackStateEnum currentCharacterAttackState;
+	CharacterAttackStateEnum? currentCharacterAttackState;
 
-	public CharacterAttackStateEnum CurrentCharacterAttackState {
+	public CharacterAttackStateEnum? CurrentCharacterAttackState {
 		get {
 			return currentCharacterAttackState;
 		}
 		set {
 			currentCharacterAttackState = value;
+		}
+	}
+
+	CharacterAttackStateEnum? postWaitCharacterAttackState;
+
+	public CharacterAttackStateEnum? PostWaitCharacterAttackState {
+		get {
+			return postWaitCharacterAttackState;
+		}
+		set {
+			postWaitCharacterAttackState = value;
 		}
 	}
 
@@ -144,6 +155,17 @@ public class BattleManager : MonoBehaviour {
 
 	#endregion
 
+	int statusEffectsResolved = 0;
+
+	public int StatusEffectsResolved {
+		get {
+			return statusEffectsResolved;
+		}
+		set {
+			statusEffectsResolved = value;
+		}
+	}
+
 	Item itemToBeUsed;
 
 	List<BattleCharacter> targetUnfriendlies = new List<BattleCharacter>();
@@ -174,6 +196,7 @@ public class BattleManager : MonoBehaviour {
 		attackActionsList.Add(_plagueBite);
 		attackActionsList.Add(_sewerStench);
 		attackActionsList.Add(_flee);
+		attackActionsList.Add(_poisonTest);
 	}
 
 	public void _resetVariables()//does not reset the states, maybe it should?
@@ -181,6 +204,7 @@ public class BattleManager : MonoBehaviour {
 		playerCharacters.Clear();
 		enemyCharacters.Clear();
 		activeAttack = null;
+		statusEffectsResolved = 0;
 		bonus = 0;
 		coinsEarned = 0;
 		currentCharacter = null;
@@ -198,6 +222,41 @@ public class BattleManager : MonoBehaviour {
 		{
 			switch(currentBattleState)
 			{
+				case BattleStateEnum.ResolveStatusEffects:
+					if(statusEffectsResolved == currentCharacter.StatusEffectsList.Count)
+					{
+						statusEffectsResolved = 0;
+						List<StatusEffect> removeEffectsList = new List<StatusEffect>();
+						foreach(StatusEffect effectIter in currentCharacter.StatusEffectsList)
+						{
+							if(effectIter.Turns == 0)
+							{
+								removeEffectsList.Add(effectIter);
+							}
+						}
+
+						foreach(StatusEffect removeEffectIter in removeEffectsList)
+						{
+							currentCharacter.StatusEffectsList.Remove(removeEffectIter);
+							Destroy(removeEffectIter.gameObject);
+						}
+
+						if(playerCharacters.Contains(currentCharacter))
+						{
+							currentBattleState = BattleStateEnum.InitPlayerDecide;
+						}
+						else
+						{
+							currentBattleState = BattleStateEnum.EnemyDecide;
+						}
+					}
+					else
+					{
+						currentCharacter.StatusEffectsList[statusEffectsResolved]._applyEffect();
+					}
+
+
+					break;
 				case BattleStateEnum.InitPlayerDecide:
 					_initPlayerChoices();
 					currentBattleState = BattleStateEnum.PlayerDecide;
@@ -223,8 +282,45 @@ public class BattleManager : MonoBehaviour {
 					break;
 				case BattleStateEnum.EnemyDecide:
 					currentCharacterAttackState = CharacterAttackStateEnum.InitAttack;
+					//need Ai for enemies ***
 					activeAttack = currentCharacter.Sheet.abilities[0];
-					targetUnfriendlies.Add(playerCharacters[0]);
+					//need Ai for enemies ***
+					switch(activeAttack.TargetType)
+					{
+						case attackTargetEnum.ChooseAlly:
+							for(int i = 0; i < activeAttack.NumberOfTargets && i < enemyCharacters.Count; i++) //need Ai
+							{
+								targetFriendlies.Add(enemyCharacters[i]);
+							}
+							break;
+						
+						case attackTargetEnum.ChooseEnemy:
+							for(int i = 0; i < activeAttack.NumberOfTargets && i < playerCharacters.Count; i++) //need Ai
+							{
+								targetUnfriendlies.Add(playerCharacters[i]);
+							}
+							break;
+						
+						case attackTargetEnum.AllAllies:
+							targetFriendlies.AddRange(enemyCharacters);
+							break;
+						case attackTargetEnum.AllCharacters:
+							targetFriendlies.AddRange(enemyCharacters);
+							targetUnfriendlies.AddRange(playerCharacters);
+							break;
+						case attackTargetEnum.AllEnemies:
+							targetUnfriendlies.AddRange(playerCharacters);
+							break;
+						case attackTargetEnum.FirstAlly:
+							targetFriendlies.Add(enemyCharacters[0]);
+							break;
+						case attackTargetEnum.FirstEnemy:
+							targetUnfriendlies.Add(playerCharacters[0]);
+							break;
+						case attackTargetEnum.Self:
+							targetFriendlies.Add(currentCharacter);
+							break;
+					}
 					currentBattleState = BattleStateEnum.EnemyAttack;
 					break;
 				case BattleStateEnum.EnemyAttack:
@@ -318,6 +414,8 @@ public class BattleManager : MonoBehaviour {
 					break;
 				case BattleStateEnum.PlayerLose:
 					break;
+				case BattleStateEnum.Flee:
+					break;
 				case BattleStateEnum.Wait:
 					break;
 			}
@@ -331,18 +429,7 @@ public class BattleManager : MonoBehaviour {
 			currentCharacter = _getNextInLineForTurn(currentCharacter);
 		}
 		PreGotNextCharInLine = false;
-		if(enemyCharacters.IndexOf(currentCharacter) > -1)
-		{
-			_setWait(BattleStateEnum.EnemyDecide, 1f);
-		}
-		else if(playerCharacters.IndexOf(currentCharacter) > -1)
-		{
-			_setWait(BattleStateEnum.InitPlayerDecide, 1f);
-		}
-		else
-		{
-			Debug.Log("Char not found in either list!");
-		}
+		_setWait(BattleStateEnum.ResolveStatusEffects, 1f);
 	}
 
 	public BattleCharacter _getNextInLineForTurn(BattleCharacter givenChar)
@@ -370,50 +457,64 @@ public class BattleManager : MonoBehaviour {
 		}
 	}
 
-	void _setWait(BattleStateEnum? givenNextState, float waitTime)
+	public void _setWait(BattleStateEnum? givenNextState, float waitTime)
 	{
 		currentBattleState = BattleStateEnum.Wait;
 		postWaitBattleState = givenNextState;
 		Invoke("_finishWait", waitTime);
 	}
 
+	public void _setWait(CharacterAttackStateEnum? givenNextState, float waitTime)
+	{
+		postWaitBattleState = currentBattleState;
+		currentBattleState = BattleStateEnum.Wait;
+		postWaitCharacterAttackState = givenNextState;
+		Invoke("_finishWait", waitTime);
+	}
+
 	void _finishWait()
 	{
 		currentBattleState = postWaitBattleState;
+		if(postWaitCharacterAttackState != null)
+		{
+			currentCharacterAttackState = postWaitCharacterAttackState;
+		}
+
 		postWaitBattleState = null;
+		postWaitCharacterAttackState = null;
 	}
 
 	void _initPlayerChoices()
 	{
 
-		Dropdown abilityDD = (Instantiate(Engine.self.DropDownPrefab, mainDDPosition, Quaternion.identity) as GameObject).GetComponent<Dropdown>();
+		Dropdown abilityDD = (Instantiate(Engine.self.dropDownPrefab, mainDDPosition, Quaternion.identity) as GameObject).GetComponent<Dropdown>();
 		abilityDD.transform.SetParent(Engine.self.CoreCanvas.transform, false);
 		abilityDD.AddOptions(currentCharacter.Sheet._attacksToOptions(currentCharacter.Sheet.abilities));
 
-		Dropdown spellDD = (Instantiate(Engine.self.DropDownPrefab, mainDDPosition + ddOffsetPosition, Quaternion.identity) as GameObject).GetComponent<Dropdown>();
+		Dropdown spellDD = (Instantiate(Engine.self.dropDownPrefab, mainDDPosition + ddOffsetPosition, Quaternion.identity) as GameObject).GetComponent<Dropdown>();
 		spellDD.transform.SetParent(Engine.self.CoreCanvas.transform, false);
 		spellDD.AddOptions(currentCharacter.Sheet._attacksToOptions(currentCharacter.Sheet.spells));
 
-		Dropdown itemDD = (Instantiate(Engine.self.DropDownPrefab, mainDDPosition - ddOffsetPosition, Quaternion.identity) as GameObject).GetComponent<Dropdown>();
+		Dropdown itemDD = (Instantiate(Engine.self.dropDownPrefab, mainDDPosition - ddOffsetPosition, Quaternion.identity) as GameObject).GetComponent<Dropdown>();
 		itemDD.transform.SetParent(Engine.self.CoreCanvas.transform, false);
 		itemDD.AddOptions(Engine.self._battleItemsToOptions(false, false));
 
-		Button abilityButton = (Instantiate(Engine.self.ButtonPrefab, mainDDPosition + buttonOffsetPosition, Quaternion.identity) as GameObject).GetComponent<Button>();
+		Button abilityButton = (Instantiate(Engine.self.buttonPrefab, mainDDPosition + buttonOffsetPosition, Quaternion.identity) as GameObject).GetComponent<Button>();
 		abilityButton.GetComponentInChildren<Text>().text = "Abilities";
 		abilityButton.transform.SetParent(Engine.self.CoreCanvas.transform, false);
 
 		Vector3 spellButtonPosition = mainDDPosition + buttonOffsetPosition + ddOffsetPosition;
-		Button spellButton = (Instantiate(Engine.self.ButtonPrefab, spellButtonPosition, Quaternion.identity) as GameObject).GetComponent<Button>();
+		Button spellButton = (Instantiate(Engine.self.buttonPrefab, spellButtonPosition, Quaternion.identity) as GameObject).GetComponent<Button>();
 		spellButton.GetComponentInChildren<Text>().text = "Spells";
 		spellButton.transform.SetParent(Engine.self.CoreCanvas.transform, false);
 
 		Vector3 itemButtonPosition = mainDDPosition + buttonOffsetPosition - ddOffsetPosition;
-		Button itemButton = (Instantiate(Engine.self.ButtonPrefab, itemButtonPosition, Quaternion.identity) as GameObject).GetComponent<Button>();
+		Button itemButton = (Instantiate(Engine.self.buttonPrefab, itemButtonPosition, Quaternion.identity) as GameObject).GetComponent<Button>();
 		itemButton.GetComponentInChildren<Text>().text = "Items";
 		itemButton.transform.SetParent(Engine.self.CoreCanvas.transform, false);
 
 		Vector3 fleeButtonPosition = mainDDPosition + buttonOffsetPosition - ddOffsetPosition*2;
-		Button fleeButton = (Instantiate(Engine.self.ButtonPrefab, fleeButtonPosition, Quaternion.identity) as GameObject).GetComponent<Button>();
+		Button fleeButton = (Instantiate(Engine.self.buttonPrefab, fleeButtonPosition, Quaternion.identity) as GameObject).GetComponent<Button>();
 		fleeButton.GetComponentInChildren<Text>().text = "Flee";
 		fleeButton.transform.SetParent(Engine.self.CoreCanvas.transform, false);
 
@@ -465,6 +566,7 @@ public class BattleManager : MonoBehaviour {
 	void _activateOption(Attack attackInQuestion)
 	{
 		_destroyAllButtonsAndDropDowns();
+
 		if(attackInQuestion.TargetType == attackTargetEnum.ChooseEnemy)
 		{
 
@@ -484,6 +586,28 @@ public class BattleManager : MonoBehaviour {
 		}
 		else // non-choosing attacks immediately initiate execution of the attack
 		{
+			switch(attackInQuestion.TargetType)
+			{
+				case attackTargetEnum.AllAllies:
+					targetFriendlies.AddRange(playerCharacters);
+					break;
+				case attackTargetEnum.AllCharacters:
+					targetFriendlies.AddRange(playerCharacters);
+					targetUnfriendlies.AddRange(enemyCharacters);
+					break;
+				case attackTargetEnum.AllEnemies:
+					targetUnfriendlies.AddRange(enemyCharacters);
+					break;
+				case attackTargetEnum.FirstAlly:
+					targetFriendlies.Add(playerCharacters[0]);
+					break;
+				case attackTargetEnum.FirstEnemy:
+					targetUnfriendlies.Add(enemyCharacters[0]);
+					break;
+				case attackTargetEnum.Self:
+					targetFriendlies.Add(currentCharacter);
+					break;
+			}
 			activeAttack = attackInQuestion;
 			currentBattleState = BattleStateEnum.InitPlayerAttack;
 		}
@@ -506,7 +630,7 @@ public class BattleManager : MonoBehaviour {
 	{
 		Vector3 buttonOffset = new Vector3(0, 2, 0);
 		Vector3 targetButtonPosition = RectTransformUtility.WorldToScreenPoint(Engine.self.cam, givenTarget.transform.localPosition + buttonOffset);
-		Button targetButton = (Instantiate(Engine.self.ButtonPrefab, targetButtonPosition, Quaternion.identity) as GameObject).GetComponent<Button>();
+		Button targetButton = (Instantiate(Engine.self.buttonPrefab, targetButtonPosition, Quaternion.identity) as GameObject).GetComponent<Button>();
 		targetButton.transform.SetParent(Engine.self.CoreCanvas.transform, true);
 		targetButton.transform.localScale = Vector3.one;//when setting the parent, true keeps the position correct, but enlargers the scale, this is an easy fix
 		targetButton.GetComponentInChildren<Text>().text = givenTarget.Sheet.characterName;
@@ -539,7 +663,7 @@ public class BattleManager : MonoBehaviour {
 	void _generateBackButton(Attack selectedAttack)//remember the back button is only used during Target selection
 	{
 		Vector3 backButtonPosition = RectTransformUtility.WorldToScreenPoint(Engine.self.cam, new Vector3(0, 2, 0));
-		Button backButton = (Instantiate(Engine.self.ButtonPrefab, backButtonPosition, Quaternion.identity) as GameObject).GetComponent<Button>();
+		Button backButton = (Instantiate(Engine.self.buttonPrefab, backButtonPosition, Quaternion.identity) as GameObject).GetComponent<Button>();
 		backButton.transform.SetParent(Engine.self.CoreCanvas.transform, true);
 		backButton.transform.localScale = Vector3.one;//when setting the parent, true keeps the position correct, but enlargers the scale, this is an easy fix
 		backButton.GetComponentInChildren<Text>().text = "Back";
@@ -565,14 +689,14 @@ public class BattleManager : MonoBehaviour {
 		);
 	}
 
-	void _damageTarget(BattleCharacter targ, int givenDamage)
+	public void _damageTarget(BattleCharacter targ, int givenDamage)
 	{
 		int damageDealt = givenDamage; // later this will be modified by weakness/resistance
-		int damageTaken = Mathf.Max(1, damageDealt - (targ.Sheet.def + targ.BonusDef));
+		int damageTaken = Mathf.Max(1, damageDealt - (targ.Sheet.def)); // minimum 1 damage is always taken
 		targ.Sheet.hp -= damageTaken;
 		targ.Sheet.hp = Mathf.Max(0, targ.Sheet.hp);//minimum hp is 0
 		Vector3 damagePosition = RectTransformUtility.WorldToScreenPoint(Engine.self.cam, targ.transform.localPosition);
-		Damage damageScript = (Instantiate(Engine.self.DamagePrefab) as GameObject).GetComponent<Damage>();
+		Damage damageScript = (Instantiate(Engine.self.damagePrefab) as GameObject).GetComponent<Damage>();
 		if(playerCharacters.Contains(targ))
 		{
 			damageScript.scaleDirection = -1;
@@ -596,8 +720,8 @@ public class BattleManager : MonoBehaviour {
 			if(currentBattleState == BattleStateEnum.PlayerAttack || currentBattleState == BattleStateEnum.EnemyAttack)
 			{
 				currentBattleState = BattleStateEnum.InitKill;
-				bool shouldFlipPlayer = currentCharacter.transform.localRotation.y != 0 && playerCharacters.Contains(currentCharacter);
-				bool shouldFlipEnemy = currentCharacter.transform.localRotation.y != 180 && enemyCharacters.Contains(currentCharacter);
+				bool shouldFlipPlayer = currentCharacter.transform.localEulerAngles.y != 0 && playerCharacters.Contains(currentCharacter);
+				bool shouldFlipEnemy = Mathf.RoundToInt(currentCharacter.transform.localEulerAngles.y) != 180 && enemyCharacters.Contains(currentCharacter);
 				if(shouldFlipPlayer || shouldFlipEnemy)
 				{
 					currentCharacter.transform.Rotate(0, 180, 0);
@@ -613,7 +737,7 @@ public class BattleManager : MonoBehaviour {
 			case CharacterAttackStateEnum.InitAttack:
 				if(playerCharacters.Contains(currentCharacter))
 				{
-					ActionCommand command = (Instantiate(Engine.self.RapidCommandPrefab, Vector3.one, Quaternion.identity) as GameObject).GetComponent<ActionCommand>();
+					ActionCommand command = (Instantiate(Engine.self.rapidCommandPrefab, Vector3.one, Quaternion.identity) as GameObject).GetComponent<ActionCommand>();
 					command.transform.SetParent(Engine.self.CoreCanvas.transform, false);
 					command.ActionKey = "z";
 					command.DestroyTime = 3;
@@ -624,9 +748,8 @@ public class BattleManager : MonoBehaviour {
 			case CharacterAttackStateEnum.MovePreAction:
 				if(currentCharacter.HitGameObject == targetUnfriendlies[0].gameObject)
 				{
-					_setWait(currentBattleState, 1);
 					currentCharacter.GetComponent<Rigidbody>().velocity = Vector3.zero;
-					currentCharacterAttackState = CharacterAttackStateEnum.ActionCommand;
+					_setWait(CharacterAttackStateEnum.ActionCommand, 1); // pause briefly before swiping at enemy
 				}
 				break;
 			case CharacterAttackStateEnum.ActionCommand:
@@ -638,13 +761,12 @@ public class BattleManager : MonoBehaviour {
 				}
 				break;
 			case CharacterAttackStateEnum.ApplyAttack:
-				bool mystics = true;
+				bool mystics = false;
 
 				if(mystics == true)
 				{
 					_damageTarget(currentCharacter, 1);
-					_setWait(currentBattleState, Damage.popTime + .25f);
-					currentCharacterAttackState = CharacterAttackStateEnum.HandleFail;
+					_setWait(CharacterAttackStateEnum.HandleFail, Damage.popTime + .25f);
 					break;
 				}
 
@@ -652,13 +774,12 @@ public class BattleManager : MonoBehaviour {
 				{
 					bonus -= 1;
 					_damageTarget(targetUnfriendlies[0], activeAttack.BaseDamage + currentCharacter.Sheet.pow);
-					_setWait(currentBattleState, Damage.popTime + 1f);
+					_setWait(CharacterAttackStateEnum.ApplyAttack, Damage.popTime + 1f); // pause then swing, this will happen repeatedly until player runs out of bonus
 				}
 				else
 				{
 					currentCharacter.transform.Rotate(0, 180, 0);
-					_setWait(currentBattleState, .25f); // small wait to visually seperate attacking from returning
-					currentCharacterAttackState = CharacterAttackStateEnum.MovePostAction;
+					_setWait(CharacterAttackStateEnum.MovePostAction, .25f); // small wait to visually seperate attacking from returning
 				}
 				break;
 			case CharacterAttackStateEnum.HandleFail:
@@ -686,8 +807,7 @@ public class BattleManager : MonoBehaviour {
 				_damageTarget(targetUnfriendlies[0], activeAttack.BaseDamage + currentCharacter.Sheet.pow);
 				//_damageTarget(targetUnfriendlies[1], activeAttack.BaseDamage + currentCharacter.Sheet.pow);
 				//_damageTarget(targetUnfriendlies[2], activeAttack.BaseDamage + currentCharacter.Sheet.pow);
-				_setWait(currentBattleState, Damage.popTime + 1f);
-				currentCharacterAttackState = CharacterAttackStateEnum.MovePostAction;
+				_setWait(CharacterAttackStateEnum.MovePostAction, Damage.popTime + 1f);
 				break;
 			case CharacterAttackStateEnum.MovePostAction:
 				_goToStart(currentCharacter);
@@ -705,7 +825,7 @@ public class BattleManager : MonoBehaviour {
 		switch(currentCharacterAttackState)
 		{
 			case CharacterAttackStateEnum.InitAttack:
-				PrecisionCommand command = (Instantiate(Engine.self.PrecisionCommandPrefab) as GameObject).GetComponent<PrecisionCommand>();
+				PrecisionCommand command = (Instantiate(Engine.self.precisionCommandPrefab) as GameObject).GetComponent<PrecisionCommand>();
 				command.transform.SetParent(Engine.self.CoreCanvas.transform, false);
 				command.ActionKey = "v";
 				command.DestroyTime = 99;
@@ -716,13 +836,50 @@ public class BattleManager : MonoBehaviour {
 			case CharacterAttackStateEnum.MovePreAction:
 				break;
 			case CharacterAttackStateEnum.ActionCommand:
+				if(!FindObjectOfType<ActionCommand>())
+				{
+					if(bonus == 0)
+					{
+						currentCharacterAttackState = CharacterAttackStateEnum.MovePostAction;
+						Engine.self.AudioSource.PlayOneShot(Engine.self.BuzzClip);
+					}
+					else
+					{
+						//signify success
+						_setWait(CharacterAttackStateEnum.ApplyAttack, 1f);
+					}
+				}
 				break;
 			case CharacterAttackStateEnum.ApplyAttack:
-				_setWait(currentBattleState, Damage.popTime + 1f);
-				currentCharacterAttackState = CharacterAttackStateEnum.MovePostAction;
+				Engine.self.Fleeing = true;
+				Engine.self._initiateSceneChange(Engine.self.CurrentWorldSceneName, doorEnum.ReturnFromBattle);
+				currentBattleState = BattleStateEnum.Flee;
 				break;
 			case CharacterAttackStateEnum.MovePostAction:
 				_goToStart(currentCharacter);
+				break;
+		}
+	}
+
+	public void _poisonTest()
+	{
+		switch(currentCharacterAttackState)
+		{
+			case CharacterAttackStateEnum.InitAttack:
+				GameObject effectGO = Instantiate(Engine.self.statusEffectPrefab);
+				Poison effect = effectGO.AddComponent<Poison>();
+				effect.Turns = 2;
+				targetUnfriendlies[0]._addStatusEffect(effect);
+				currentCharacterAttackState = CharacterAttackStateEnum.MovePreAction;
+				_goToStart(currentCharacter);
+				break;
+			case CharacterAttackStateEnum.MovePreAction:
+				break;
+			case CharacterAttackStateEnum.ActionCommand:
+				break;
+			case CharacterAttackStateEnum.ApplyAttack:
+				break;
+			case CharacterAttackStateEnum.MovePostAction:
 				break;
 		}
 	}

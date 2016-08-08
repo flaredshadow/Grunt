@@ -8,21 +8,54 @@ public class PrecisionCommand : ActionCommand
 	public Image bullseye;
 	public Image arrow;
 
-	public override void _checkPress()
+	float arrowSpeed = 2f;
+
+	public float ArrowSpeed {
+		get {
+			return arrowSpeed;
+		}
+		set {
+			arrowSpeed = value;
+		}
+	}
+
+	int arrowMoveDirection = Random.Range(0, 1);
+	float reversalThresh = .25f;
+
+	public override void _activeUpdate()
 	{
+		if(arrowMoveDirection == 0)
 		{
-			//InvokeRepeating("_switchSprite", 0, .1f);
+			arrow.rectTransform.anchoredPosition = Vector2.MoveTowards(arrow.rectTransform.anchoredPosition, new Vector2(bar.rectTransform.rect.xMin, arrow.rectTransform.anchoredPosition.y), arrowSpeed);
+			if(Mathf.Abs(arrow.rectTransform.anchoredPosition.x - bar.rectTransform.rect.xMin) < reversalThresh)
+			{
+				arrowMoveDirection = 1;
+			}
+		}
+		else
+		{
+			arrow.rectTransform.anchoredPosition = Vector2.MoveTowards(arrow.rectTransform.anchoredPosition, new Vector2(bar.rectTransform.rect.xMax, arrow.rectTransform.anchoredPosition.y), arrowSpeed);
+			if(Mathf.Abs(arrow.rectTransform.anchoredPosition.x - bar.rectTransform.rect.xMax) < reversalThresh)
+			{
+				arrowMoveDirection = 0;
+			}
 		}
 
 		if(Input.GetKeyDown(ActionKey))
 		{
-			//BattleManager.self.Bonus += 1;
+			if(arrow.rectTransform.anchoredPosition.x > bullseye.rectTransform.rect.xMin && arrow.rectTransform.anchoredPosition.x < bullseye.rectTransform.rect.xMax)
+			{
+				BattleManager.self.Bonus = 1;
+			}
+
+			Destroy(gameObject);
 		}
 	}
 
 	public void _randomizeArrowPos()
 	{
 		//success!
-		arrow.rectTransform.localPosition = new Vector2(bar.rectTransform.rect.xMin, arrow.rectTransform.localPosition.y);
+		float randX = Random.Range(bar.rectTransform.rect.xMin, bar.rectTransform.rect.xMax);
+		arrow.rectTransform.localPosition = new Vector2(randX, arrow.rectTransform.localPosition.y);
 	}
 }

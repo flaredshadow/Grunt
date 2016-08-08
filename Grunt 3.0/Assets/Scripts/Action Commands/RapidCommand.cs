@@ -6,7 +6,7 @@ public class RapidCommand : ActionCommand
 {
 	bool isAnimating = false;
 
-	public override void _checkPress()
+	public override void _activeUpdate()
 	{
 		if(isAnimating == false)
 		{

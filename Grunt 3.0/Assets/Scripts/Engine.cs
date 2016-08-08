@@ -8,10 +8,12 @@ using System.Runtime.Serialization.Formatters.Binary;
 using System.Runtime.Serialization;
 
 public enum GameStateEnum {BeginGame, Dialogue, Paused, CutScene, OverWorldPlay, BattlePlay, EnterScene, ExitScene, Ending}
-public enum BattleStateEnum {InitPlayerDecide, PlayerDecide, InitPlayerAttack, PlayerAttack, EnemyDecide, EnemyAttack, PlayerWin, PlayerLose, Flee, InitKill, AdjustLineUp, Wait}
+public enum BattleStateEnum {InitPlayerDecide, PlayerDecide, InitPlayerAttack, PlayerAttack, EnemyDecide, EnemyAttack, PlayerWin, PlayerLose, Flee, InitKill, AdjustLineUp, Wait,
+ResolveStatusEffects}
 public enum CharacterAttackStateEnum {InitAttack, MovePreAction, ActionCommand,  ApplyAttack, HandleFail, MovePostAction}
 public enum WorldPlayerStateEnum {Grounded, Airborne, TakeAction}
-public enum SpoilsStateEnum {AddExp, AddCoins, LevelUp, Wait};
+public enum SpoilsStateEnum {AddExp, AddCoins, LevelUp, Wait}
+public enum StatusEffectStateEnum {InitApply, ActivelyApply, FinishApply}
 
 public enum doorEnum {A, B, C, ReturnFromBattle, SavePoint, None}
 public enum formEnum {Animal, Monster, Machine}
@@ -25,9 +27,8 @@ public class Engine : MonoBehaviour
 	public static string startingSceneName = "StartingAreaScene";
 	public static List<string> visitedScenes = new List<string>();
 
-	#region Prefab variables
 	public GameObject worldPlayer, battleCharacterPrefab, buttonPrefab, dropDownPrefab, rapidCommandPrefab, precisionCommandPrefab, damagePrefab, tombStonePrefab, playerHudPrefab, explosionPrefab,
-	spoilsPrefab, pauseMenuPrefab, plusPrefab;
+	spoilsPrefab, pauseMenuPrefab, plusPrefab, statusEffectPrefab;
 
 	public Canvas coreCanvas;
 
@@ -37,69 +38,6 @@ public class Engine : MonoBehaviour
 		}
 		set {
 			coreCanvas = value;
-		}
-	}
-
-	public GameObject ButtonPrefab {
-		get {
-			return buttonPrefab;
-		}
-		set {
-			buttonPrefab = value;
-		}
-	}
-
-	public GameObject DropDownPrefab {
-		get {
-			return dropDownPrefab;
-		}
-		set {
-			dropDownPrefab = value;
-		}
-	}
-
-	public GameObject RapidCommandPrefab {
-		get {
-			return rapidCommandPrefab;
-		}
-		set {
-			rapidCommandPrefab = value;
-		}
-	}
-
-	public GameObject PrecisionCommandPrefab {
-		get {
-			return precisionCommandPrefab;
-		}
-		set {
-			precisionCommandPrefab = value;
-		}
-	}
-
-	public GameObject DamagePrefab {
-		get {
-			return damagePrefab;
-		}
-		set {
-			damagePrefab = value;
-		}
-	}
-
-	public GameObject TombStonePrefab {
-		get {
-			return tombStonePrefab;
-		}
-		set {
-			tombStonePrefab = value;
-		}
-	}
-
-	public GameObject PlayerHudPrefab {
-		get {
-			return playerHudPrefab;
-		}
-		set {
-			playerHudPrefab = value;
 		}
 	}
 
@@ -128,8 +66,6 @@ public class Engine : MonoBehaviour
 	}
 
 	public Sprite zUp, zDown, xUp, xDown, cUp, cDown, vUp, vDown;
-
-	#endregion
 
 	#region non-Prefab variables
 
@@ -430,7 +366,7 @@ public class Engine : MonoBehaviour
 					else
 					{
 						CurrentGameState = GameStateEnum.BattlePlay;
-						BattleManager.self.CurrentBattleState = BattleStateEnum.InitPlayerDecide;
+						BattleManager.self.CurrentBattleState = BattleStateEnum.ResolveStatusEffects;//add first strike logic here
 					}
 				}
 				break;

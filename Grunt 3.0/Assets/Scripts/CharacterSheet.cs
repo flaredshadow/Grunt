@@ -22,10 +22,10 @@ public class CharacterSheet
 		switch(givenRank)
 		{
 			case rankEnum.Rat:
-				hp = 1;
 				maxHp = 10;
-				sp = 10;
+				hp = maxHp;
 				maxSp = 10;
+				sp = maxSp;
 				pow = 3;
 				def = 3;
 				hpGain = 2;
@@ -38,6 +38,7 @@ public class CharacterSheet
 				coinWorth = 1;
 				form = formEnum.Animal;
 				rank = rankEnum.Rat;
+				abilities.Add(new PoisonTest());
 				abilities.Add(new SquirmingClaws());
 				spells.Add(new PlagueBite());
 				spells.Add(new SewerStench());

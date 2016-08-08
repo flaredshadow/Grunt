@@ -9,6 +9,8 @@ public class PlayerHud : MonoBehaviour {
 
 	public Text nameLabel, levelLabel, hpLabel, spLabel, expLabel, powLabel, defLabel, electiveLabel;
 
+	public LayoutGroup statusEffectsLayoutGroup;
+
 	CharacterSheet sheet;
 
 	public CharacterSheet Sheet {

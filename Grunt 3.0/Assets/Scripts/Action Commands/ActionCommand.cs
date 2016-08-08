@@ -93,7 +93,7 @@ public class ActionCommand : MonoBehaviour
 			if(BattleManager.self.CurrentCharacterAttackState == CharacterAttackStateEnum.ActionCommand)
 			{
 				Destroy(gameObject, destroyTime);
-				_checkPress();
+				_activeUpdate();
 			}
 
 			if(BattleManager.self.CurrentCharacterAttackState == CharacterAttackStateEnum.ApplyAttack)
@@ -103,7 +103,7 @@ public class ActionCommand : MonoBehaviour
 		}
 	}
 
-	public virtual void _checkPress()
+	public virtual void _activeUpdate()
 	{
 		
 	}

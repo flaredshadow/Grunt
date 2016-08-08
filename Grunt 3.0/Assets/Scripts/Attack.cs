@@ -5,7 +5,7 @@ using System;
 [Serializable]
 public class Attack
 {
-	string attackName;
+	protected string attackName;
 
 	public string AttackName {
 		get {
@@ -16,7 +16,7 @@ public class Attack
 		}
 	}
 
-	int baseDamage;
+	protected int baseDamage;
 
 	public int BaseDamage {
 		get {
@@ -27,7 +27,7 @@ public class Attack
 		}
 	}
 
-	int spCost;
+	protected int spCost;
 
 	public int SpCost {
 		get {
@@ -38,7 +38,7 @@ public class Attack
 		}
 	}
 
-	int numberOfTargets;
+	protected int numberOfTargets;
 
 	public int NumberOfTargets {
 		get {
@@ -49,7 +49,7 @@ public class Attack
 		}
 	}
 
-	attackTargetEnum targetType;
+	protected attackTargetEnum targetType;
 
 	public attackTargetEnum TargetType {
 		get {
@@ -60,7 +60,7 @@ public class Attack
 		}
 	}
 
-	int attackActionIndex;
+	protected int attackActionIndex;
 
 	public int AttackActionIndex {
 		get {
@@ -77,12 +77,12 @@ public class SquirmingClaws : Attack
 {
 	public SquirmingClaws()
 	{
-		AttackName = "Squirming Claws";
-		BaseDamage = 1;
-		SpCost = 0;
-		NumberOfTargets = 1;
-		TargetType = attackTargetEnum.ChooseEnemy;
-		AttackActionIndex = BattleManager.self.AttackActionsList.IndexOf(BattleManager.self._squirmingClaws);
+		attackName = "Squirming Claws";
+		baseDamage = 1;
+		spCost = 0;
+		numberOfTargets = 1;
+		targetType = attackTargetEnum.ChooseEnemy;
+		attackActionIndex = BattleManager.self.AttackActionsList.IndexOf(BattleManager.self._squirmingClaws);
 	}
 }
 
@@ -91,12 +91,12 @@ public class PlagueBite : Attack
 {
 	public PlagueBite()
 	{
-		AttackName = "Plague Bite";
-		BaseDamage = 2;
-		SpCost = 0;
-		NumberOfTargets = 3;
-		TargetType = attackTargetEnum.ChooseEnemy;
-		AttackActionIndex = BattleManager.self.AttackActionsList.IndexOf(BattleManager.self._plagueBite);
+		attackName = "Plague Bite";
+		baseDamage = 2;
+		spCost = 0;
+		numberOfTargets = 3;
+		targetType = attackTargetEnum.ChooseEnemy;
+		attackActionIndex = BattleManager.self.AttackActionsList.IndexOf(BattleManager.self._plagueBite);
 	}
 }
 
@@ -105,12 +105,12 @@ public class SewerStench : Attack
 {
 	public SewerStench()
 	{
-		AttackName = "Sewer Stench";
-		BaseDamage = 0;
-		SpCost = 2;
-		NumberOfTargets = 1;
-		TargetType = attackTargetEnum.Self;
-		AttackActionIndex = BattleManager.self.AttackActionsList.IndexOf(BattleManager.self._sewerStench);
+		attackName = "Sewer Stench";
+		baseDamage = 0;
+		spCost = 2;
+		numberOfTargets = 1;
+		targetType = attackTargetEnum.Self;
+		attackActionIndex = BattleManager.self.AttackActionsList.IndexOf(BattleManager.self._sewerStench);
 	}
 }
 
@@ -119,11 +119,25 @@ public class Flee : Attack
 {
 	public Flee()
 	{
-		AttackName = "Flee";
-		BaseDamage = 0;
-		SpCost = 0;
-		NumberOfTargets = 1;
-		TargetType = attackTargetEnum.Self;
-		AttackActionIndex = BattleManager.self.AttackActionsList.IndexOf(BattleManager.self._flee);
+		attackName = "Flee";
+		baseDamage = 0;
+		spCost = 0;
+		numberOfTargets = 1;
+		targetType = attackTargetEnum.Self;
+		attackActionIndex = BattleManager.self.AttackActionsList.IndexOf(BattleManager.self._flee);
+	}
+}
+
+[Serializable]
+public class PoisonTest : Attack
+{
+	public PoisonTest()
+	{
+		attackName = "Poison Test";
+		baseDamage = 0;
+		spCost = 0;
+		numberOfTargets = 1;
+		targetType = attackTargetEnum.FirstEnemy;
+		attackActionIndex = BattleManager.self.AttackActionsList.IndexOf(BattleManager.self._poisonTest);
 	}
 }

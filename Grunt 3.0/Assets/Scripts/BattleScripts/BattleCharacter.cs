@@ -1,12 +1,13 @@
 ﻿using UnityEngine;
 using System.Collections;
 using UnityEngine.UI;
+using System.Collections.Generic;
 
 public class BattleCharacter : MonoBehaviour {
-	//*********** Status Conditions should be stored in here, not in the Sheet
+
 	CharacterSheet sheet;
 
-	Vector3 hudHeight = Vector3.down*3.7f;
+	Vector3 hudVertSpacing = Vector3.down*3.25f;
 
 	public CharacterSheet Sheet {
 		get {
@@ -28,28 +29,6 @@ public class BattleCharacter : MonoBehaviour {
 		}
 	}
 
-	int bonusPow;
-
-	public int BonusPow {
-		get {
-			return bonusPow;
-		}
-		set {
-			bonusPow = value;
-		}
-	}
-
-	int bonusDef;
-
-	public int BonusDef {
-		get {
-			return bonusDef;
-		}
-		set {
-			bonusDef = value;
-		}
-	}
-
 	PlayerHud hud;
 
 	public PlayerHud Hud {
@@ -61,10 +40,21 @@ public class BattleCharacter : MonoBehaviour {
 		}
 	}
 
+	List<StatusEffect> statusEffectsList = new List<StatusEffect>();
+
+	public List<StatusEffect> StatusEffectsList {
+		get {
+			return statusEffectsList;
+		}
+		set {
+			statusEffectsList = value;
+		}
+	}
+
 	// Use this for initialization
 	void Start () {
-		Vector3 hudPosition = RectTransformUtility.WorldToScreenPoint(Engine.self.cam, transform.localPosition + hudHeight);
-		hud = (Instantiate(Engine.self.PlayerHudPrefab, hudPosition, Quaternion.identity) as GameObject).GetComponent<PlayerHud>();
+		Vector3 hudPosition = RectTransformUtility.WorldToScreenPoint(Engine.self.cam, transform.localPosition + hudVertSpacing);
+		hud = (Instantiate(Engine.self.playerHudPrefab, hudPosition, Quaternion.identity) as GameObject).GetComponent<PlayerHud>();
 		hud.transform.SetParent(Engine.self.CoreCanvas.transform, true);
 		hud.transform.localScale = Vector3.one;
 		hud.Sheet = sheet;
@@ -82,6 +72,52 @@ public class BattleCharacter : MonoBehaviour {
 
 	public void _updateHudPosition()
 	{
-		hud.transform.position = RectTransformUtility.WorldToScreenPoint(Engine.self.cam, transform.localPosition + hudHeight);// don't want to use local position once already child of canvas
+		hud.transform.position = RectTransformUtility.WorldToScreenPoint(Engine.self.cam, transform.localPosition + hudVertSpacing);// don't want to use local position once already child of canvas
+	}
+
+	public void _addStatusEffect(StatusEffect givenStatusEffect)
+	{
+		foreach(StatusEffect effectsIter in statusEffectsList)
+		{
+			if(givenStatusEffect.GetType() == effectsIter.GetType())
+			{
+				effectsIter.Turns += givenStatusEffect.Turns;
+				Destroy(givenStatusEffect.gameObject);
+				return;
+			}
+		}
+
+		if(statusEffectsList.Count < 10) // 10 is the current maximum that can be fit neatly
+		{
+			statusEffectsList.Add(givenStatusEffect);
+			givenStatusEffect.Owner = this;
+			givenStatusEffect.transform.SetParent(hud.statusEffectsLayoutGroup.transform);
+			givenStatusEffect.transform.localScale = Vector3.one;
+		}
+		else
+		{
+			Engine.self.AudioSource.PlayOneShot(Engine.self.BuzzClip);
+			Debug.Log("Maximum amount of status effects");
+		}
+	}
+
+	public int _sumAllHpBuffs()
+	{
+		return 0;
+	}
+
+	public int _sumAllSpBuffs()
+	{
+		return 0;
+	}
+
+	public int _sumAllPowBuffs()
+	{
+		return 0;
+	}
+
+	public int _sumAllDefBuffs()
+	{
+		return 0;
 	}
 }

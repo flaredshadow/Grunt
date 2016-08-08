@@ -46,7 +46,7 @@ public class Explosion : MonoBehaviour {
 			Destroy(killTarget);
 			if(spawnTombStone == true)
 			{
-				Instantiate(Engine.self.TombStonePrefab, tombStonePos, Quaternion.identity);
+				Instantiate(Engine.self.tombStonePrefab, tombStonePos, Quaternion.identity);
 				spawnTombStone = false;
 			}
 		}
