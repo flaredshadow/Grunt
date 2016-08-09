@@ -5,7 +5,7 @@ using System.Collections;
 public class RegionContents : MonoBehaviour {
 	
 	public int minAdditionalEnemies, maxAdditionalEnemies;
-	public rankEnum[] sceneEnemyRanks;
+	public rankTypeEnum[] sceneEnemyRanks;
 
 
 	void Start () {
@@ -21,6 +21,6 @@ public class RegionContents : MonoBehaviour {
 	{
 		Engine.self.MinAdditionalEnemies = minAdditionalEnemies;
 		Engine.self.MaxAdditionalEnemies = maxAdditionalEnemies;
-		Engine.self.SceneEnemyRanks = sceneEnemyRanks;
+		Engine.self.SceneEnemyRankTypes = sceneEnemyRanks;
 	}
 }

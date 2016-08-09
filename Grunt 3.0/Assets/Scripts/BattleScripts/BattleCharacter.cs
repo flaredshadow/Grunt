@@ -87,7 +87,7 @@ public class BattleCharacter : MonoBehaviour {
 			}
 		}
 
-		if(statusEffectsList.Count < 10) // 10 is the current maximum that can be fit neatly
+		if(statusEffectsList.Count < hud.GetComponentInChildren<GridLayoutGroup>().constraintCount * 2) // 10 is the current maximum that can be fit neatly under the hud
 		{
 			statusEffectsList.Add(givenStatusEffect);
 			givenStatusEffect.Owner = this;

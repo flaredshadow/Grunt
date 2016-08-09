@@ -6,7 +6,7 @@ public class RapidCommand : ActionCommand
 {
 	bool isAnimating = false;
 
-	public override void _activeUpdate()
+	public override void _activeChildUpdate()
 	{
 		if(isAnimating == false)
 		{

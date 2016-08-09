@@ -1,18 +1,9 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public class WorldEnemy : MonoBehaviour {
+public class NPC : MonoBehaviour {
 
-	public rankTypeEnum rank;
-
-	public rankTypeEnum RankType {
-		get {
-			return rank;
-		}
-		set {
-			rank = value;
-		}
-	}
+	public string[] dialogue;
 
 	// Use this for initialization
 	void Start () {

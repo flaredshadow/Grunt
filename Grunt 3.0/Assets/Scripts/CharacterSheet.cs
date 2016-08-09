@@ -7,22 +7,22 @@ using UnityEngine.UI;
 public class CharacterSheet
 {
 
-	public int exp = 0, maxExp = 10, maxExpGrowth = 3, level = 1, hp, maxHp, sp, maxSp, pow, def, electivePoints = 0,
+	public int exp = 0, maxExp = 10, maxExpGrowth = 3, rank = 1, hp, maxHp, sp, maxSp, pow, def, electivePoints = 0,
 	hpGain, spGain, powGain, defGain, electivePointsGain, expWorth, coinWorth;
 	public string characterName;
 	public formEnum form;
-	public rankEnum rank;
+	public rankTypeEnum rankType;
 	public List<Attack> abilities = new List<Attack>();
 	public List<Attack> spells = new List<Attack>();
 	public Attack retreat;
 
-	public void _initRank(rankEnum givenRank)
+	public void _initRank(rankTypeEnum givenRankType)
 	{
 		retreat = new Flee();
-		switch(givenRank)
+		switch(givenRankType)
 		{
-			case rankEnum.Rat:
-				maxHp = 10;
+			case rankTypeEnum.Rat:
+				maxHp = 4;
 				hp = maxHp;
 				maxSp = 10;
 				sp = maxSp;
@@ -34,10 +34,10 @@ public class CharacterSheet
 				defGain = 1;
 				electivePointsGain = 2;
 				characterName = "Rat";
-				expWorth = 1 * level;
+				expWorth = 30 * rank;
 				coinWorth = 1;
 				form = formEnum.Animal;
-				rank = rankEnum.Rat;
+				rankType = rankTypeEnum.Rat;
 				abilities.Add(new PoisonTest());
 				abilities.Add(new SquirmingClaws());
 				spells.Add(new PlagueBite());
@@ -61,7 +61,7 @@ public class CharacterSheet
 		return odList;
 	}
 
-	public void _levelUp()
+	public void _rankUp()
 	{
 		maxHp += hpGain;
 		hp = maxHp;

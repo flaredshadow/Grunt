@@ -49,7 +49,7 @@ public class Spoils : MonoBehaviour {
 				case SpoilsStateEnum.AddCoins:
 					_addCoins();
 					break;
-				case SpoilsStateEnum.LevelUp:
+				case SpoilsStateEnum.RankUp:
 					break;
 				case SpoilsStateEnum.Wait:
 					break;
@@ -87,18 +87,18 @@ public class Spoils : MonoBehaviour {
 					currentSheet.exp += 1;
 					if(currentSheet.exp == currentSheet.maxExp)
 					{
-						currentSheet.level += 1;
+						currentSheet.rank += 1;
 						currentSheet.exp = 0;
 						currentSheet.maxExp *= currentSheet.maxExpGrowth;
-						currentSpoilsState = SpoilsStateEnum.LevelUp;
-						currentSheet._levelUp();
+						currentSpoilsState = SpoilsStateEnum.RankUp;
+						currentSheet._rankUp();
 						Pause.self.huds[i]._makeStatAdders();
 					}
 				}
 			}
 
 			BattleManager.self.ExpEarned -= 1;
-			if(currentSpoilsState == SpoilsStateEnum.AddExp)//only tally more EXP if not set to LevelUp state
+			if(currentSpoilsState == SpoilsStateEnum.AddExp)//only tally more EXP if not set to RankUp state
 			{
 				_setWait(SpoilsStateEnum.AddExp, waitTime);
 			}

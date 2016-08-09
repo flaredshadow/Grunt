@@ -12,12 +12,12 @@ public enum BattleStateEnum {InitPlayerDecide, PlayerDecide, InitPlayerAttack, P
 ResolveStatusEffects}
 public enum CharacterAttackStateEnum {InitAttack, MovePreAction, ActionCommand,  ApplyAttack, HandleFail, MovePostAction}
 public enum WorldPlayerStateEnum {Grounded, Airborne, TakeAction}
-public enum SpoilsStateEnum {AddExp, AddCoins, LevelUp, Wait}
+public enum SpoilsStateEnum {AddExp, AddCoins, RankUp, Wait}
 public enum StatusEffectStateEnum {InitApply, ActivelyApply, FinishApply}
 
 public enum doorEnum {A, B, C, ReturnFromBattle, SavePoint, None}
 public enum formEnum {Animal, Monster, Machine}
-public enum rankEnum {Rat, Bat, Boar, Falcon, Wolf, Pterodactyl, Bear, Zombie, Toaster}
+public enum rankTypeEnum {Rat, Bat, Boar, Falcon, Wolf, Pterodactyl, Bear, Zombie, Toaster}
 public enum attackTargetEnum {FirstEnemy, ChooseEnemy, Self, FirstAlly, ChooseAlly, AllEnemies, AllAllies, AllCharacters}
 
 public class Engine : MonoBehaviour
@@ -27,8 +27,10 @@ public class Engine : MonoBehaviour
 	public static string startingSceneName = "StartingAreaScene";
 	public static List<string> visitedScenes = new List<string>();
 
-	public GameObject worldPlayer, battleCharacterPrefab, buttonPrefab, dropDownPrefab, rapidCommandPrefab, precisionCommandPrefab, damagePrefab, tombStonePrefab, playerHudPrefab, explosionPrefab,
-	spoilsPrefab, pauseMenuPrefab, plusPrefab, statusEffectPrefab;
+	public GameObject worldPlayer, battleCharacterPrefab, buttonPrefab, dropDownPrefab, rapidCommandPrefab, precisionCommandPrefab, damagePrefab, tombStonePrefab, playerHudPrefab,
+	explosionPrefab, spoilsPrefab, pauseMenuPrefab, plusPrefab, statusEffectPrefab, dialogueBoxPrefab;
+
+	public Sprite poisonIcon, paralysisIcon;
 
 	public Canvas coreCanvas;
 
@@ -240,25 +242,25 @@ public class Engine : MonoBehaviour
 		}
 	}
 
-	rankEnum firstEnemyRank;
+	rankTypeEnum firstEnemyRankType;
 
-	public rankEnum FirstEnemyRank {
+	public rankTypeEnum FirstEnemyRankType {
 		get {
-			return firstEnemyRank;
+			return firstEnemyRankType;
 		}
 		set {
-			firstEnemyRank = value;
+			firstEnemyRankType = value;
 		}
 	}
 
-	rankEnum[] sceneEnemyRanks;
+	rankTypeEnum[] sceneEnemyRankTypes;
 
-	public rankEnum[] SceneEnemyRanks {
+	public rankTypeEnum[] SceneEnemyRankTypes {
 		get {
-			return sceneEnemyRanks;
+			return sceneEnemyRankTypes;
 		}
 		set {
-			sceneEnemyRanks = value;
+			sceneEnemyRankTypes = value;
 		}
 	}
 
@@ -328,7 +330,7 @@ public class Engine : MonoBehaviour
 					Debug.Log ("Saved");
 				}
 				if (Input.GetKeyDown ("m")) {
-					Debug.Log (mainCharacterSheet.rank);
+					Debug.Log (mainCharacterSheet.rankType);
 				}
 				break;
 			case GameStateEnum.BattlePlay:
@@ -564,15 +566,15 @@ public class Engine : MonoBehaviour
 			bc.transform.localPosition = _getLineUpPosition(bc);
 			if (i == 0) {
 				CharacterSheet firstSheet = new CharacterSheet ();
-				firstSheet._initRank (firstEnemyRank);
+				firstSheet._initRank (firstEnemyRankType);
 				bc.Sheet = firstSheet;
 			} else {
 				CharacterSheet otherSheet = new CharacterSheet ();
-				if (sceneEnemyRanks.Length > 0) {
-					int randomRankIndex = Random.Range (0, sceneEnemyRanks.Length);
-					otherSheet._initRank (sceneEnemyRanks [randomRankIndex]);
+				if (sceneEnemyRankTypes.Length > 0) {
+					int randomRankIndex = Random.Range (0, sceneEnemyRankTypes.Length);
+					otherSheet._initRank (sceneEnemyRankTypes [randomRankIndex]);
 				} else {
-					otherSheet._initRank (firstEnemyRank);
+					otherSheet._initRank (firstEnemyRankType);
 				}
 				bc.Sheet = otherSheet;
 			}

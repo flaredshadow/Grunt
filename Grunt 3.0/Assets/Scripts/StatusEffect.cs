@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections;
+using UnityEngine.UI;
 
 public class StatusEffect : MonoBehaviour {
 
@@ -42,7 +43,7 @@ public class StatusEffect : MonoBehaviour {
 	protected int powBuff;
 	protected int defBuff;
 
-	// eventually have Icons
+	protected Sprite icon;
 
 	// Use this for initialization
 	void Start () {
@@ -93,6 +94,8 @@ public class Poison : StatusEffect
 	public Poison()
 	{
 		statusName = "Poisoned";
+		icon = Engine.self.poisonIcon;
+		transform.GetChild(0).GetComponent<Image>().sprite = icon;
 	}
 
 	public override void _applyInitChildEffect()

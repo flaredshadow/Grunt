@@ -16,6 +16,17 @@ public class WorldPlayer : MonoBehaviour {
 	WorldPlayerStateEnum currentWorldPlayerState = WorldPlayerStateEnum.Grounded;
 	Rigidbody rBody;
 
+	GameObject touchingNPC = null;
+
+	public GameObject TouchingNPC {
+		get {
+			return touchingNPC;
+		}
+		set {
+			touchingNPC = value;
+		}
+	}
+
 	// Use this for initialization
 	void Start ()
 	{
@@ -33,7 +44,14 @@ public class WorldPlayer : MonoBehaviour {
 			switch(currentWorldPlayerState)
 			{
 				case WorldPlayerStateEnum.Grounded:
-					_jump();
+					if(touchingNPC == null)
+					{
+						_jump();
+					}
+					else if (Input.GetKeyDown("z"))
+					{
+						_chatNPC();
+					}
 					break;
 
 				case WorldPlayerStateEnum.Airborne:
@@ -45,7 +63,6 @@ public class WorldPlayer : MonoBehaviour {
 				_pause();
 			}
 		}
-	
 	}
 
 	void FixedUpdate ()
@@ -58,7 +75,7 @@ public class WorldPlayer : MonoBehaviour {
 		if(Engine.self.CurrentGameState == GameStateEnum.OverWorldPlay)
 		{
 			switch(other.gameObject.tag)
-			{	
+			{
 				case "Door":
 					Door DoorScript = other.gameObject.GetComponent<Door> ();
 					Engine.self._initiateSceneChange (DoorScript.nextArea, DoorScript.doorEnumVal);
@@ -68,7 +85,7 @@ public class WorldPlayer : MonoBehaviour {
 					if(invincible == false)
 					{
 						Engine.self.EncounterOverworldEnemy = other.gameObject;
-						Engine.self.FirstEnemyRank = other.gameObject.GetComponent<WorldEnemy>().Rank;//make first battle enemy always match the overworld enemy
+						Engine.self.FirstEnemyRankType = other.gameObject.GetComponent<WorldEnemy>().RankType;//make first battle enemy always match the overworld enemy
 						Engine.self._goToBattle();
 					}
 					break;
@@ -77,7 +94,40 @@ public class WorldPlayer : MonoBehaviour {
 					Engine.self._addItem(other.GetComponent<WorldItem>().ItemInstance);
 					Destroy(other.gameObject);
 					break;
+				case "NPC":
+					touchingNPC = other.gameObject;
+					break;
 			}
+		}
+	}
+
+	void OnTriggerExit(Collider other)
+	{
+		if(Engine.self.CurrentGameState == GameStateEnum.OverWorldPlay)
+		{
+			switch(other.gameObject.tag)
+			{
+				case "NPC":
+					touchingNPC = null;
+					break;
+			}
+		}
+	}
+
+	void _chatNPC()
+	{
+		//Time.timeScale = 0; // not sure if I want this
+		Engine.self.CurrentGameState = GameStateEnum.Dialogue;
+		DialogueBox diaBox = Instantiate(Engine.self.dialogueBoxPrefab).GetComponent<DialogueBox>();
+		diaBox.transform.SetParent(Engine.self.coreCanvas.transform, false);
+		string[] npcDialogue = touchingNPC.GetComponent<NPC>().dialogue;
+		if(npcDialogue.Length > 0) 
+		{
+			diaBox.dialogueLabel.text = npcDialogue[0];
+		}
+		else
+		{
+			diaBox.dialogueLabel.text = "oops, this NPC has no dialogue at all.";
 		}
 	}
 

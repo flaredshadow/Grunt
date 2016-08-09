@@ -19,10 +19,15 @@ public class PrecisionCommand : ActionCommand
 		}
 	}
 
-	int arrowMoveDirection = Random.Range(0, 1);
+	int arrowMoveDirection;
 	float reversalThresh = .25f;
 
-	public override void _activeUpdate()
+	public override void _childStart()
+	{
+		arrowMoveDirection = Random.Range(0, 1);
+	}
+
+	public override void _activeChildUpdate()
 	{
 		if(arrowMoveDirection == 0)
 		{
@@ -41,9 +46,18 @@ public class PrecisionCommand : ActionCommand
 			}
 		}
 
+		if(arrow.rectTransform.anchoredPosition.x > bullseye.rectTransform.rect.xMin && arrow.rectTransform.anchoredPosition.x < bullseye.rectTransform.rect.xMax)
+		{
+			commandImage.sprite = DownSprite;
+		}
+		else
+		{
+			commandImage.sprite = UpSprite;
+		}
+
 		if(Input.GetKeyDown(ActionKey))
 		{
-			if(arrow.rectTransform.anchoredPosition.x > bullseye.rectTransform.rect.xMin && arrow.rectTransform.anchoredPosition.x < bullseye.rectTransform.rect.xMax)
+			if(commandImage.sprite == DownSprite)
 			{
 				BattleManager.self.Bonus = 1;
 			}

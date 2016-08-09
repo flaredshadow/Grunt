@@ -65,22 +65,22 @@ public class ButtonControl : MonoBehaviour {
 					b.onClick.AddListener(
 						delegate
 							{
-								charSheet._initRank(rankEnum.Rat);
+								charSheet._initRank(rankTypeEnum.Rat);
 								CharacterSheet charSheet2 = new CharacterSheet();// only for testing purposes
 								Engine.self._addSheetToParty(charSheet2);// only for testing purposes
-								charSheet2._initRank(rankEnum.Rat);// only for testing purposes
+								charSheet2._initRank(rankTypeEnum.Rat);// only for testing purposes
 								Engine.self.CurrentSaveInstance.savedPlayerSheets = GameSave.DeepClone<List<CharacterSheet>>(Engine.self.PlayerSheets); // damn deep clones
 							});
 					break;
 				case 2:
 					bText.text = "Monster";
 					Engine.self.CurrentSaveInstance.savedPlayerSheets = GameSave.DeepClone<List<CharacterSheet>>(Engine.self.PlayerSheets);
-					b.onClick.AddListener(delegate{charSheet._initRank(rankEnum.Zombie);});
+					b.onClick.AddListener(delegate{charSheet._initRank(rankTypeEnum.Zombie);});
 					break;
 				case 3:
 					bText.text = "Machine";
 					Engine.self.CurrentSaveInstance.savedPlayerSheets = GameSave.DeepClone<List<CharacterSheet>>(Engine.self.PlayerSheets);
-					b.onClick.AddListener(delegate{charSheet._initRank(rankEnum.Toaster);});
+					b.onClick.AddListener(delegate{charSheet._initRank(rankTypeEnum.Toaster);});
 					break;
 			}
 		}

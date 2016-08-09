@@ -5,9 +5,9 @@ using UnityEngine.UI;
 
 public class PlayerHud : MonoBehaviour {
 
-	public static int hudsLeveling = 0;
+	public static int hudsRankingUp = 0;
 
-	public Text nameLabel, levelLabel, hpLabel, spLabel, expLabel, powLabel, defLabel, electiveLabel;
+	public Text nameLabel, rankLabel, hpLabel, spLabel, expLabel, powLabel, defLabel, electiveLabel;
 
 	public LayoutGroup statusEffectsLayoutGroup;
 
@@ -44,13 +44,12 @@ public class PlayerHud : MonoBehaviour {
 	void _updateLabels()
 	{
 		nameLabel.text = sheet.characterName;
-		levelLabel.text = "Level : " + sheet.level;
-		hpLabel.text = "HP : " + sheet.hp;
-		spLabel.text = "SP : " + sheet.sp;
+		rankLabel.text = "R : " + sheet.rank;
+		hpLabel.text = "HP : " + sheet.hp + " / " + sheet.maxHp;
+		spLabel.text = "SP : " + sheet.sp + " / " + sheet.maxSp;
 		if(expLabel != null)
 		{
-			hpLabel.text += " / " + sheet.maxHp;
-			spLabel.text += " / " + sheet.maxSp;
+			rankLabel.text = "Rank : " + sheet.rank;
 			expLabel.text = "EXP : " + sheet.exp + " / " + sheet.maxExp;
 			powLabel.text = "POW : " + sheet.pow;
 			defLabel.text = "DEF : " + sheet.def;
@@ -63,7 +62,7 @@ public class PlayerHud : MonoBehaviour {
 		Vector3 spacing = new Vector3(40, 0, 0);
 		List<Button> plusList = new List<Button>();
 		int numberOfStats = 4;
-		hudsLeveling += 1;//static counter of all huds that are in the process of leveling up
+		hudsRankingUp += 1;//static counter of all huds that are in the process of ranking up
 
 		for(int i = 0; i < numberOfStats; i++)
 		{
@@ -76,8 +75,8 @@ public class PlayerHud : MonoBehaviour {
 						sheet.electivePoints -= 1;
 						if(sheet.electivePoints == 0)
 						{
-							hudsLeveling -= 1;
-							if(hudsLeveling == 0)
+							hudsRankingUp -= 1;
+							if(hudsRankingUp == 0)
 							{
 								Spoils.self.CurrentSpoilsState = SpoilsStateEnum.AddExp;
 							}

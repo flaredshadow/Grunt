@@ -4,7 +4,7 @@ using UnityEngine.UI;
 
 public class ActionCommand : MonoBehaviour
 {
-	Image commandImage;
+	protected Image commandImage;
 
 	public Image CommandImage {
 		get {
@@ -83,6 +83,8 @@ public class ActionCommand : MonoBehaviour
 				break;
 		}
 		commandImage.sprite = upSprite;
+
+		_childStart();
 	}
 	
 	// Update is called once per frame
@@ -93,7 +95,7 @@ public class ActionCommand : MonoBehaviour
 			if(BattleManager.self.CurrentCharacterAttackState == CharacterAttackStateEnum.ActionCommand)
 			{
 				Destroy(gameObject, destroyTime);
-				_activeUpdate();
+				_activeChildUpdate();
 			}
 
 			if(BattleManager.self.CurrentCharacterAttackState == CharacterAttackStateEnum.ApplyAttack)
@@ -103,9 +105,14 @@ public class ActionCommand : MonoBehaviour
 		}
 	}
 
-	public virtual void _activeUpdate()
+	public virtual void _childStart()
 	{
 		
+	}
+
+	public virtual void _activeChildUpdate()
+	{
+
 	}
 
 	public void _switchSprite()
