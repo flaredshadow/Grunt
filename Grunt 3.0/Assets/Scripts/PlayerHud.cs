@@ -2,12 +2,15 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine.UI;
+using System.Reflection;
 
 public class PlayerHud : MonoBehaviour {
 
 	public static int hudsRankingUp = 0;
 
 	public Text nameLabel, rankLabel, hpLabel, spLabel, expLabel, powLabel, defLabel, electiveLabel;
+	public Button useSpellButton;
+	public Dropdown hudSpellDD;
 
 	public LayoutGroup statusEffectsLayoutGroup;
 
@@ -25,7 +28,38 @@ public class PlayerHud : MonoBehaviour {
 	// Use this for initialization
 	void Start ()
 	{
-		
+		if(useSpellButton != null)
+		{
+			if(Engine.self.CurrentGameState != GameStateEnum.Paused)
+			{
+				Destroy(useSpellButton.gameObject);
+			}
+			else
+			{
+				useSpellButton.GetComponentInChildren<Dropdown>().AddOptions (sheet._attacksToOptions (sheet.spells));
+				useSpellButton.onClick.AddListener (
+					delegate {
+						Attack currentSelectedSpell = null;
+						bool isOverride = false;
+
+						if(sheet.spells.Count > 0)
+						{
+							currentSelectedSpell = sheet.spells[hudSpellDD.value];
+							MethodInfo mInfo = currentSelectedSpell.GetType().GetMethod("_overworldFunction");
+							isOverride = !mInfo.Equals(mInfo.GetBaseDefinition());
+						}
+						if (currentSelectedSpell != null && sheet.sp >= sheet.spells[hudSpellDD.value].SpCost && isOverride == true)
+						{
+							sheet.spells[hudSpellDD.value]._overworldFunction();
+							sheet.sp -= sheet.spells[hudSpellDD.value].SpCost;
+						}
+						else
+						{
+							Engine.self.AudioSource.PlayOneShot (Engine.self.BuzzClip);
+						}
+					});
+			}
+		}
 	}
 	
 	// Update is called once per frame

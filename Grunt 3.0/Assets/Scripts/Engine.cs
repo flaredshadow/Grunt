@@ -652,7 +652,7 @@ public class Engine : MonoBehaviour
 		}
 
 		givenItem.Amount -= removalAmount;
-		if(removalAmount == 0)
+		if(givenItem.Amount == 0)
 		{
 			playerBattleItems.Remove(givenItem);
 		}

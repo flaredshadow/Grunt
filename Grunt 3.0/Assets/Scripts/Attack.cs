@@ -60,15 +60,13 @@ public class Attack
 		}
 	}
 
-	protected int attackActionIndex;
+	public virtual void _battleFunction()
+	{
+		
+	}
 
-	public int AttackActionIndex {
-		get {
-			return attackActionIndex;
-		}
-		set {
-			attackActionIndex = value;
-		}
+	public virtual void _overworldFunction()
+	{
 	}
 }
 
@@ -82,7 +80,16 @@ public class SquirmingClaws : Attack
 		spCost = 0;
 		numberOfTargets = 1;
 		targetType = attackTargetEnum.ChooseEnemy;
-		attackActionIndex = BattleManager.self.AttackActionsList.IndexOf(BattleManager.self._squirmingClaws);
+	}
+
+	public override void _battleFunction()
+	{
+		BattleManager.self._squirmingClaws();
+	}
+
+	public override void _overworldFunction()
+	{
+		Debug.Log("Oworld test success");
 	}
 }
 
@@ -96,7 +103,16 @@ public class PlagueBite : Attack
 		spCost = 0;
 		numberOfTargets = 3;
 		targetType = attackTargetEnum.ChooseEnemy;
-		attackActionIndex = BattleManager.self.AttackActionsList.IndexOf(BattleManager.self._plagueBite);
+	}
+
+	public override void _battleFunction()
+	{
+		BattleManager.self._plagueBite();
+	}
+
+	public override void _overworldFunction()
+	{
+		Debug.Log("Oworld test success");
 	}
 }
 
@@ -110,7 +126,11 @@ public class SewerStench : Attack
 		spCost = 2;
 		numberOfTargets = 1;
 		targetType = attackTargetEnum.Self;
-		attackActionIndex = BattleManager.self.AttackActionsList.IndexOf(BattleManager.self._sewerStench);
+	}
+
+	public override void _battleFunction()
+	{
+		BattleManager.self._sewerStench();
 	}
 }
 
@@ -124,7 +144,11 @@ public class Flee : Attack
 		spCost = 0;
 		numberOfTargets = 1;
 		targetType = attackTargetEnum.Self;
-		attackActionIndex = BattleManager.self.AttackActionsList.IndexOf(BattleManager.self._flee);
+	}
+
+	public override void _battleFunction()
+	{
+		BattleManager.self._flee();
 	}
 }
 
@@ -138,6 +162,10 @@ public class PoisonTest : Attack
 		spCost = 0;
 		numberOfTargets = 1;
 		targetType = attackTargetEnum.FirstEnemy;
-		attackActionIndex = BattleManager.self.AttackActionsList.IndexOf(BattleManager.self._poisonTest);
+	}
+
+	public override void _battleFunction()
+	{
+		BattleManager.self._poisonTest();
 	}
 }

@@ -60,3 +60,14 @@ public class Potion : Item
 		PurchaseValue = 5;
 	}
 }
+
+[Serializable]
+public class OtherPotion : Item
+{
+	public OtherPotion()
+	{
+		ItemName = "Other Test Potion";
+		ItemAttack = new SquirmingClaws();
+		PurchaseValue = 5;
+	}
+}

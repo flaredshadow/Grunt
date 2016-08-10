@@ -180,26 +180,10 @@ public class BattleManager : MonoBehaviour
 
 	float walkSpeed = 10;
 
-	List<Action> attackActionsList = new List<Action> ();
-
-	public List<Action> AttackActionsList {
-		get {
-			return attackActionsList;
-		}
-		set {
-			attackActionsList = value;
-		}
-	}
-
 	// Use this for initialization
 	void Start ()
 	{
 		self = this;
-		attackActionsList.Add (_squirmingClaws);
-		attackActionsList.Add (_plagueBite);
-		attackActionsList.Add (_sewerStench);
-		attackActionsList.Add (_flee);
-		attackActionsList.Add (_poisonTest);
 	}
 
 	public void _resetVariables ()//does not reset the states, maybe it should?
@@ -288,7 +272,7 @@ public class BattleManager : MonoBehaviour
 					currentCharacterAttackState = CharacterAttackStateEnum.InitAttack;
 					break;
 				case BattleStateEnum.PlayerAttack:
-					attackActionsList [activeAttack.AttackActionIndex] ();
+					activeAttack._battleFunction ();
 					break;
 				case BattleStateEnum.EnemyDecide:
 					currentCharacterAttackState = CharacterAttackStateEnum.InitAttack;
@@ -334,7 +318,7 @@ public class BattleManager : MonoBehaviour
 					currentBattleState = BattleStateEnum.EnemyAttack;
 					break;
 				case BattleStateEnum.EnemyAttack:
-					attackActionsList [activeAttack.AttackActionIndex] ();
+					activeAttack._battleFunction ();
 					break;
 				case BattleStateEnum.InitKill:
 					targetUnfriendlies.Clear ();
@@ -410,7 +394,7 @@ public class BattleManager : MonoBehaviour
 						else if (enemyCharacters.Count == 0)
 						{
 							currentBattleState = BattleStateEnum.PlayerWin;
-							expEarned = Mathf.RoundToInt(expEarned / (float)playerCharacters.Count); 
+							expEarned = Mathf.RoundToInt (expEarned / (float)playerCharacters.Count); 
 							GameObject spoilsDisplay = Instantiate (Engine.self.spoilsPrefab);
 							spoilsDisplay.transform.SetParent (Engine.self.coreCanvas.transform, false);
 						}
