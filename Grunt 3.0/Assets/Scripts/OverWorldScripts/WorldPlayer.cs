@@ -37,6 +37,11 @@ public class WorldPlayer : MonoBehaviour {
 	
 	// Update is called once per frame
 	void Update () {
+		if(Input.GetKeyDown("m"))
+		{
+			Engine.self.PlayerCoins += 10;
+		}
+
 		if(Engine.self.CurrentGameState == GameStateEnum.OverWorldPlay)
 		{
 			_movePlayer();
@@ -118,16 +123,25 @@ public class WorldPlayer : MonoBehaviour {
 	{
 		//Time.timeScale = 0; // not sure if I want this
 		Engine.self.CurrentGameState = GameStateEnum.Dialogue;
-		DialogueBox diaBox = Instantiate(Engine.self.dialogueBoxPrefab).GetComponent<DialogueBox>();
-		diaBox.transform.SetParent(Engine.self.coreCanvas.transform, false);
-		string[] npcDialogue = touchingNPC.GetComponent<NPC>().dialogue;
-		if(npcDialogue.Length > 0) 
+		NPC npcScript = touchingNPC.GetComponent<NPC>();
+
+		if(npcScript.isShopOwner)
 		{
-			diaBox.dialogueLabel.text = npcDialogue[0];
+			Instantiate(Engine.self.shopPrefab).transform.SetParent(Engine.self.CoreCanvas.transform, false);
 		}
 		else
 		{
-			diaBox.dialogueLabel.text = "oops, this NPC has no dialogue at all.";
+			DialogueBox diaBox = Instantiate(Engine.self.dialogueBoxPrefab).GetComponent<DialogueBox>();
+			diaBox.transform.SetParent(Engine.self.coreCanvas.transform, false);
+			string[] npcDialogue = npcScript.dialogue;
+			if(npcDialogue.Length > 0) 
+			{
+				diaBox.dialogueLabel.text = npcDialogue[0];
+			}
+			else
+			{
+				diaBox.dialogueLabel.text = "oops, this NPC has no dialogue at all.";
+			}
 		}
 	}
 

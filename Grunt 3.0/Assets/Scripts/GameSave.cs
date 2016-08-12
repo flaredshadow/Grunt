@@ -50,7 +50,7 @@ public class GameSave {
 		worldPlayerZ = WorldPlayer.self.gameObject.transform.position.z;
 		savedSceneName = Engine.self.CurrentWorldSceneName;
 		savedCoins = Engine.self.PlayerCoins;
-		savedPlayerSheets = DeepClone<List<CharacterSheet>>(Engine.self.PlayerSheets);
+		savedPlayerSheets = Engine.DeepClone<List<CharacterSheet>>(Engine.self.PlayerSheets);
 		mainCharacterIndex = Engine.self.PlayerSheets.IndexOf(Engine.self.MainCharacterSheet);
 		//Debug.Log("values put in GameSave instance");
 	}
@@ -60,20 +60,8 @@ public class GameSave {
 		//savedSceneName is handled in Engine's _loadFile
 		WorldPlayer.self.gameObject.transform.position = new Vector3(worldPlayerX, worldPlayerY, worldPlayerZ);
 		Engine.self.PlayerCoins = savedCoins;
-		Engine.self.PlayerSheets = DeepClone<List<CharacterSheet>>(savedPlayerSheets);
+		Engine.self.PlayerSheets = Engine.DeepClone<List<CharacterSheet>>(savedPlayerSheets);
 		Engine.self.MainCharacterSheet = Engine.self.PlayerSheets[mainCharacterIndex];
 		//Debug.Log("values uploaded, but maybe worldPlayer being inactive meant no change");
-	}
-
-	public static T DeepClone<T> (T obj)
-	{
-		using (MemoryStream ms = new MemoryStream())
-		{
-			BinaryFormatter formatter = new BinaryFormatter ();
-			formatter.Serialize (ms, obj);
-			ms.Position = 0;
-
-			return (T)formatter.Deserialize (ms);
-		}
 	}
 }

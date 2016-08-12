@@ -35,7 +35,7 @@ public class CharacterSheet
 				electivePointsGain = 2;
 				characterName = "Rat";
 				expWorth = 30 * rank;
-				coinWorth = 1;
+				coinWorth = 2;
 				form = formEnum.Animal;
 				rankType = rankTypeEnum.Rat;
 				abilities.Add(new PoisonTest());

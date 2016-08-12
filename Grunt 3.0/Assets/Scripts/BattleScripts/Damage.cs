@@ -6,6 +6,9 @@ public class Damage : MonoBehaviour {
 
 	public static float popTime = 1.25f;
 
+	public Text damageLabel;
+	public Sprite healSprite;
+
 	public int scaleDirection = 1;
 
 	Vector3 scaleGrowth;
@@ -16,7 +19,7 @@ public class Damage : MonoBehaviour {
 		Destroy(gameObject, popTime);
 		if(scaleDirection < 0)
 		{
-			GetComponentInChildren<Text>().transform.Rotate(0, 180, 0);
+			damageLabel.transform.Rotate(0, 180, 0);
 		}
 		scaleGrowth = new Vector3(.1f * scaleDirection, .1f, 0);
 	}
@@ -28,5 +31,12 @@ public class Damage : MonoBehaviour {
 		{
 			transform.localScale += scaleGrowth;
 		}
+	}
+
+	public void _setToHeal()
+	{
+		GetComponent<Image>().sprite = healSprite;
+		damageLabel.color = Color.white;
+		damageLabel.rectTransform.anchoredPosition = new Vector2(0, -8); 
 	}
 }

@@ -27,6 +27,17 @@ public class Attack
 		}
 	}
 
+	protected int baseHealing;
+
+	public int BaseHealing {
+		get {
+			return baseHealing;
+		}
+		set {
+			baseHealing = value;
+		}
+	}
+
 	protected int spCost;
 
 	public int SpCost {
@@ -77,6 +88,7 @@ public class SquirmingClaws : Attack
 	{
 		attackName = "Squirming Claws";
 		baseDamage = 1;
+		baseHealing = 0;
 		spCost = 0;
 		numberOfTargets = 1;
 		targetType = attackTargetEnum.ChooseEnemy;
@@ -100,6 +112,7 @@ public class PlagueBite : Attack
 	{
 		attackName = "Plague Bite";
 		baseDamage = 2;
+		baseHealing = 0;
 		spCost = 0;
 		numberOfTargets = 3;
 		targetType = attackTargetEnum.ChooseEnemy;
@@ -123,6 +136,7 @@ public class SewerStench : Attack
 	{
 		attackName = "Sewer Stench";
 		baseDamage = 0;
+		baseHealing = 0;
 		spCost = 2;
 		numberOfTargets = 1;
 		targetType = attackTargetEnum.Self;
@@ -141,6 +155,7 @@ public class Flee : Attack
 	{
 		attackName = "Flee";
 		baseDamage = 0;
+		baseHealing = 0;
 		spCost = 0;
 		numberOfTargets = 1;
 		targetType = attackTargetEnum.Self;
@@ -159,6 +174,7 @@ public class PoisonTest : Attack
 	{
 		attackName = "Poison Test";
 		baseDamage = 0;
+		baseHealing = 0;
 		spCost = 0;
 		numberOfTargets = 1;
 		targetType = attackTargetEnum.FirstEnemy;
@@ -167,5 +183,24 @@ public class PoisonTest : Attack
 	public override void _battleFunction()
 	{
 		BattleManager.self._poisonTest();
+	}
+}
+
+[Serializable]
+public class HealTest : Attack
+{
+	public HealTest()
+	{
+		attackName = "Heal Test";
+		baseDamage = 0;
+		baseHealing = 2;
+		spCost = 0;
+		numberOfTargets = 1;
+		targetType = attackTargetEnum.Self;
+	}
+
+	public override void _battleFunction()
+	{
+		BattleManager.self._healTest();
 	}
 }

@@ -28,7 +28,7 @@ public class Engine : MonoBehaviour
 	public static List<string> visitedScenes = new List<string>();
 
 	public GameObject worldPlayer, battleCharacterPrefab, buttonPrefab, dropDownPrefab, rapidCommandPrefab, precisionCommandPrefab, damagePrefab, tombStonePrefab, playerHudPrefab,
-	explosionPrefab, spoilsPrefab, pauseMenuPrefab, plusPrefab, statusEffectPrefab, dialogueBoxPrefab;
+	explosionPrefab, spoilsPrefab, pauseMenuPrefab, plusPrefab, statusEffectPrefab, dialogueBoxPrefab, shopPrefab;
 
 	public Sprite poisonIcon, paralysisIcon;
 
@@ -82,7 +82,7 @@ public class Engine : MonoBehaviour
 		}
 	}
 
-	int currentFileNumber, minAdditionalEnemies, maxAdditionalEnemies, playerCoins = 0;
+	int currentFileNumber, minAdditionalEnemies, maxAdditionalEnemies, playerCoins;
 
 	public int CurrentFileNumber {
 		get {
@@ -120,14 +120,14 @@ public class Engine : MonoBehaviour
 		}
 	}
 
-	List<Item> playerBattleItems = new List<Item>();
+	List<Item> playerUsableItems = new List<Item>();
 
-	public List<Item> PlayerBattleItems {
+	public List<Item> PlayerUsableItems {
 		get {
-			return playerBattleItems;
+			return playerUsableItems;
 		}
 		set {
-			playerBattleItems = value;
+			playerUsableItems = value;
 		}
 	}
 
@@ -329,7 +329,7 @@ public class Engine : MonoBehaviour
 					_saveFile ();
 					Debug.Log ("Saved");
 				}
-				if (Input.GetKeyDown ("m")) {
+				if (Input.GetKeyDown ("r")) {
 					Debug.Log (mainCharacterSheet.rankType);
 				}
 				break;
@@ -615,33 +615,33 @@ public class Engine : MonoBehaviour
 		playerSheets.Add (givenSheet);
 	}
 
-	public List<Dropdown.OptionData> _battleItemsToOptions(bool showCosts, bool buying)
+	public List<string> _battleItemsToOptions(bool showCosts)
 	{
-		List<Dropdown.OptionData> odList = new List<Dropdown.OptionData>();
-		foreach(Item pBItem in playerBattleItems)
+		List<string> odList = new List<string>();
+		foreach(Item pBItem in playerUsableItems)
 		{
 			string itemText = pBItem.ItemName + ", " + pBItem.Amount;
 			if(showCosts == true)
 			{
-				itemText += " : " + pBItem.PurchaseValue + " Gold";//need to incorporate buying bool
+				itemText += " : " + pBItem.PurchaseValue + " Coins";
 			}
-			odList.Add(new Dropdown.OptionData(){text = itemText});
+			odList.Add(itemText);
 		}
 		return odList;
 	}
 
 	public void _addItem(Item givenItem)
 	{
-		foreach(Item itm in playerBattleItems)
+		foreach(Item itm in playerUsableItems)
 		{
 			if(itm.GetType() == givenItem.GetType())
 			{
 				itm.Amount += givenItem.Amount;
-				break;
+				return;
 			}
 		}
 
-		playerBattleItems.Add(givenItem);
+		playerUsableItems.Add(givenItem);
 	}
 
 	public bool _removeItem(Item givenItem, int removalAmount)//returns false when more trying to remove more of an item than you have
@@ -654,9 +654,27 @@ public class Engine : MonoBehaviour
 		givenItem.Amount -= removalAmount;
 		if(givenItem.Amount == 0)
 		{
-			playerBattleItems.Remove(givenItem);
+			playerUsableItems.Remove(givenItem);
 		}
 
 		return true;
+	}
+
+	public static System.Type _fetchTypeByName (string given) // just keeping this here for *unlikely* future need
+	{
+		System.Type type = System.Reflection.Assembly.GetExecutingAssembly ().GetType (given);
+		return type;
+	}
+
+	public static T DeepClone<T> (T obj)
+	{
+		using (MemoryStream ms = new MemoryStream())
+		{
+			BinaryFormatter formatter = new BinaryFormatter ();
+			formatter.Serialize (ms, obj);
+			ms.Position = 0;
+
+			return (T)formatter.Deserialize (ms);
+		}
 	}
 }

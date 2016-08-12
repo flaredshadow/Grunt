@@ -114,7 +114,7 @@ public class Spoils : MonoBehaviour {
 		float waitTime = 1f / (BattleManager.self.CoinsEarned + 1);
 		if(BattleManager.self.CoinsEarned > 0)
 		{
-			Engine.self.PlayerCoins += 1;
+			Engine.self.PlayerCoins += BattleManager.self.CoinsEarned;
 			BattleManager.self.CoinsEarned -= 1;
 			_setWait(SpoilsStateEnum.AddCoins, waitTime);
 		}

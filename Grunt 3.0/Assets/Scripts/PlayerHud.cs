@@ -136,4 +136,12 @@ public class PlayerHud : MonoBehaviour {
 		plusList[3].transform.position = defLabel.transform.position + spacing;
 		plusList[3].onClick.AddListener(delegate{sheet.def += 1;});
 	}
+
+	void OnDestroy()
+	{
+		if(hudSpellDD != null)
+		{
+			hudSpellDD.Hide(); // needed to prevent leftover blockers
+		}
+	}
 }

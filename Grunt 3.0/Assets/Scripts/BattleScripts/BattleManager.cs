@@ -492,7 +492,7 @@ public class BattleManager : MonoBehaviour
 
 		Dropdown itemDD = (Instantiate (Engine.self.dropDownPrefab, mainDDPosition - ddOffsetPosition, Quaternion.identity) as GameObject).GetComponent<Dropdown> ();
 		itemDD.transform.SetParent (Engine.self.CoreCanvas.transform, false);
-		itemDD.AddOptions (Engine.self._battleItemsToOptions (false, false));
+		itemDD.AddOptions (Engine.self._battleItemsToOptions (false));
 
 		Button abilityButton = (Instantiate (Engine.self.buttonPrefab, mainDDPosition + buttonOffsetPosition, Quaternion.identity) as GameObject).GetComponent<Button> ();
 		abilityButton.GetComponentInChildren<Text> ().text = "Abilities";
@@ -538,9 +538,9 @@ public class BattleManager : MonoBehaviour
 			});
 		itemButton.onClick.AddListener (
 			delegate {
-				if (Engine.self.PlayerBattleItems.Count > 0)
+				if (Engine.self.PlayerUsableItems.Count > 0)
 				{
-					itemToBeUsed = Engine.self.PlayerBattleItems [itemDD.value];
+					itemToBeUsed = Engine.self.PlayerUsableItems [itemDD.value];
 					_activateOption (itemToBeUsed.ItemAttack);
 				}
 				else
@@ -693,7 +693,24 @@ public class BattleManager : MonoBehaviour
 		damageScript.transform.localPosition = damagePosition;
 		damageScript.transform.SetParent (Engine.self.CoreCanvas.transform, true);
 		damageScript.transform.localScale = Vector3.zero;//when setting the parent, true keeps the position correct, but enlargers the scale, this is an easy fix
-		damageScript.GetComponentInChildren<Text> ().text = damageTaken.ToString ();
+		damageScript.damageLabel.text = damageTaken.ToString ();
+	}
+
+	public void _healTarget (BattleCharacter targ, int givenHealing)
+	{
+		targ.Sheet.hp += givenHealing;
+		targ.Sheet.hp = Mathf.Min (targ.Sheet.hp, targ.Sheet.maxHp);
+		Vector3 damagePosition = RectTransformUtility.WorldToScreenPoint (Engine.self.cam, targ.transform.localPosition);
+		Damage damageScript = (Instantiate (Engine.self.damagePrefab) as GameObject).GetComponent<Damage> ();
+		damageScript._setToHeal();
+		if (playerCharacters.Contains (targ))
+		{
+			damageScript.scaleDirection = -1;
+		}
+		damageScript.transform.localPosition = damagePosition;
+		damageScript.transform.SetParent (Engine.self.CoreCanvas.transform, true);
+		damageScript.transform.localScale = Vector3.zero;//when setting the parent, true keeps the position correct, but enlargers the scale, this is an easy fix
+		damageScript.damageLabel.text = givenHealing.ToString ();
 	}
 
 	void _goToStart (BattleCharacter givenBC)
@@ -859,6 +876,26 @@ public class BattleManager : MonoBehaviour
 				Poison effect = effectGO.AddComponent<Poison> ();
 				effect.Turns = 2;
 				targetUnfriendlies [0]._addStatusEffect (effect);
+				currentCharacterAttackState = CharacterAttackStateEnum.MovePreAction;
+				_goToStart (currentCharacter);
+				break;
+			case CharacterAttackStateEnum.MovePreAction:
+				break;
+			case CharacterAttackStateEnum.ActionCommand:
+				break;
+			case CharacterAttackStateEnum.ApplyAttack:
+				break;
+			case CharacterAttackStateEnum.MovePostAction:
+				break;
+		}
+	}
+
+	public void _healTest()
+	{
+		switch (currentCharacterAttackState)
+		{
+			case CharacterAttackStateEnum.InitAttack:
+				_healTarget (targetFriendlies [0], activeAttack.BaseHealing);
 				currentCharacterAttackState = CharacterAttackStateEnum.MovePreAction;
 				_goToStart (currentCharacter);
 				break;

@@ -56,7 +56,7 @@ public class Potion : Item
 	public Potion()
 	{
 		ItemName = "Test Potion";
-		ItemAttack = new SquirmingClaws();
+		ItemAttack = new HealTest();
 		PurchaseValue = 5;
 	}
 }

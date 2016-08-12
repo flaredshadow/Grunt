@@ -34,7 +34,7 @@ public class Pause : MonoBehaviour
 		}
 		else
 		{
-			pauseItemDD.AddOptions(Engine.self._battleItemsToOptions (false, false));
+			pauseItemDD.AddOptions(Engine.self._battleItemsToOptions (false));
 			saveButton.onClick.AddListener(delegate {Engine.self._saveFile();});
 
 			useItemButton.onClick.AddListener (
@@ -42,19 +42,24 @@ public class Pause : MonoBehaviour
 					Item currentSelectedItem = null;
 					bool isOverride = false;
 
-					if (Engine.self.PlayerBattleItems.Count > 0)
+					if (Engine.self.PlayerUsableItems.Count > 0)
 					{
-						currentSelectedItem = Engine.self.PlayerBattleItems[pauseItemDD.value];
+						currentSelectedItem = Engine.self.PlayerUsableItems[pauseItemDD.value];
 						MethodInfo mInfo = currentSelectedItem.ItemAttack.GetType().GetMethod("_overworldFunction");
 						isOverride = !mInfo.Equals(mInfo.GetBaseDefinition());
 					}
 
 					if (currentSelectedItem != null && isOverride == true)
 					{
+						bool depleteItemType = currentSelectedItem.Amount == 1;
 						currentSelectedItem.ItemAttack._overworldFunction();
 						Engine.self._removeItem (currentSelectedItem, 1);
 						pauseItemDD.ClearOptions();
-						pauseItemDD.AddOptions(Engine.self._battleItemsToOptions (false, false));
+						pauseItemDD.AddOptions(Engine.self._battleItemsToOptions (false));
+						if(depleteItemType == true)
+						{
+							pauseItemDD.value -= 1;
+						}
 					}
 					else
 					{
@@ -66,7 +71,7 @@ public class Pause : MonoBehaviour
 	
 	// Update is called once per frame
 	void Update ()
-	{
+	{			
 		if(Engine.self.CurrentGameState == GameStateEnum.EnterScene)
 		{
 			Destroy(gameObject);
@@ -84,6 +89,14 @@ public class Pause : MonoBehaviour
 					Engine.self.CurrentGameState = GameStateEnum.OverWorldPlay;
 				}
 			}
+		}
+	}
+
+	void OnDestroy()
+	{
+		if(pauseItemDD != null)
+		{
+			pauseItemDD.Hide(); // needed to prevent leftover blockers
 		}
 	}
 }
