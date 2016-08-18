@@ -39,9 +39,48 @@ public class StatusEffect : MonoBehaviour {
 	}
 
 	protected int hpBuff;
+
+	public int HpBuff {
+		get {
+			return hpBuff;
+		}
+		set {
+			hpBuff = value;
+		}
+	}
+
 	protected int spBuff;
+
+	public int SpBuff {
+		get {
+			return spBuff;
+		}
+		set {
+			spBuff = value;
+		}
+	}
+
 	protected int powBuff;
+
+	public int PowBuff {
+		get {
+			return powBuff;
+		}
+		set {
+			powBuff = value;
+		}
+	}
+
 	protected int defBuff;
+
+	public int DefBuff {
+		get {
+			return defBuff;
+		}
+		set {
+			defBuff = value;
+		}
+	}
 
 	protected Sprite icon;
 
@@ -117,5 +156,16 @@ public class Poison : StatusEffect
 		Debug.Log("waiting on effect resolution");
 		BattleManager.self._setWait(BattleStateEnum.ResolveStatusEffects, .5f);
 		base._applyFinishChildEffect();
+	}
+}
+
+public class Stench : StatusEffect
+{
+	public Stench()
+	{
+		statusName = "Stenched";
+		icon = Engine.self.shieldIcon;
+		transform.GetChild(0).GetComponent<Image>().sprite = icon;
+		defBuff = 2;
 	}
 }

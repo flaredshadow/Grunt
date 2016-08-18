@@ -4,9 +4,7 @@ using UnityEngine.UI;
 
 public class PrecisionCommand : ActionCommand
 {
-	public Image bar;
-	public Image bullseye;
-	public Image arrow;
+	public Image bar, bullseye, arrow;
 
 	float arrowSpeed = 2f;
 
@@ -48,16 +46,16 @@ public class PrecisionCommand : ActionCommand
 
 		if(arrow.rectTransform.anchoredPosition.x > bullseye.rectTransform.rect.xMin && arrow.rectTransform.anchoredPosition.x < bullseye.rectTransform.rect.xMax)
 		{
-			commandImage.sprite = DownSprite;
+			commandImage.sprite = keyDownSprite;
 		}
 		else
 		{
-			commandImage.sprite = UpSprite;
+			commandImage.sprite = keyUpSprite;
 		}
 
 		if(Input.GetKeyDown(ActionKey))
 		{
-			if(commandImage.sprite == DownSprite)
+			if(commandImage.sprite == keyDownSprite)
 			{
 				BattleManager.self.Bonus = 1;
 			}

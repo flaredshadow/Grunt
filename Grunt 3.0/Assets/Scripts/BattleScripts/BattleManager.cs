@@ -78,7 +78,7 @@ public class BattleManager : MonoBehaviour
 		}
 	}
 
-	int bonus;
+	int bonus = 0;
 
 	public int Bonus {
 		get {
@@ -188,8 +188,9 @@ public class BattleManager : MonoBehaviour
 
 	public void _resetVariables ()//does not reset the states, maybe it should?
 	{
-		playerCharacters.Clear ();
-		enemyCharacters.Clear ();
+		playerCharacters.Clear();
+		enemyCharacters.Clear();
+		Engine.self.EnemyUsableItems.Clear();
 		activeAttack = null;
 		statusEffectsResolved = 0;
 		bonus = 0;
@@ -277,7 +278,7 @@ public class BattleManager : MonoBehaviour
 				case BattleStateEnum.EnemyDecide:
 					currentCharacterAttackState = CharacterAttackStateEnum.InitAttack;
 					//need Ai for enemies ***
-					activeAttack = currentCharacter.Sheet.abilities [0];
+					activeAttack = currentCharacter.Sheet.spells [0];
 					//need Ai for enemies ***
 					switch (activeAttack.TargetType)
 					{
@@ -324,6 +325,7 @@ public class BattleManager : MonoBehaviour
 					targetUnfriendlies.Clear ();
 					targetFriendlies.Clear ();
 					activeAttack = null;
+					bonus = 0;
 					bool madeExplosion = false;
 					float tombStoneHeight = 17.75f;
 					foreach (BattleCharacter playerC in playerCharacters)
@@ -681,7 +683,7 @@ public class BattleManager : MonoBehaviour
 	public void _damageTarget (BattleCharacter targ, int givenDamage)
 	{
 		int damageDealt = givenDamage; // later this will be modified by weakness/resistance
-		int damageTaken = Mathf.Max (1, damageDealt - (targ.Sheet.def)); // minimum 1 damage is always taken
+		int damageTaken = Mathf.Max (1, damageDealt - (targ.Sheet.def + targ._sumAllDefBuffs())); // minimum 1 damage is always taken
 		targ.Sheet.hp -= damageTaken;
 		targ.Sheet.hp = Mathf.Max (0, targ.Sheet.hp);//minimum hp is 0
 		Vector3 damagePosition = RectTransformUtility.WorldToScreenPoint (Engine.self.cam, targ.transform.localPosition);
@@ -744,7 +746,6 @@ public class BattleManager : MonoBehaviour
 				if (playerCharacters.Contains (currentCharacter))
 				{
 					ActionCommand command = (Instantiate (Engine.self.rapidCommandPrefab, Vector3.one, Quaternion.identity) as GameObject).GetComponent<ActionCommand> ();
-					command.transform.SetParent (Engine.self.CoreCanvas.transform, false);
 					command.ActionKey = "z";
 					command.DestroyTime = 3;
 				}
@@ -823,7 +824,66 @@ public class BattleManager : MonoBehaviour
 
 	public void _sewerStench ()
 	{
+		switch (currentCharacterAttackState)
+		{
+			case CharacterAttackStateEnum.InitAttack:
+				if (playerCharacters.Contains (currentCharacter))
+				{
+					ChargeCommand command = (Instantiate (Engine.self.chargeCommandPrefab) as GameObject).GetComponent<ChargeCommand> ();
+					command._setAttributes(true, 1f, true);
+					command.ActionKey = "z";
+					command.DestroyTime = 6;
+				}
+				currentCharacterAttackState = CharacterAttackStateEnum.ActionCommand;
+				break;
+			case CharacterAttackStateEnum.MovePreAction:
+				break;
+			case CharacterAttackStateEnum.ActionCommand:
+				if (!FindObjectOfType<ActionCommand> ())
+				{
+					currentCharacterAttackState = CharacterAttackStateEnum.ApplyAttack;
+				}
+				break;
+			case CharacterAttackStateEnum.ApplyAttack:
+				GameObject effectGO = Instantiate (Engine.self.statusEffectPrefab);
+				Stench effect = effectGO.AddComponent<Stench> ();
+				effect.Turns = 1 + Mathf.Max(0, bonus);
+				targetFriendlies [0]._addStatusEffect (effect);
+				currentCharacterAttackState = CharacterAttackStateEnum.MovePostAction;
+				_goToStart (currentCharacter);
+				break;
+			case CharacterAttackStateEnum.MovePostAction:
+				break;
+		}
+	}
 
+	public void _piedPiper()
+	{
+		switch (currentCharacterAttackState)
+		{
+			case CharacterAttackStateEnum.InitAttack:
+				if (playerCharacters.Contains (currentCharacter))
+				{
+					Instantiate (Engine.self.pipeCommandPrefab);
+					_setWait(CharacterAttackStateEnum.ActionCommand, .5f);
+				}
+				break;
+			case CharacterAttackStateEnum.MovePreAction:
+				break;
+			case CharacterAttackStateEnum.ActionCommand:
+				if (!FindObjectOfType<PipeCommand> ())
+				{
+					currentCharacterAttackState = CharacterAttackStateEnum.ApplyAttack;
+				}
+				break;
+			case CharacterAttackStateEnum.ApplyAttack:
+				
+				currentCharacterAttackState = CharacterAttackStateEnum.MovePostAction;
+				_goToStart (currentCharacter);
+				break;
+			case CharacterAttackStateEnum.MovePostAction:
+				break;
+		}
 	}
 
 	public void _flee ()
@@ -832,7 +892,6 @@ public class BattleManager : MonoBehaviour
 		{
 			case CharacterAttackStateEnum.InitAttack:
 				PrecisionCommand command = (Instantiate (Engine.self.precisionCommandPrefab) as GameObject).GetComponent<PrecisionCommand> ();
-				command.transform.SetParent (Engine.self.CoreCanvas.transform, false);
 				command.ActionKey = "v";
 				command.DestroyTime = 99;
 				command._randomizeArrowPos ();

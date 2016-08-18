@@ -27,10 +27,14 @@ public class Engine : MonoBehaviour
 	public static string startingSceneName = "StartingAreaScene";
 	public static List<string> visitedScenes = new List<string>();
 
-	public GameObject worldPlayer, battleCharacterPrefab, buttonPrefab, dropDownPrefab, rapidCommandPrefab, precisionCommandPrefab, damagePrefab, tombStonePrefab, playerHudPrefab,
+	public GameObject worldPlayer, battleCharacterPrefab, buttonPrefab, dropDownPrefab,
+	rapidCommandPrefab, precisionCommandPrefab, chargeCommandPrefab, pressCommandPrefab, pipeCommandPrefab,
+	damagePrefab, tombStonePrefab, playerHudPrefab,
 	explosionPrefab, spoilsPrefab, pauseMenuPrefab, plusPrefab, statusEffectPrefab, dialogueBoxPrefab, shopPrefab;
 
-	public Sprite poisonIcon, paralysisIcon;
+	public Sprite poisonIcon, paralysisIcon, shieldIcon;
+
+	public Material blueSwapMat, yellowSwapMat, greenSwapMat, purpleSwapMat, darkGraySwapMat;
 
 	public Canvas coreCanvas;
 
@@ -66,8 +70,6 @@ public class Engine : MonoBehaviour
 			buzzClip = value;
 		}
 	}
-
-	public Sprite zUp, zDown, xUp, xDown, cUp, cDown, vUp, vDown;
 
 	#region non-Prefab variables
 
@@ -128,6 +130,17 @@ public class Engine : MonoBehaviour
 		}
 		set {
 			playerUsableItems = value;
+		}
+	}
+
+	List<Item> enemyUsableItems = new List<Item>();
+
+	public List<Item> EnemyUsableItems {
+		get {
+			return enemyUsableItems;
+		}
+		set {
+			enemyUsableItems = value;
 		}
 	}
 
@@ -578,8 +591,15 @@ public class Engine : MonoBehaviour
 				}
 				bc.Sheet = otherSheet;
 			}
+			for(int k = 0; k < bc.Sheet.potentialItems.Count; k++)
+			{
+				if(Random.Range(0f, 1f) >= bc.Sheet.potentialItemsChances[k])
+				{
+					enemyUsableItems.Add(DeepClone<Item>(bc.Sheet.potentialItems[k]));
+				}
+			}
 		}
-
+		//Debug.Log(enemyUsableItems.Count);
 		//need to determine who goes first
 		
 	}

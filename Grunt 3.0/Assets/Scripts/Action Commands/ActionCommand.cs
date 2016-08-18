@@ -4,6 +4,9 @@ using UnityEngine.UI;
 
 public class ActionCommand : MonoBehaviour
 {
+	public Sprite keyUpSprite, keyDownSprite;
+	public Text keyLabel;
+
 	protected Image commandImage;
 
 	public Image CommandImage {
@@ -37,93 +40,80 @@ public class ActionCommand : MonoBehaviour
 		}
 	}
 
-	Sprite upSprite;
 
-	public Sprite UpSprite {
-		get {
-			return upSprite;
-		}
-		set {
-			upSprite = value;
-		}
-	}
-
-	Sprite downSprite;
-
-	public Sprite DownSprite {
-		get {
-			return downSprite;
-		}
-		set {
-			downSprite = value;
-		}
-	}
 
 	// Use this for initialization
 	void Start ()
 	{
-		commandImage = GetComponent<Image>();
-		switch(actionKey)
+		transform.SetParent (Engine.self.CoreCanvas.transform, false);
+		commandImage = GetComponent<Image> ();
+		commandImage.sprite = keyUpSprite;
+		keyLabel.text = actionKey;
+
+		switch (actionKey)
 		{
 			case "z":
-				upSprite = Engine.self.zUp;
-				downSprite = Engine.self.zDown;
 				break;
 			case "x":
-				upSprite = Engine.self.xUp;
-				downSprite = Engine.self.xDown;
+				commandImage.material = Engine.self.greenSwapMat;
 				break;
 			case "c":
-				upSprite = Engine.self.cUp;
-				downSprite = Engine.self.cDown;
+				commandImage.material = Engine.self.blueSwapMat;
 				break;
 			case "v":
-				upSprite = Engine.self.vUp;
-				downSprite = Engine.self.vDown;
+				commandImage.material = Engine.self.purpleSwapMat;
 				break;
 		}
-		commandImage.sprite = upSprite;
 
-		_childStart();
+		_childStart ();
 	}
 	
 	// Update is called once per frame
 	void Update ()
 	{
-		if(BattleManager.self.CurrentBattleState == BattleStateEnum.PlayerAttack)
+		if (commandImage.sprite == keyUpSprite)
 		{
-			if(BattleManager.self.CurrentCharacterAttackState == CharacterAttackStateEnum.ActionCommand)
+			keyLabel.rectTransform.anchoredPosition = new Vector2 (0, 8);
+		}
+		else
+		{
+			keyLabel.rectTransform.anchoredPosition = new Vector2 (0, 0);
+		}
+
+		if (BattleManager.self.CurrentBattleState == BattleStateEnum.PlayerAttack)
+		{
+			if (BattleManager.self.CurrentCharacterAttackState == CharacterAttackStateEnum.ActionCommand)
 			{
-				Destroy(gameObject, destroyTime);
-				_activeChildUpdate();
+				Destroy (gameObject, destroyTime);
+				_activeChildUpdate ();
 			}
 
-			if(BattleManager.self.CurrentCharacterAttackState == CharacterAttackStateEnum.ApplyAttack)
+			if (BattleManager.self.CurrentCharacterAttackState == CharacterAttackStateEnum.ApplyAttack)
 			{
-				Destroy(gameObject);
+				Destroy (gameObject);
 			}
 		}
 	}
 
-	public virtual void _childStart()
+	public virtual void _childStart ()
 	{
 		
 	}
 
-	public virtual void _activeChildUpdate()
+	public virtual void _activeChildUpdate ()
 	{
 
 	}
 
-	public void _switchSprite()
+	public void _switchSprite ()
 	{
-		if(CommandImage.sprite == UpSprite)
+		if (commandImage.sprite == keyUpSprite)
 		{
-			CommandImage.sprite = DownSprite;
+			commandImage.sprite = keyDownSprite;
 		}
 		else
 		{
-			CommandImage.sprite = UpSprite;
+			commandImage.sprite = keyUpSprite;
 		}
 	}
 }

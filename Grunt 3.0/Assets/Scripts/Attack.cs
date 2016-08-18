@@ -114,7 +114,7 @@ public class PlagueBite : Attack
 		baseDamage = 2;
 		baseHealing = 0;
 		spCost = 0;
-		numberOfTargets = 3;
+		numberOfTargets = 1;
 		targetType = attackTargetEnum.ChooseEnemy;
 	}
 
@@ -145,6 +145,25 @@ public class SewerStench : Attack
 	public override void _battleFunction()
 	{
 		BattleManager.self._sewerStench();
+	}
+}
+
+[Serializable]
+public class PiedPiper : Attack
+{
+	public PiedPiper()
+	{
+		attackName = "Pied Piper";
+		baseDamage = 2;
+		baseHealing = 0;
+		spCost = 3;
+		numberOfTargets = 4;
+		targetType = attackTargetEnum.AllEnemies;
+	}
+
+	public override void _battleFunction()
+	{
+		BattleManager.self._piedPiper();
 	}
 }
 

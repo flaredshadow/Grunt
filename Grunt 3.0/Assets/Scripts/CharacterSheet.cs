@@ -15,6 +15,8 @@ public class CharacterSheet
 	public List<Attack> abilities = new List<Attack>();
 	public List<Attack> spells = new List<Attack>();
 	public Attack retreat;
+	public List<Item> potentialItems = new List<Item>();
+	public List<float> potentialItemsChances = new List<float>();
 
 	public void _initRank(rankTypeEnum givenRankType)
 	{
@@ -27,7 +29,7 @@ public class CharacterSheet
 				maxSp = 10;
 				sp = maxSp;
 				pow = 3;
-				def = 3;
+				def = 1;
 				hpGain = 2;
 				spGain = 2;
 				powGain = 1;
@@ -38,10 +40,13 @@ public class CharacterSheet
 				coinWorth = 2;
 				form = formEnum.Animal;
 				rankType = rankTypeEnum.Rat;
+				abilities.Add(new PiedPiper());
 				abilities.Add(new PoisonTest());
 				abilities.Add(new SquirmingClaws());
 				spells.Add(new PlagueBite());
 				spells.Add(new SewerStench());
+				potentialItems.Add(new Potion());
+				potentialItemsChances.Add(.5f);
 				break;
 		}
 	}

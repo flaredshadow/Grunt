@@ -113,11 +113,21 @@ public class BattleCharacter : MonoBehaviour {
 
 	public int _sumAllPowBuffs()
 	{
-		return 0;
+		int totalPowBuff = 0;
+		foreach(StatusEffect effectIter in statusEffectsList)
+		{
+			totalPowBuff += effectIter.DefBuff;
+		}
+		return totalPowBuff;
 	}
 
 	public int _sumAllDefBuffs()
 	{
-		return 0;
+		int totalDefBuff = 0;
+		foreach(StatusEffect effectIter in statusEffectsList)
+		{
+			totalDefBuff += effectIter.DefBuff;
+		}
+		return totalDefBuff;
 	}
 }
