@@ -10,6 +10,7 @@ public class CharacterSheet
 	public int exp = 0, maxExp = 10, maxExpGrowth = 3, rank = 1, hp, maxHp, sp, maxSp, pow, def, electivePoints = 0,
 	hpGain, spGain, powGain, defGain, electivePointsGain, expWorth, coinWorth;
 	public string characterName;
+	public bool hasFlight = false;
 	public formEnum form;
 	public rankTypeEnum rankType;
 	public List<Attack> abilities = new List<Attack>();
@@ -36,10 +37,39 @@ public class CharacterSheet
 				defGain = 1;
 				electivePointsGain = 2;
 				characterName = "Rat";
-				expWorth = 30 * rank;
+				hasFlight = false;
+				expWorth = 1 * rank;
 				coinWorth = 2;
 				form = formEnum.Animal;
 				rankType = rankTypeEnum.Rat;
+				abilities.Add(new SquirmingClaws());
+				abilities.Add(new PiedPiper());
+				abilities.Add(new PoisonTest());
+				spells.Add(new PlagueBite());
+				spells.Add(new SewerStench());
+				potentialItems.Add(new Potion());
+				potentialItemsChances.Add(.5f);
+				break;
+
+			case rankTypeEnum.Bat:
+				maxHp = 4;
+				hp = maxHp;
+				maxSp = 10;
+				sp = maxSp;
+				pow = 3;
+				def = 1;
+				hpGain = 2;
+				spGain = 2;
+				powGain = 1;
+				defGain = 1;
+				electivePointsGain = 2;
+				characterName = "Bat";
+				hasFlight = true;
+				expWorth = 3 * rank;
+				coinWorth = 2;
+				form = formEnum.Animal;
+				rankType = rankTypeEnum.Bat;
+				abilities.Add(new Swoop());
 				abilities.Add(new PiedPiper());
 				abilities.Add(new PoisonTest());
 				abilities.Add(new SquirmingClaws());

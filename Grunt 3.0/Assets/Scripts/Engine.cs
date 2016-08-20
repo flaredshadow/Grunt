@@ -30,6 +30,7 @@ public class Engine : MonoBehaviour
 	public GameObject worldPlayer, battleCharacterPrefab, buttonPrefab, dropDownPrefab,
 	rapidCommandPrefab, precisionCommandPrefab, chargeCommandPrefab, pressCommandPrefab, pipeCommandPrefab,
 	damagePrefab, tombStonePrefab, playerHudPrefab,
+	pipeRatPrefab,
 	explosionPrefab, spoilsPrefab, pauseMenuPrefab, plusPrefab, statusEffectPrefab, dialogueBoxPrefab, shopPrefab;
 
 	public Sprite poisonIcon, paralysisIcon, shieldIcon;
@@ -299,6 +300,17 @@ public class Engine : MonoBehaviour
 		}
 	}
 
+	float flightHeight = 1.5f;
+
+	public float FlightHeight {
+		get {
+			return flightHeight;
+		}
+		set {
+			flightHeight = value;
+		}
+	}
+
 	bool fleeing = false;
 
 	public bool Fleeing {
@@ -541,7 +553,13 @@ public class Engine : MonoBehaviour
 
 	public Vector3 _getLineUpPosition(BattleCharacter givenBC)
 	{
-		Vector3 lineUpPos = new Vector3(0, spawnHeight + givenBC.GetComponent<Collider>().bounds.extents.y, 0);
+		Vector3 lineUpPos = new Vector3(0, spawnHeight + givenBC.GetComponent<SpriteRenderer>().sprite.bounds.extents.y, 0);
+
+		if(givenBC.Flying == true)
+		{
+			lineUpPos += Vector3.up * flightHeight;
+		}
+
 		if(BattleManager.self.PlayerCharacters.Contains(givenBC))
 		{
 			lineUpPos.x = (BattleManager.self.PlayerCharacters.IndexOf(givenBC) + 1) * -characterSpacing;
@@ -562,6 +580,7 @@ public class Engine : MonoBehaviour
 			//populate player characters
 			BattleCharacter bc = (Instantiate (battleCharacterPrefab) as GameObject).GetComponent<BattleCharacter>();
 			bc.Sheet = playerSheets [i];
+			bc.Flying = bc.Sheet.hasFlight;
 			BattleManager.self.PlayerCharacters.Add(bc);
 			bc.transform.localPosition = _getLineUpPosition(bc);
 			if (i == 0)
@@ -576,7 +595,6 @@ public class Engine : MonoBehaviour
 			BattleCharacter bc = (Instantiate (battleCharacterPrefab) as GameObject).GetComponent<BattleCharacter>();
 			bc.transform.Rotate(0, 180, 0);
 			BattleManager.self.EnemyCharacters.Add(bc);
-			bc.transform.localPosition = _getLineUpPosition(bc);
 			if (i == 0) {
 				CharacterSheet firstSheet = new CharacterSheet ();
 				firstSheet._initRank (firstEnemyRankType);
@@ -591,6 +609,10 @@ public class Engine : MonoBehaviour
 				}
 				bc.Sheet = otherSheet;
 			}
+
+			bc.Flying = bc.Sheet.hasFlight;
+			bc.transform.localPosition = _getLineUpPosition(bc);
+
 			for(int k = 0; k < bc.Sheet.potentialItems.Count; k++)
 			{
 				if(Random.Range(0f, 1f) >= bc.Sheet.potentialItemsChances[k])

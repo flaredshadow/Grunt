@@ -7,30 +7,46 @@ public class PipeCommand : MonoBehaviour {
 	int tries = 0, maxTries = 7;
 	float waitTimeBetweenKeys = .5f;
 	string[] keys = {"z", "x", "c", "v"};
+	bool userAttacking;
 
 	// Use this for initialization
 	void Start ()
 	{
 		transform.SetParent (Engine.self.CoreCanvas.transform, false);
+
+		userAttacking = BattleManager.self.PlayerCharacters.Contains (BattleManager.self.CurrentCharacter);
+		if(userAttacking == false)
+		{
+			BattleManager.self.Bonus = Random.Range(0, maxTries+1);
+			Destroy(gameObject, .5f);
+		}
 	}
 	
 	// Update is called once per frame
 	void Update ()
 	{
-		if(BattleManager.self.CurrentCharacterAttackState == CharacterAttackStateEnum.ActionCommand && !IsInvoking("makePressCommand"))
+		if (userAttacking == true)
 		{
-			if (!FindObjectOfType<PressCommand>())
+			if(BattleManager.self.CurrentCharacterAttackState == CharacterAttackStateEnum.ActionCommand && !IsInvoking("makePressCommand"))
 			{
-				if(tries < maxTries)
+				if (!FindObjectOfType<PressCommand>())
 				{
-					Invoke("makePressCommand", waitTimeBetweenKeys);
-				}
-				else
-				{
-					Destroy(gameObject);
+					if(tries < maxTries)
+					{
+						Invoke("makePressCommand", waitTimeBetweenKeys);
+					}
+					else
+					{
+						Destroy(gameObject);
+					}
 				}
 			}
 		}
+	}
+
+	void OnDestroy()
+	{
+		BattleManager.self._setWait(CharacterAttackStateEnum.ActionCommand, 1f);
 	}
 
 	void makePressCommand()

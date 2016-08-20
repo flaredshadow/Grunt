@@ -2,10 +2,9 @@
 using System.Collections.Generic;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
-using System;
 
 [System.Serializable]
-public class BattleManager : MonoBehaviour
+public partial class BattleManager : MonoBehaviour
 {
 
 	public static BattleManager self;
@@ -178,7 +177,7 @@ public class BattleManager : MonoBehaviour
 	Vector3 ddOffsetPosition = new Vector3 (200, 0, 0);
 	//to be used as sideways adjustment for Spells, Items, and Fleeing dropdowns
 
-	float walkSpeed = 10;
+	float walkSpeed = .1f;
 
 	// Use this for initialization
 	void Start ()
@@ -278,7 +277,7 @@ public class BattleManager : MonoBehaviour
 				case BattleStateEnum.EnemyDecide:
 					currentCharacterAttackState = CharacterAttackStateEnum.InitAttack;
 					//need Ai for enemies ***
-					activeAttack = currentCharacter.Sheet.spells [0];
+					activeAttack = currentCharacter.Sheet.abilities [0];
 					//need Ai for enemies ***
 					switch (activeAttack.TargetType)
 					{
@@ -368,7 +367,7 @@ public class BattleManager : MonoBehaviour
 					foreach (BattleCharacter enemyC in enemyCharacters)
 					{
 						_goToStart (enemyC);
-						enemyC._updateHudPosition ();
+						enemyC.Hud.transform.position = enemyC._calcHudPosition();
 						if (enemyC.transform.localPosition.x != Engine.self._getLineUpPosition (enemyC).x)
 						{
 							lineUpComplete = false;
@@ -378,7 +377,7 @@ public class BattleManager : MonoBehaviour
 					foreach (BattleCharacter playerC in playerCharacters)
 					{
 						_goToStart (playerC);
-						playerC._updateHudPosition ();
+						playerC.Hud.transform.position = playerC._calcHudPosition();
 						if (playerC.transform.localPosition.x != Engine.self._getLineUpPosition (playerC).x)
 						{
 							lineUpComplete = false;
@@ -718,13 +717,9 @@ public class BattleManager : MonoBehaviour
 	void _goToStart (BattleCharacter givenBC)
 	{
 		Vector3 lineUpPos = Engine.self._getLineUpPosition (givenBC);
-		float currentX = givenBC.transform.localPosition.x;
-		givenBC.GetComponent<Rigidbody> ().velocity = (lineUpPos - givenBC.transform.position).normalized * walkSpeed;
-		if (Mathf.Abs (currentX - lineUpPos.x) <= .2f)
+		if(givenBC._approach(lineUpPos, walkSpeed))
 		{
-			givenBC.transform.localPosition = lineUpPos;
-			givenBC.GetComponent<Rigidbody> ().velocity = Vector3.zero;
-			givenBC._updateHudPosition ();
+			givenBC.Hud.transform.position = givenBC._calcHudPosition(); // safety check
 			if (currentBattleState == BattleStateEnum.PlayerAttack || currentBattleState == BattleStateEnum.EnemyAttack)
 			{
 				currentBattleState = BattleStateEnum.InitKill;
@@ -745,23 +740,32 @@ public class BattleManager : MonoBehaviour
 			case CharacterAttackStateEnum.InitAttack:
 				if (playerCharacters.Contains (currentCharacter))
 				{
-					ActionCommand command = (Instantiate (Engine.self.rapidCommandPrefab, Vector3.one, Quaternion.identity) as GameObject).GetComponent<ActionCommand> ();
+					RapidCommand command = (Instantiate (Engine.self.rapidCommandPrefab, Vector3.one, Quaternion.identity) as GameObject).GetComponent<RapidCommand> ();
 					command.ActionKey = "z";
 					command.DestroyTime = 3;
 				}
-				currentCharacter.GetComponent<Rigidbody> ().velocity = currentCharacter.transform.right * walkSpeed;
 				currentCharacterAttackState = CharacterAttackStateEnum.MovePreAction;
 				break;
 			case CharacterAttackStateEnum.MovePreAction:
+
+				Vector3 preSquirmDestination = new Vector3(targetUnfriendlies[0].transform.position.x, currentCharacter.transform.position.y, currentCharacter.transform.position.z);
+				if(currentCharacter._approach(preSquirmDestination, walkSpeed))
+				{
+					if(FindObjectOfType<RapidCommand>())
+					{	
+						Destroy(FindObjectOfType<RapidCommand>().gameObject);
+					}
+					currentCharacter.transform.Rotate (0, 180, 0);
+					_setWait (CharacterAttackStateEnum.MovePostAction, 1); // pause briefly before swiping at enemy
+				}
+
 				if (currentCharacter.HitGameObject == targetUnfriendlies [0].gameObject)
 				{
-					currentCharacter.GetComponent<Rigidbody> ().velocity = Vector3.zero;
 					_setWait (CharacterAttackStateEnum.ActionCommand, 1); // pause briefly before swiping at enemy
 				}
 				break;
 			case CharacterAttackStateEnum.ActionCommand:
-				// if GetKeyDown(anykey) && !Getkeydown(z)
-				if (!FindObjectOfType<ActionCommand> ())
+				if (!FindObjectOfType<RapidCommand> ())
 				{
 					currentCharacterAttackState = CharacterAttackStateEnum.ApplyAttack;
 					bonus = bonus / 6; // 6 is an arbitrarily choesn number
@@ -780,7 +784,7 @@ public class BattleManager : MonoBehaviour
 				if (bonus > -1)
 				{
 					bonus -= 1;
-					_damageTarget (targetUnfriendlies [0], activeAttack.BaseDamage + currentCharacter.Sheet.pow);
+					_damageTarget (targetUnfriendlies [0], activeAttack.BaseDamage + currentCharacter._calcPow());
 					_setWait (CharacterAttackStateEnum.ApplyAttack, Damage.popTime + 1f); // pause then swing, this will happen repeatedly until player runs out of bonus
 				}
 				else
@@ -811,9 +815,9 @@ public class BattleManager : MonoBehaviour
 			case CharacterAttackStateEnum.ActionCommand:
 				break;
 			case CharacterAttackStateEnum.ApplyAttack:
-				_damageTarget (targetUnfriendlies [0], activeAttack.BaseDamage + currentCharacter.Sheet.pow);
-				//_damageTarget(targetUnfriendlies[1], activeAttack.BaseDamage + currentCharacter.Sheet.pow);
-				//_damageTarget(targetUnfriendlies[2], activeAttack.BaseDamage + currentCharacter.Sheet.pow);
+				_damageTarget (targetUnfriendlies [0], activeAttack.BaseDamage + currentCharacter._calcPow());
+				//_damageTarget(targetUnfriendlies[1], activeAttack.BaseDamage + currentCharacter._calcPow());
+				//_damageTarget(targetUnfriendlies[2], activeAttack.BaseDamage + currentCharacter._calcPow());
 				_setWait (CharacterAttackStateEnum.MovePostAction, Damage.popTime + 1f);
 				break;
 			case CharacterAttackStateEnum.MovePostAction:
@@ -839,7 +843,7 @@ public class BattleManager : MonoBehaviour
 			case CharacterAttackStateEnum.MovePreAction:
 				break;
 			case CharacterAttackStateEnum.ActionCommand:
-				if (!FindObjectOfType<ActionCommand> ())
+				if (!FindObjectOfType<ChargeCommand> ())
 				{
 					currentCharacterAttackState = CharacterAttackStateEnum.ApplyAttack;
 				}
@@ -859,29 +863,168 @@ public class BattleManager : MonoBehaviour
 
 	public void _piedPiper()
 	{
+		int ratSpawns = (bonus+1)/2;
 		switch (currentCharacterAttackState)
 		{
 			case CharacterAttackStateEnum.InitAttack:
-				if (playerCharacters.Contains (currentCharacter))
-				{
-					Instantiate (Engine.self.pipeCommandPrefab);
-					_setWait(CharacterAttackStateEnum.ActionCommand, .5f);
-				}
+				
+				Instantiate (Engine.self.pipeCommandPrefab);
+				_setWait(CharacterAttackStateEnum.ActionCommand, .5f);
 				break;
 			case CharacterAttackStateEnum.MovePreAction:
 				break;
 			case CharacterAttackStateEnum.ActionCommand:
 				if (!FindObjectOfType<PipeCommand> ())
 				{
+					for(int i = 0; i < ratSpawns; i++)
+					{
+						float xOffset = (currentCharacter.transform.right.x * i * 1.5f) + (-3f * currentCharacter.transform.right.x);
+						GameObject pRat = Instantiate(Engine.self.pipeRatPrefab);
+						pRat.transform.position = new Vector3(xOffset, currentCharacter.transform.position.y, 0);
+						pRat.transform.rotation = currentCharacter.transform.rotation;
+					}
 					currentCharacterAttackState = CharacterAttackStateEnum.ApplyAttack;
 				}
 				break;
 			case CharacterAttackStateEnum.ApplyAttack:
-				
-				currentCharacterAttackState = CharacterAttackStateEnum.MovePostAction;
-				_goToStart (currentCharacter);
+				if (!FindObjectOfType<PipeRat> ())
+				{
+					if(bonus > 0)
+					{
+						foreach(BattleCharacter enemyIter in targetUnfriendlies)
+						{
+							_damageTarget(enemyIter, activeAttack.BaseDamage + ratSpawns);
+						}
+					}
+					currentCharacterAttackState = CharacterAttackStateEnum.MovePostAction;
+				}
 				break;
 			case CharacterAttackStateEnum.MovePostAction:
+				if (!FindObjectOfType<Damage> ())
+				{
+					_goToStart (currentCharacter);
+				}
+				break;
+		}
+	}
+
+	public void _swoop()
+	{
+		float preSwoopSpacing = 3f;
+		Vector3 preSwoopVertOffset = Vector3.up*preSwoopSpacing, preSwoopHorizOffset = targetUnfriendlies[0].transform.right*preSwoopSpacing,
+		acPosition = Vector3.one + Vector3.up*100 + targetUnfriendlies[0].transform.right*100;
+		Vector3 preSwoopDestination = targetUnfriendlies[0].transform.position + preSwoopHorizOffset + preSwoopVertOffset;
+		switch (currentCharacterAttackState)
+		{
+			case CharacterAttackStateEnum.InitAttack:
+				if (playerCharacters.Contains (currentCharacter))
+				{
+					PressCommand command = (Instantiate (Engine.self.pressCommandPrefab, acPosition, Quaternion.identity) as GameObject).GetComponent<PressCommand> ();
+					command.ActionKey = "z";
+					command.DestroyTime = 999;
+					command.PrePressWaitTime = .1f;
+				}
+				else
+				{
+					bonus = Random.Range(0,2);
+				}
+				_setWait(CharacterAttackStateEnum.MovePreAction, .5f);
+				break;
+			case CharacterAttackStateEnum.MovePreAction:
+				float initialRotationSpeed = -4f, noseDiveAngle = 300, initRotateThresh = preSwoopSpacing + .75f;
+				bool preSwoopThreshMet = Mathf.Abs(currentCharacter.transform.position.x - targetUnfriendlies[0].transform.position.x) < initRotateThresh;
+				if(currentCharacter._approach(preSwoopDestination, walkSpeed/2f))
+				{
+					currentCharacter.transform.eulerAngles = new Vector3(currentCharacter.transform.eulerAngles.x, currentCharacter.transform.eulerAngles.y, noseDiveAngle);
+					_setWait(CharacterAttackStateEnum.ActionCommand, .25f);
+				}
+				else if(preSwoopThreshMet == true && (currentCharacter.transform.eulerAngles.z  > noseDiveAngle || currentCharacter.transform.eulerAngles.z  == 0))
+				{
+					currentCharacter.transform.Rotate(0, 0, initialRotationSpeed);
+				}
+				break;
+			case CharacterAttackStateEnum.ActionCommand:
+				float rotationSpeed = 2f, postSwoopYThresh = preSwoopVertOffset.y + .5f;
+				Vector3 swoopHitPoint = preSwoopVertOffset + targetUnfriendlies[0].transform.position + Vector3.up*targetUnfriendlies[0].GetComponent<Collider>().bounds.max.y*.25f;
+				currentCharacter.transform.RotateAround(swoopHitPoint, currentCharacter.transform.forward, rotationSpeed);
+
+				if(currentCharacter.HitGameObject == targetUnfriendlies[0].gameObject)
+				{
+					_damageTarget(targetUnfriendlies[0], activeAttack.BaseDamage + currentCharacter._calcPow() + bonus);
+					PressCommand foundCommand = FindObjectOfType<PressCommand>();
+					if(foundCommand != null)
+					{
+						Destroy(foundCommand.gameObject);
+					}
+					bonus *= 2;
+					if(bonus == 2)
+					{
+						if (playerCharacters.Contains (currentCharacter))
+						{
+							PressCommand command = (Instantiate (Engine.self.pressCommandPrefab, acPosition, Quaternion.identity) as GameObject).GetComponent<PressCommand> ();
+							command.ActionKey = "z";
+							command.DestroyTime = 999;
+							command.PrePressWaitTime = 1f;
+						}
+						else
+						{
+							bonus = Random.Range(2, 4);
+						}
+					}
+				}
+				if(currentCharacter.transform.position.y >= targetUnfriendlies[0].transform.position.y + postSwoopYThresh && (bonus == 0 || bonus > 3))
+				{
+					Vector3 finalSwoopRotation = new Vector3(0, currentCharacter.transform.rotation.eulerAngles.y+180, 0);
+					currentCharacter.transform.rotation = Quaternion.Euler(finalSwoopRotation); // set z to 0 without altering the y;
+					_setWait(CharacterAttackStateEnum.MovePostAction, .5f);
+				}
+				break;
+			case CharacterAttackStateEnum.ApplyAttack:
+				break;
+			case CharacterAttackStateEnum.MovePostAction:
+				if (!FindObjectOfType<Damage> ())
+				{
+					_goToStart (currentCharacter);
+				}
+				break;
+		}
+	}
+
+	public void _scentOfBlood()
+	{
+		switch (currentCharacterAttackState)
+		{
+			case CharacterAttackStateEnum.InitAttack:
+				PrecisionCommand command = (Instantiate (Engine.self.precisionCommandPrefab) as GameObject).GetComponent<PrecisionCommand> ();
+				command.ActionKey = "x";
+				command.DestroyTime = 99;
+				command._randomizeArrowPos ();
+
+				currentCharacterAttackState = CharacterAttackStateEnum.ActionCommand;
+				break;
+			case CharacterAttackStateEnum.MovePreAction:
+				break;
+			case CharacterAttackStateEnum.ActionCommand:
+				if (!FindObjectOfType<PrecisionCommand> ())
+				{
+					if (bonus == 0)
+					{
+						currentCharacterAttackState = CharacterAttackStateEnum.MovePostAction;
+						Engine.self.AudioSource.PlayOneShot (Engine.self.BuzzClip);
+					}
+					else
+					{
+						_setWait (CharacterAttackStateEnum.ApplyAttack, 1f);
+					}
+				}
+				break;
+			case CharacterAttackStateEnum.ApplyAttack:
+				Engine.self.Fleeing = true;
+				Engine.self._initiateSceneChange (Engine.self.CurrentWorldSceneName, doorEnum.ReturnFromBattle);
+				currentBattleState = BattleStateEnum.Flee;
+				break;
+			case CharacterAttackStateEnum.MovePostAction:
+				_goToStart (currentCharacter);
 				break;
 		}
 	}
@@ -901,7 +1044,7 @@ public class BattleManager : MonoBehaviour
 			case CharacterAttackStateEnum.MovePreAction:
 				break;
 			case CharacterAttackStateEnum.ActionCommand:
-				if (!FindObjectOfType<ActionCommand> ())
+				if (!FindObjectOfType<PrecisionCommand> ())
 				{
 					if (bonus == 0)
 					{

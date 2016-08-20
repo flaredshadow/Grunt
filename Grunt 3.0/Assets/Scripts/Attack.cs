@@ -154,7 +154,7 @@ public class PiedPiper : Attack
 	public PiedPiper()
 	{
 		attackName = "Pied Piper";
-		baseDamage = 2;
+		baseDamage = 0;
 		baseHealing = 0;
 		spCost = 3;
 		numberOfTargets = 4;
@@ -164,6 +164,44 @@ public class PiedPiper : Attack
 	public override void _battleFunction()
 	{
 		BattleManager.self._piedPiper();
+	}
+}
+
+[Serializable]
+public class Swoop : Attack
+{
+	public Swoop()
+	{
+		attackName = "Swoop";
+		baseDamage = 2;
+		baseHealing = 0;
+		spCost = 3;
+		numberOfTargets = 1;
+		targetType = attackTargetEnum.ChooseEnemy;
+	}
+
+	public override void _battleFunction()
+	{
+		BattleManager.self._swoop();
+	}
+}
+
+[Serializable]
+public class ScentOfBlood : Attack
+{
+	public ScentOfBlood()
+	{
+		attackName = "Scent Of Blood";
+		baseDamage = 2;
+		baseHealing = 0;
+		spCost = 3;
+		numberOfTargets = 1;
+		targetType = attackTargetEnum.Self;
+	}
+
+	public override void _battleFunction()
+	{
+		BattleManager.self._scentOfBlood();
 	}
 }
 

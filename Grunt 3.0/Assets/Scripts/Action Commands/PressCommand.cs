@@ -22,7 +22,7 @@ public class PressCommand : ActionCommand
 			Invoke("_switchSprite", prePressWaitTime);
 		}
 
-		if(Input.GetKeyDown(ActionKey))
+		if(Input.GetKeyDown(ActionKey) && commandImage.sprite == keyDownSprite)
 		{
 			BattleManager.self.Bonus += 1;
 			Destroy(gameObject);

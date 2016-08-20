@@ -7,14 +7,23 @@ public class BattleCharacter : MonoBehaviour {
 
 	CharacterSheet sheet;
 
-	Vector3 hudVertSpacing = Vector3.down*3.25f;
-
 	public CharacterSheet Sheet {
 		get {
 			return sheet;
 		}
 		set {
 			sheet = value;
+		}
+	}
+
+	bool flying;
+
+	public bool Flying {
+		get {
+			return flying;
+		}
+		set {
+			flying = value;
 		}
 	}
 
@@ -53,7 +62,9 @@ public class BattleCharacter : MonoBehaviour {
 
 	// Use this for initialization
 	void Start () {
-		Vector3 hudPosition = RectTransformUtility.WorldToScreenPoint(Engine.self.cam, transform.localPosition + hudVertSpacing);
+		updateCollider();
+		Vector3 hudPosition = RectTransformUtility.WorldToScreenPoint(Engine.self.cam, transform.localPosition.x * Vector3.right);
+		hudPosition.y = Screen.height/8f; // 0 for screen y axis is bottom screen edge
 		hud = (Instantiate(Engine.self.playerHudPrefab, hudPosition, Quaternion.identity) as GameObject).GetComponent<PlayerHud>();
 		hud.transform.SetParent(Engine.self.CoreCanvas.transform, true);
 		hud.transform.localScale = Vector3.one;
@@ -70,9 +81,32 @@ public class BattleCharacter : MonoBehaviour {
 		hitGameObject = other.gameObject;
 	}
 
-	public void _updateHudPosition()
+	public void updateCollider()
 	{
-		hud.transform.position = RectTransformUtility.WorldToScreenPoint(Engine.self.cam, transform.localPosition + hudVertSpacing);// don't want to use local position once already child of canvas
+		gameObject.GetComponent<BoxCollider>().size = gameObject.GetComponent<SpriteRenderer>().sprite.bounds.size;
+	}
+
+	public Vector3 _calcHudPosition()
+	{
+		Vector3 hudPosition = RectTransformUtility.WorldToScreenPoint(Engine.self.cam, transform.localPosition.x * Vector3.right);
+		hudPosition.y = Screen.height/8f; // 0 for screen y axis is bottom screen edge
+		return hudPosition;
+	}
+
+	public bool _approach(Vector3 givenDestination, float givenSpeed) // returns true to designate arrival at destination
+	{
+		float pointFoundThresh = .2f;
+
+		if(Vector3.Distance(transform.position, givenDestination) <= pointFoundThresh)
+		{
+			transform.position = givenDestination;
+			return true;
+		}
+		else
+		{
+			transform.position = Vector3.MoveTowards(transform.position, givenDestination, givenSpeed);
+			return false;
+		}
 	}
 
 	public void _addStatusEffect(StatusEffect givenStatusEffect)
@@ -129,5 +163,10 @@ public class BattleCharacter : MonoBehaviour {
 			totalDefBuff += effectIter.DefBuff;
 		}
 		return totalDefBuff;
+	}
+
+	public int _calcPow()
+	{
+		return sheet.pow + _sumAllPowBuffs();
 	}
 }
