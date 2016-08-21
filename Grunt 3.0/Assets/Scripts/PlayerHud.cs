@@ -25,6 +25,17 @@ public class PlayerHud : MonoBehaviour {
 		}
 	}
 
+	BattleCharacter owningBattleCharacter;
+
+	public BattleCharacter OwningBattleCharacter {
+		get {
+			return owningBattleCharacter;
+		}
+		set {
+			owningBattleCharacter = value;
+		}
+	}
+
 	// Use this for initialization
 	void Start ()
 	{
@@ -78,16 +89,21 @@ public class PlayerHud : MonoBehaviour {
 	void _updateLabels()
 	{
 		nameLabel.text = sheet.characterName;
-		rankLabel.text = "R : " + sheet.rank;
-		hpLabel.text = "HP : " + sheet.hp + " / " + sheet.maxHp;
-		spLabel.text = "SP : " + sheet.sp + " / " + sheet.maxSp;
-		if(expLabel != null)
+		if(expLabel != null) // in overworld
 		{
 			rankLabel.text = "Rank : " + sheet.rank;
+			hpLabel.text = "HP : " + sheet.hp + " / " + sheet._calcMaxHp() + " (" + sheet.maxHp + ")";
+			spLabel.text = "SP : " + sheet.sp + " / " + sheet._calcMaxSp()  + " (" + sheet.maxSp + ")";
 			expLabel.text = "EXP : " + sheet.exp + " / " + sheet.maxExp;
-			powLabel.text = "POW : " + sheet.pow;
-			defLabel.text = "DEF : " + sheet.def;
+			powLabel.text = "POW : " + sheet._calcPow()  + " (" + sheet.pow + ")";
+			defLabel.text = "DEF : " + sheet._calcDef() + " (" + sheet.def + ")";
 			electiveLabel.text = "Elective Points : " + sheet.electivePoints;
+		}
+		else
+		{
+			rankLabel.text = "R : " + sheet.rank;
+			hpLabel.text = "HP : " + sheet.hp + " / " + owningBattleCharacter._calcBattleMaxHp();
+			spLabel.text = "SP : " + sheet.sp + " / " + owningBattleCharacter._calcBattleMaxSp();
 		}
 	}
 
@@ -125,10 +141,10 @@ public class PlayerHud : MonoBehaviour {
 		}
 
 		plusList[0].transform.position = hpLabel.transform.position + spacing;
-		plusList[0].onClick.AddListener(delegate{sheet.maxHp += 1; sheet.hp = sheet.maxHp;});
+		plusList[0].onClick.AddListener(delegate{sheet.maxHp += 1; sheet.hp = sheet._calcMaxHp();});
 
 		plusList[1].transform.position = spLabel.transform.position + spacing;
-		plusList[1].onClick.AddListener(delegate{sheet.maxSp += 1; sheet.sp = sheet.maxSp;});
+		plusList[1].onClick.AddListener(delegate{sheet.maxSp += 1; sheet.sp = sheet._calcMaxSp();});
 
 		plusList[2].transform.position = powLabel.transform.position + spacing;
 		plusList[2].onClick.AddListener(delegate{sheet.pow += 1;});

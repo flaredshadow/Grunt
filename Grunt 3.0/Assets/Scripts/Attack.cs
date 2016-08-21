@@ -192,9 +192,9 @@ public class ScentOfBlood : Attack
 	public ScentOfBlood()
 	{
 		attackName = "Scent Of Blood";
-		baseDamage = 2;
+		baseDamage = 0;
 		baseHealing = 0;
-		spCost = 3;
+		spCost = 1;
 		numberOfTargets = 1;
 		targetType = attackTargetEnum.Self;
 	}

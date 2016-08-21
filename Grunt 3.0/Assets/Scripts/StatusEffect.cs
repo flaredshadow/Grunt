@@ -38,25 +38,25 @@ public class StatusEffect : MonoBehaviour {
 		}
 	}
 
-	protected int hpBuff;
+	protected int maxHpBuff;
 
-	public int HpBuff {
+	public int MaxHpBuff {
 		get {
-			return hpBuff;
+			return maxHpBuff;
 		}
 		set {
-			hpBuff = value;
+			maxHpBuff = value;
 		}
 	}
 
-	protected int spBuff;
+	protected int maxSpBuff;
 
-	public int SpBuff {
+	public int MaxSpBuff {
 		get {
-			return spBuff;
+			return maxSpBuff;
 		}
 		set {
-			spBuff = value;
+			maxSpBuff = value;
 		}
 	}
 
@@ -153,7 +153,7 @@ public class Poison : StatusEffect
 
 	public override void _applyFinishChildEffect()
 	{
-		Debug.Log("waiting on effect resolution");
+		//Debug.Log("waiting on effect resolution");
 		BattleManager.self._setWait(BattleStateEnum.ResolveStatusEffects, .5f);
 		base._applyFinishChildEffect();
 	}
@@ -163,9 +163,20 @@ public class Stench : StatusEffect
 {
 	public Stench()
 	{
-		statusName = "Stenched";
+		statusName = "Stench";
 		icon = Engine.self.shieldIcon;
 		transform.GetChild(0).GetComponent<Image>().sprite = icon;
 		defBuff = 2;
+	}
+}
+
+public class Ravenous : StatusEffect
+{
+	public Ravenous()
+	{
+		statusName = "Ravenous";
+		icon = Engine.self.swordIcon;
+		transform.GetChild(0).GetComponent<Image>().sprite = icon;
+		//pow is buffed based on bonus
 	}
 }

@@ -57,7 +57,7 @@ public class CharacterSheet
 				maxSp = 10;
 				sp = maxSp;
 				pow = 3;
-				def = 1;
+				def = 10;
 				hpGain = 2;
 				spGain = 2;
 				powGain = 1;
@@ -69,6 +69,7 @@ public class CharacterSheet
 				coinWorth = 2;
 				form = formEnum.Animal;
 				rankType = rankTypeEnum.Bat;
+				abilities.Add(new ScentOfBlood());
 				abilities.Add(new Swoop());
 				abilities.Add(new PiedPiper());
 				abilities.Add(new PoisonTest());
@@ -105,5 +106,26 @@ public class CharacterSheet
 		pow += powGain;
 		def += defGain;
 		electivePoints += electivePointsGain;
+	}
+
+	//possibly add equipment stat modifiers in future
+	public int _calcMaxHp()
+	{
+		return maxHp;
+	}
+
+	public int _calcMaxSp()
+	{
+		return maxSp;
+	}
+
+	public int _calcPow()
+	{
+		return pow;
+	}
+
+	public int _calcDef()
+	{
+		return def;
 	}
 }

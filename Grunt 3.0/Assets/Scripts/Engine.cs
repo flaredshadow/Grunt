@@ -28,12 +28,12 @@ public class Engine : MonoBehaviour
 	public static List<string> visitedScenes = new List<string>();
 
 	public GameObject worldPlayer, battleCharacterPrefab, buttonPrefab, dropDownPrefab,
-	rapidCommandPrefab, precisionCommandPrefab, chargeCommandPrefab, pressCommandPrefab, pipeCommandPrefab,
+	rapidCommandPrefab, precisionCommandPrefab, chargeCommandPrefab, pressCommandPrefab, pipeCommandPrefab, clickableBullseyePrefab,
 	damagePrefab, tombStonePrefab, playerHudPrefab,
 	pipeRatPrefab,
 	explosionPrefab, spoilsPrefab, pauseMenuPrefab, plusPrefab, statusEffectPrefab, dialogueBoxPrefab, shopPrefab;
 
-	public Sprite poisonIcon, paralysisIcon, shieldIcon;
+	public Sprite poisonIcon, paralysisIcon, shieldIcon, swordIcon;
 
 	public Material blueSwapMat, yellowSwapMat, greenSwapMat, purpleSwapMat, darkGraySwapMat;
 

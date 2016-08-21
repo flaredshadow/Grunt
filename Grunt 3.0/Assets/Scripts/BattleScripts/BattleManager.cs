@@ -682,7 +682,7 @@ public partial class BattleManager : MonoBehaviour
 	public void _damageTarget (BattleCharacter targ, int givenDamage)
 	{
 		int damageDealt = givenDamage; // later this will be modified by weakness/resistance
-		int damageTaken = Mathf.Max (1, damageDealt - (targ.Sheet.def + targ._sumAllDefBuffs())); // minimum 1 damage is always taken
+		int damageTaken = Mathf.Max (1, damageDealt - targ._calcBattleDef()); // minimum 1 damage is always taken
 		targ.Sheet.hp -= damageTaken;
 		targ.Sheet.hp = Mathf.Max (0, targ.Sheet.hp);//minimum hp is 0
 		Vector3 damagePosition = RectTransformUtility.WorldToScreenPoint (Engine.self.cam, targ.transform.localPosition);
@@ -700,7 +700,7 @@ public partial class BattleManager : MonoBehaviour
 	public void _healTarget (BattleCharacter targ, int givenHealing)
 	{
 		targ.Sheet.hp += givenHealing;
-		targ.Sheet.hp = Mathf.Min (targ.Sheet.hp, targ.Sheet.maxHp);
+		targ.Sheet.hp = Mathf.Min (targ.Sheet.hp, targ._calcBattleMaxHp());
 		Vector3 damagePosition = RectTransformUtility.WorldToScreenPoint (Engine.self.cam, targ.transform.localPosition);
 		Damage damageScript = (Instantiate (Engine.self.damagePrefab) as GameObject).GetComponent<Damage> ();
 		damageScript._setToHeal();
@@ -784,7 +784,7 @@ public partial class BattleManager : MonoBehaviour
 				if (bonus > -1)
 				{
 					bonus -= 1;
-					_damageTarget (targetUnfriendlies [0], activeAttack.BaseDamage + currentCharacter._calcPow());
+					_damageTarget (targetUnfriendlies [0], activeAttack.BaseDamage + currentCharacter._calcBattlePow());
 					_setWait (CharacterAttackStateEnum.ApplyAttack, Damage.popTime + 1f); // pause then swing, this will happen repeatedly until player runs out of bonus
 				}
 				else
@@ -815,9 +815,9 @@ public partial class BattleManager : MonoBehaviour
 			case CharacterAttackStateEnum.ActionCommand:
 				break;
 			case CharacterAttackStateEnum.ApplyAttack:
-				_damageTarget (targetUnfriendlies [0], activeAttack.BaseDamage + currentCharacter._calcPow());
-				//_damageTarget(targetUnfriendlies[1], activeAttack.BaseDamage + currentCharacter._calcPow());
-				//_damageTarget(targetUnfriendlies[2], activeAttack.BaseDamage + currentCharacter._calcPow());
+				_damageTarget (targetUnfriendlies [0], activeAttack.BaseDamage + currentCharacter._calcBattlePow());
+				//_damageTarget(targetUnfriendlies[1], activeAttack.BaseDamage + currentCharacter._calcBattlePow());
+				//_damageTarget(targetUnfriendlies[2], activeAttack.BaseDamage + currentCharacter._calcBattlePow());
 				_setWait (CharacterAttackStateEnum.MovePostAction, Damage.popTime + 1f);
 				break;
 			case CharacterAttackStateEnum.MovePostAction:
@@ -849,8 +849,7 @@ public partial class BattleManager : MonoBehaviour
 				}
 				break;
 			case CharacterAttackStateEnum.ApplyAttack:
-				GameObject effectGO = Instantiate (Engine.self.statusEffectPrefab);
-				Stench effect = effectGO.AddComponent<Stench> ();
+				Stench effect = Instantiate (Engine.self.statusEffectPrefab).AddComponent<Stench> ();
 				effect.Turns = 1 + Mathf.Max(0, bonus);
 				targetFriendlies [0]._addStatusEffect (effect);
 				currentCharacterAttackState = CharacterAttackStateEnum.MovePostAction;
@@ -950,7 +949,7 @@ public partial class BattleManager : MonoBehaviour
 
 				if(currentCharacter.HitGameObject == targetUnfriendlies[0].gameObject)
 				{
-					_damageTarget(targetUnfriendlies[0], activeAttack.BaseDamage + currentCharacter._calcPow() + bonus);
+					_damageTarget(targetUnfriendlies[0], activeAttack.BaseDamage + currentCharacter._calcBattlePow() + bonus);
 					PressCommand foundCommand = FindObjectOfType<PressCommand>();
 					if(foundCommand != null)
 					{
@@ -992,36 +991,41 @@ public partial class BattleManager : MonoBehaviour
 
 	public void _scentOfBlood()
 	{
+		float bullseyeVertOffset =  1.5f;
+		float actionTime = 3f;
 		switch (currentCharacterAttackState)
 		{
 			case CharacterAttackStateEnum.InitAttack:
-				PrecisionCommand command = (Instantiate (Engine.self.precisionCommandPrefab) as GameObject).GetComponent<PrecisionCommand> ();
-				command.ActionKey = "x";
-				command.DestroyTime = 99;
-				command._randomizeArrowPos ();
+				if(enemyCharacters.Contains(currentCharacter))
+				{
+					bonus = Random.Range(0, playerCharacters.Count+1);
+					currentCharacterAttackState = CharacterAttackStateEnum.ActionCommand;
+					break;
+				}
 
+				foreach(BattleCharacter enemyIter in enemyCharacters)
+				{
+					Vector3 bullseyePosition = enemyIter.transform.position + Vector3.up*(enemyIter.GetComponent<Collider>().bounds.max.y + bullseyeVertOffset);
+					ClickableBullseye cBullseye = Instantiate(Engine.self.clickableBullseyePrefab).GetComponent<ClickableBullseye>();
+					Destroy(cBullseye.gameObject, actionTime);
+					cBullseye.transform.position = bullseyePosition;
+					cBullseye.Durability = 10 * enemyIter.Sheet.hp / enemyIter._calcBattleMaxHp();
+				}
 				currentCharacterAttackState = CharacterAttackStateEnum.ActionCommand;
 				break;
 			case CharacterAttackStateEnum.MovePreAction:
 				break;
 			case CharacterAttackStateEnum.ActionCommand:
-				if (!FindObjectOfType<PrecisionCommand> ())
+				if (!FindObjectOfType<ClickableBullseye> ())
 				{
-					if (bonus == 0)
-					{
-						currentCharacterAttackState = CharacterAttackStateEnum.MovePostAction;
-						Engine.self.AudioSource.PlayOneShot (Engine.self.BuzzClip);
-					}
-					else
-					{
-						_setWait (CharacterAttackStateEnum.ApplyAttack, 1f);
-					}
+					Ravenous effect = Instantiate (Engine.self.statusEffectPrefab).AddComponent<Ravenous> ();
+					effect.PowBuff = 3 + bonus;
+					effect.Turns = 3;
+					targetFriendlies [0]._addStatusEffect (effect);
+					_setWait(CharacterAttackStateEnum.MovePostAction, .5f);
 				}
 				break;
 			case CharacterAttackStateEnum.ApplyAttack:
-				Engine.self.Fleeing = true;
-				Engine.self._initiateSceneChange (Engine.self.CurrentWorldSceneName, doorEnum.ReturnFromBattle);
-				currentBattleState = BattleStateEnum.Flee;
 				break;
 			case CharacterAttackStateEnum.MovePostAction:
 				_goToStart (currentCharacter);
@@ -1074,8 +1078,7 @@ public partial class BattleManager : MonoBehaviour
 		switch (currentCharacterAttackState)
 		{
 			case CharacterAttackStateEnum.InitAttack:
-				GameObject effectGO = Instantiate (Engine.self.statusEffectPrefab);
-				Poison effect = effectGO.AddComponent<Poison> ();
+				Poison effect = Instantiate (Engine.self.statusEffectPrefab).AddComponent<Poison> ();
 				effect.Turns = 2;
 				targetUnfriendlies [0]._addStatusEffect (effect);
 				currentCharacterAttackState = CharacterAttackStateEnum.MovePreAction;

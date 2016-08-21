@@ -69,6 +69,7 @@ public class BattleCharacter : MonoBehaviour {
 		hud.transform.SetParent(Engine.self.CoreCanvas.transform, true);
 		hud.transform.localScale = Vector3.one;
 		hud.Sheet = sheet;
+		hud.OwningBattleCharacter = this;
 	}
 	
 	// Update is called once per frame
@@ -115,6 +116,10 @@ public class BattleCharacter : MonoBehaviour {
 		{
 			if(givenStatusEffect.GetType() == effectsIter.GetType())
 			{
+				effectsIter.MaxHpBuff = givenStatusEffect.MaxHpBuff;
+				effectsIter.MaxSpBuff = givenStatusEffect.MaxSpBuff;
+				effectsIter.PowBuff = givenStatusEffect.PowBuff;
+				effectsIter.DefBuff = givenStatusEffect.DefBuff;
 				effectsIter.Turns += givenStatusEffect.Turns;
 				Destroy(givenStatusEffect.gameObject);
 				return;
@@ -135,14 +140,24 @@ public class BattleCharacter : MonoBehaviour {
 		}
 	}
 
-	public int _sumAllHpBuffs()
+	public int _sumAllMaxHpBuffs()
 	{
-		return 0;
+		int totalMaxHpBuff = 0;
+		foreach(StatusEffect effectIter in statusEffectsList)
+		{
+			totalMaxHpBuff += effectIter.MaxHpBuff;
+		}
+		return totalMaxHpBuff;
 	}
 
-	public int _sumAllSpBuffs()
+	public int _sumAllMaxSpBuffs()
 	{
-		return 0;
+		int totalMaxSpBuff = 0;
+		foreach(StatusEffect effectIter in statusEffectsList)
+		{
+			totalMaxSpBuff += effectIter.MaxSpBuff;
+		}
+		return totalMaxSpBuff;
 	}
 
 	public int _sumAllPowBuffs()
@@ -150,7 +165,7 @@ public class BattleCharacter : MonoBehaviour {
 		int totalPowBuff = 0;
 		foreach(StatusEffect effectIter in statusEffectsList)
 		{
-			totalPowBuff += effectIter.DefBuff;
+			totalPowBuff += effectIter.PowBuff;
 		}
 		return totalPowBuff;
 	}
@@ -165,8 +180,23 @@ public class BattleCharacter : MonoBehaviour {
 		return totalDefBuff;
 	}
 
-	public int _calcPow()
+	public int _calcBattleMaxHp()
 	{
-		return sheet.pow + _sumAllPowBuffs();
+		return sheet._calcMaxHp() + _sumAllMaxHpBuffs();
+	}
+
+	public int _calcBattleMaxSp()
+	{
+		return sheet._calcMaxSp() + _sumAllMaxSpBuffs();
+	}
+
+	public int _calcBattlePow()
+	{
+		return sheet._calcPow() + _sumAllPowBuffs();
+	}
+
+	public int _calcBattleDef()
+	{
+		return sheet._calcDef() + _sumAllDefBuffs();
 	}
 }
