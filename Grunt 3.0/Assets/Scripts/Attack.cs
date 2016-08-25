@@ -206,6 +206,45 @@ public class ScentOfBlood : Attack
 }
 
 [Serializable]
+public class EchoScreech : Attack
+{
+	public EchoScreech()
+	{
+		attackName = "Echo Screech";
+		baseDamage = 0;
+		baseHealing = 0;
+		spCost = 1;
+		numberOfTargets = 4;
+		targetType = attackTargetEnum.AllEnemies;
+	}
+
+	public override void _battleFunction()
+	{
+		BattleManager.self._echoScreech();
+	}
+}
+
+[Serializable]
+public class NightFlight : Attack
+{
+	public NightFlight()
+	{
+		attackName = "Night Flight";
+		baseDamage = 3;
+		baseHealing = 0;
+		spCost = 1;
+		numberOfTargets = 4;
+		targetType = attackTargetEnum.AllEnemies;
+
+	}
+
+	public override void _battleFunction()
+	{
+		BattleManager.self._nightFlight();
+	}
+}
+
+[Serializable]
 public class Flee : Attack
 {
 	public Flee()

@@ -33,6 +33,17 @@ public partial class BattleManager : MonoBehaviour
 		}
 	}
 
+	BattleStateEnum? delayedBattleState;
+
+	public BattleStateEnum? DelayedBattleState {
+		get {
+			return delayedBattleState;
+		}
+		set {
+			delayedBattleState = value;
+		}
+	}
+
 	BattleCharacter currentCharacter;
 
 	public BattleCharacter CurrentCharacter {
@@ -63,6 +74,17 @@ public partial class BattleManager : MonoBehaviour
 		}
 		set {
 			postWaitCharacterAttackState = value;
+		}
+	}
+
+	CharacterAttackStateEnum? delayedCharacterAttackState;
+
+	public CharacterAttackStateEnum? DelayedCharacterAttackState {
+		get {
+			return delayedCharacterAttackState;
+		}
+		set {
+			delayedCharacterAttackState = value;
 		}
 	}
 
@@ -170,14 +192,33 @@ public partial class BattleManager : MonoBehaviour
 	Item itemToBeUsed;
 
 	List<BattleCharacter> targetUnfriendlies = new List<BattleCharacter> ();
+
+	public List<BattleCharacter> TargetUnfriendlies {
+		get {
+			return targetUnfriendlies;
+		}
+		set {
+			targetUnfriendlies = value;
+		}
+	}
+
 	List<BattleCharacter> targetFriendlies = new List<BattleCharacter> ();
+
+	public List<BattleCharacter> TargetFriendlies {
+		get {
+			return targetFriendlies;
+		}
+		set {
+			targetFriendlies = value;
+		}
+	}
 
 	Vector3 mainDDPosition = new Vector3 (0, 20, 0);
 	Vector3 buttonOffsetPosition = new Vector3 (0, 40, 0);
 	Vector3 ddOffsetPosition = new Vector3 (200, 0, 0);
 	//to be used as sideways adjustment for Spells, Items, and Fleeing dropdowns
 
-	float walkSpeed = .1f;
+	float walkSpeed = .1f, standardWaitTime = .5f;
 
 	// Use this for initialization
 	void Start ()
@@ -211,7 +252,7 @@ public partial class BattleManager : MonoBehaviour
 			switch (currentBattleState)
 			{
 				case BattleStateEnum.ResolveStatusEffects:
-					if (statusEffectsResolved == currentCharacter.StatusEffectsList.Count)
+					if (statusEffectsResolved == currentCharacter.StatusEffectsList.Count) // when all effects have been resolved
 					{
 						statusEffectsResolved = 0;
 						List<StatusEffect> removeEffectsList = new List<StatusEffect> ();
@@ -230,7 +271,7 @@ public partial class BattleManager : MonoBehaviour
 							Destroy (removeEffectIter.gameObject);
 						}
 
-						if (currentCharacter.Sheet.hp > 0)
+						if (currentCharacter.Sheet.hp > 0 && currentCharacter.LoseTurn == false)
 						{
 							if (playerCharacters.Contains (currentCharacter))
 							{
@@ -243,6 +284,7 @@ public partial class BattleManager : MonoBehaviour
 						}
 						else
 						{
+							currentCharacter.LoseTurn = false;
 							currentBattleState = BattleStateEnum.InitKill;
 						}
 					}
@@ -268,7 +310,7 @@ public partial class BattleManager : MonoBehaviour
 					{
 						Engine.self._removeItem (itemToBeUsed, 1);
 					}
-					_setWait (BattleStateEnum.PlayerAttack, .5f);//slight pause before executing any attack
+					_setWait (BattleStateEnum.PlayerAttack, standardWaitTime);//slight pause before executing any attack
 					currentCharacterAttackState = CharacterAttackStateEnum.InitAttack;
 					break;
 				case BattleStateEnum.PlayerAttack:
@@ -358,7 +400,7 @@ public partial class BattleManager : MonoBehaviour
 					}
 					else
 					{
-						_setWait (BattleStateEnum.AdjustLineUp, .4f);
+						_setWait (BattleStateEnum.AdjustLineUp, standardWaitTime);
 					}
 					break;
 				case BattleStateEnum.AdjustLineUp:
@@ -425,7 +467,7 @@ public partial class BattleManager : MonoBehaviour
 			currentCharacter = _getNextInLineForTurn (currentCharacter);
 		}
 		PreGotNextCharInLine = false;
-		_setWait (BattleStateEnum.ResolveStatusEffects, 1f);
+		_setWait (BattleStateEnum.ResolveStatusEffects, standardWaitTime);
 	}
 
 	public BattleCharacter _getNextInLineForTurn (BattleCharacter givenChar)
@@ -478,6 +520,31 @@ public partial class BattleManager : MonoBehaviour
 
 		postWaitBattleState = null;
 		postWaitCharacterAttackState = null;
+	}
+
+	public void _setDelayedStateChange (BattleStateEnum? givenNextState, float waitTime)
+	{
+		delayedBattleState = givenNextState;
+		Invoke ("_finishDelay", waitTime);
+	}
+
+	public void _setDelayedStateChange (CharacterAttackStateEnum? givenNextState, float waitTime)
+	{
+		delayedBattleState = currentBattleState;
+		delayedCharacterAttackState = givenNextState;
+		Invoke ("_finishDelay", waitTime);
+	}
+
+	void _finishDelay ()
+	{
+		currentBattleState = delayedBattleState;
+		if (delayedCharacterAttackState != null)
+		{
+			currentCharacterAttackState = delayedCharacterAttackState;
+		}
+
+		delayedBattleState = null;
+		delayedCharacterAttackState = null;
 	}
 
 	void _initPlayerChoices ()
@@ -751,17 +818,13 @@ public partial class BattleManager : MonoBehaviour
 				Vector3 preSquirmDestination = new Vector3(targetUnfriendlies[0].transform.position.x, currentCharacter.transform.position.y, currentCharacter.transform.position.z);
 				if(currentCharacter._approach(preSquirmDestination, walkSpeed))
 				{
-					if(FindObjectOfType<RapidCommand>())
-					{	
-						Destroy(FindObjectOfType<RapidCommand>().gameObject);
-					}
 					currentCharacter.transform.Rotate (0, 180, 0);
-					_setWait (CharacterAttackStateEnum.MovePostAction, 1); // pause briefly before swiping at enemy
+					_setWait (CharacterAttackStateEnum.MovePostAction, standardWaitTime); // pause briefly before returning due to non-contact
 				}
 
 				if (currentCharacter.HitGameObject == targetUnfriendlies [0].gameObject)
 				{
-					_setWait (CharacterAttackStateEnum.ActionCommand, 1); // pause briefly before swiping at enemy
+					_setWait (CharacterAttackStateEnum.ActionCommand, standardWaitTime); // pause briefly before swiping at enemy
 				}
 				break;
 			case CharacterAttackStateEnum.ActionCommand:
@@ -777,7 +840,7 @@ public partial class BattleManager : MonoBehaviour
 				if (mystics == true)
 				{
 					_damageTarget (currentCharacter, 1);
-					_setWait (CharacterAttackStateEnum.HandleFail, Damage.popTime + .25f);
+					_setWait (CharacterAttackStateEnum.HandleFail, Damage.popTime + standardWaitTime);
 					break;
 				}
 
@@ -785,12 +848,12 @@ public partial class BattleManager : MonoBehaviour
 				{
 					bonus -= 1;
 					_damageTarget (targetUnfriendlies [0], activeAttack.BaseDamage + currentCharacter._calcBattlePow());
-					_setWait (CharacterAttackStateEnum.ApplyAttack, Damage.popTime + 1f); // pause then swing, this will happen repeatedly until player runs out of bonus
+					_setWait (CharacterAttackStateEnum.ApplyAttack, Damage.popTime + 2*standardWaitTime); // pause then swing, this will happen repeatedly until player runs out of bonus
 				}
 				else
 				{
 					currentCharacter.transform.Rotate (0, 180, 0);
-					_setWait (CharacterAttackStateEnum.MovePostAction, .25f); // small wait to visually seperate attacking from returning
+					_setWait (CharacterAttackStateEnum.MovePostAction, standardWaitTime); // small wait to visually seperate attacking from returning
 				}
 				break;
 			case CharacterAttackStateEnum.HandleFail:
@@ -818,7 +881,7 @@ public partial class BattleManager : MonoBehaviour
 				_damageTarget (targetUnfriendlies [0], activeAttack.BaseDamage + currentCharacter._calcBattlePow());
 				//_damageTarget(targetUnfriendlies[1], activeAttack.BaseDamage + currentCharacter._calcBattlePow());
 				//_damageTarget(targetUnfriendlies[2], activeAttack.BaseDamage + currentCharacter._calcBattlePow());
-				_setWait (CharacterAttackStateEnum.MovePostAction, Damage.popTime + 1f);
+				_setWait (CharacterAttackStateEnum.MovePostAction, Damage.popTime + 2*standardWaitTime);
 				break;
 			case CharacterAttackStateEnum.MovePostAction:
 				_goToStart (currentCharacter);
@@ -868,7 +931,7 @@ public partial class BattleManager : MonoBehaviour
 			case CharacterAttackStateEnum.InitAttack:
 				
 				Instantiate (Engine.self.pipeCommandPrefab);
-				_setWait(CharacterAttackStateEnum.ActionCommand, .5f);
+				_setWait(CharacterAttackStateEnum.ActionCommand, standardWaitTime);
 				break;
 			case CharacterAttackStateEnum.MovePreAction:
 				break;
@@ -920,22 +983,21 @@ public partial class BattleManager : MonoBehaviour
 				{
 					PressCommand command = (Instantiate (Engine.self.pressCommandPrefab, acPosition, Quaternion.identity) as GameObject).GetComponent<PressCommand> ();
 					command.ActionKey = "z";
-					command.DestroyTime = 999;
 					command.PrePressWaitTime = .1f;
 				}
 				else
 				{
 					bonus = Random.Range(0,2);
 				}
-				_setWait(CharacterAttackStateEnum.MovePreAction, .5f);
+				_setWait(CharacterAttackStateEnum.MovePreAction, standardWaitTime);
 				break;
 			case CharacterAttackStateEnum.MovePreAction:
 				float initialRotationSpeed = -4f, noseDiveAngle = 300, initRotateThresh = preSwoopSpacing + .75f;
 				bool preSwoopThreshMet = Mathf.Abs(currentCharacter.transform.position.x - targetUnfriendlies[0].transform.position.x) < initRotateThresh;
-				if(currentCharacter._approach(preSwoopDestination, walkSpeed/2f))
+				if(currentCharacter._approach(preSwoopDestination, walkSpeed))
 				{
 					currentCharacter.transform.eulerAngles = new Vector3(currentCharacter.transform.eulerAngles.x, currentCharacter.transform.eulerAngles.y, noseDiveAngle);
-					_setWait(CharacterAttackStateEnum.ActionCommand, .25f);
+					_setWait(CharacterAttackStateEnum.ActionCommand, standardWaitTime);
 				}
 				else if(preSwoopThreshMet == true && (currentCharacter.transform.eulerAngles.z  > noseDiveAngle || currentCharacter.transform.eulerAngles.z  == 0))
 				{
@@ -962,7 +1024,6 @@ public partial class BattleManager : MonoBehaviour
 						{
 							PressCommand command = (Instantiate (Engine.self.pressCommandPrefab, acPosition, Quaternion.identity) as GameObject).GetComponent<PressCommand> ();
 							command.ActionKey = "z";
-							command.DestroyTime = 999;
 							command.PrePressWaitTime = 1f;
 						}
 						else
@@ -975,7 +1036,7 @@ public partial class BattleManager : MonoBehaviour
 				{
 					Vector3 finalSwoopRotation = new Vector3(0, currentCharacter.transform.rotation.eulerAngles.y+180, 0);
 					currentCharacter.transform.rotation = Quaternion.Euler(finalSwoopRotation); // set z to 0 without altering the y;
-					_setWait(CharacterAttackStateEnum.MovePostAction, .5f);
+					_setWait(CharacterAttackStateEnum.MovePostAction, standardWaitTime);
 				}
 				break;
 			case CharacterAttackStateEnum.ApplyAttack:
@@ -1022,8 +1083,89 @@ public partial class BattleManager : MonoBehaviour
 					effect.PowBuff = 3 + bonus;
 					effect.Turns = 3;
 					targetFriendlies [0]._addStatusEffect (effect);
-					_setWait(CharacterAttackStateEnum.MovePostAction, .5f);
+					_setWait(CharacterAttackStateEnum.MovePostAction, standardWaitTime);
 				}
+				break;
+			case CharacterAttackStateEnum.ApplyAttack:
+				break;
+			case CharacterAttackStateEnum.MovePostAction:
+				_goToStart (currentCharacter);
+				break;
+		}
+	}
+
+	public void _echoScreech()
+	{
+		switch (currentCharacterAttackState)
+		{
+			case CharacterAttackStateEnum.InitAttack:
+				_setWait(CharacterAttackStateEnum.MovePreAction, standardWaitTime);
+				break;
+			case CharacterAttackStateEnum.MovePreAction:
+				float avrgX = (targetUnfriendlies[0].transform.position.x + targetUnfriendlies[targetUnfriendlies.Count-1].transform.position.x)/2f, actionWindow = 3.5f;
+				Vector3 targetCenterDestination = new Vector3(avrgX, 8, 0);
+
+				if(currentCharacter._approach(targetCenterDestination, walkSpeed))
+				{
+					if(playerCharacters.Contains(currentCharacter))
+					{
+						_setDelayedStateChange(CharacterAttackStateEnum.ApplyAttack, actionWindow);
+						_setWait(CharacterAttackStateEnum.ActionCommand, standardWaitTime);
+					}
+					else
+					{
+						bonus = Random.Range(0, 10) + 3;
+						_setWait(CharacterAttackStateEnum.ApplyAttack, standardWaitTime);
+					}
+				}
+				break;
+			case CharacterAttackStateEnum.ActionCommand:
+				Vector3 acPosition = currentCharacter.transform.position + Vector3.up*3;
+				if(!FindObjectOfType<PressCommand>())
+				{
+					PressCommand command = (Instantiate (Engine.self.pressCommandPrefab, acPosition, Quaternion.identity) as GameObject).GetComponent<PressCommand> ();
+					if(bonus % 2 == 0)
+					{
+						command.ActionKey = "left";
+					}
+					else
+					{
+						command.ActionKey = "right";
+					}
+					command.PrePressWaitTime = .2f;
+				}
+				break;
+			case CharacterAttackStateEnum.ApplyAttack:
+				Instantiate(Engine.self.echoPrefab,currentCharacter.transform.position -Vector3.up, Quaternion.identity);
+				currentCharacterAttackState = CharacterAttackStateEnum.MovePostAction;
+				break;
+			case CharacterAttackStateEnum.MovePostAction:
+				if(!FindObjectOfType<EchoBlast>())
+				{
+					_goToStart (currentCharacter);
+				}
+				break;
+		}
+	}
+
+	public void _nightFlight()
+	{
+		switch (currentCharacterAttackState)
+		{
+			case CharacterAttackStateEnum.InitAttack:
+				Engine.self.transitionImage.transform.parent.gameObject.SetActive(true);
+				PressCommand command = (Instantiate (Engine.self.pressCommandPrefab) as GameObject).GetComponent<PressCommand> ();
+				command.ActionKey = "z";
+				command.PrePressWaitTime = .1f;
+				currentCharacterAttackState = CharacterAttackStateEnum.MovePreAction;
+				break;
+			case CharacterAttackStateEnum.MovePreAction:
+				float darknessSpeed = .03f;
+				//Engine.self.transitionImage.color += new Color (0, 0, 0, darknessSpeed);
+				currentCharacter.transform.position = Engine.self.cam.ScreenToWorldPoint(new Vector3(Input.mousePosition.x, Input.mousePosition.y, -Engine.self.cam.transform.position.z));
+
+				break;
+			case CharacterAttackStateEnum.ActionCommand:
 				break;
 			case CharacterAttackStateEnum.ApplyAttack:
 				break;
@@ -1040,7 +1182,7 @@ public partial class BattleManager : MonoBehaviour
 			case CharacterAttackStateEnum.InitAttack:
 				PrecisionCommand command = (Instantiate (Engine.self.precisionCommandPrefab) as GameObject).GetComponent<PrecisionCommand> ();
 				command.ActionKey = "v";
-				command.DestroyTime = 99;
+				command.DestroyTime = 10;
 				command._randomizeArrowPos ();
 
 				currentCharacterAttackState = CharacterAttackStateEnum.ActionCommand;
@@ -1058,7 +1200,7 @@ public partial class BattleManager : MonoBehaviour
 					else
 					{
 						//signify success
-						_setWait (CharacterAttackStateEnum.ApplyAttack, 1f);
+						_setWait (CharacterAttackStateEnum.ApplyAttack, standardWaitTime);
 					}
 				}
 				break;
@@ -1082,9 +1224,9 @@ public partial class BattleManager : MonoBehaviour
 				effect.Turns = 2;
 				targetUnfriendlies [0]._addStatusEffect (effect);
 				currentCharacterAttackState = CharacterAttackStateEnum.MovePreAction;
-				_goToStart (currentCharacter);
 				break;
 			case CharacterAttackStateEnum.MovePreAction:
+				_goToStart (currentCharacter);
 				break;
 			case CharacterAttackStateEnum.ActionCommand:
 				break;
@@ -1102,9 +1244,10 @@ public partial class BattleManager : MonoBehaviour
 			case CharacterAttackStateEnum.InitAttack:
 				_healTarget (targetFriendlies [0], activeAttack.BaseHealing);
 				currentCharacterAttackState = CharacterAttackStateEnum.MovePreAction;
-				_goToStart (currentCharacter);
+
 				break;
 			case CharacterAttackStateEnum.MovePreAction:
+				_goToStart (currentCharacter);
 				break;
 			case CharacterAttackStateEnum.ActionCommand:
 				break;

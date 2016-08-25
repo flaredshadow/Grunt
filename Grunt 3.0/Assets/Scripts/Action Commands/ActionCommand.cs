@@ -29,7 +29,7 @@ public class ActionCommand : MonoBehaviour
 		}
 	}
 
-	float destroyTime = 999;
+	float destroyTime = -1;
 
 	public float DestroyTime {
 		get {
@@ -63,6 +63,13 @@ public class ActionCommand : MonoBehaviour
 			case "v":
 				commandImage.material = Engine.self.purpleSwapMat;
 				break;
+			case "right":
+				keyLabel.text = "➔";
+				break;
+			case "left":
+				keyLabel.text = "➔";
+				keyLabel.transform.Rotate(new Vector3(0, 180, 0));
+				break;
 		}
 
 		_childStart ();
@@ -84,11 +91,14 @@ public class ActionCommand : MonoBehaviour
 		{
 			if (BattleManager.self.CurrentCharacterAttackState == CharacterAttackStateEnum.ActionCommand)
 			{
-				Destroy (gameObject, destroyTime);
+				if(destroyTime >= 0)
+				{
+					Destroy (gameObject, destroyTime);
+				}
 				_activeChildUpdate ();
 			}
 
-			if (BattleManager.self.CurrentCharacterAttackState == CharacterAttackStateEnum.ApplyAttack)
+			if (BattleManager.self.CurrentCharacterAttackState == CharacterAttackStateEnum.ApplyAttack || BattleManager.self.CurrentCharacterAttackState == CharacterAttackStateEnum.MovePostAction)
 			{
 				Destroy (gameObject);
 			}

@@ -69,6 +69,8 @@ public class CharacterSheet
 				coinWorth = 2;
 				form = formEnum.Animal;
 				rankType = rankTypeEnum.Bat;
+				abilities.Add(new NightFlight());
+				abilities.Add(new EchoScreech());
 				abilities.Add(new ScentOfBlood());
 				abilities.Add(new Swoop());
 				abilities.Add(new PiedPiper());

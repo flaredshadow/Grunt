@@ -6,7 +6,7 @@ public class ChargeCommand : ActionCommand
 {
 	public Image bar, bullseye, arrow;
 
-	bool releasable;
+	bool releasable = true;
 
 	float arrowSpeed = 2f, acceleration = 1f;
 
@@ -19,6 +19,11 @@ public class ChargeCommand : ActionCommand
 		float arrowTip = arrow.rectTransform.anchoredPosition.x + arrow.rectTransform.rect.height/2f;
 		float bullseyeRightEdge = bullseye.rectTransform.anchoredPosition.x + bullseye.rectTransform.rect.width/2f;
 		float barRightEdge = bar.rectTransform.rect.xMax - bar.rectTransform.rect.width/64f;
+
+		if(Input.GetKeyUp(ActionKey))
+		{
+			Debug.Log("release");
+		}
 
 		if(Input.GetKey(ActionKey) && arrowTip < barRightEdge)
 		{
@@ -43,6 +48,7 @@ public class ChargeCommand : ActionCommand
 				BattleManager.self.Bonus = 1;
 			}
 		}
+
 	}
 
 	public void _setAttributes(bool givenReleasable, float givenAcceleration, bool rightCenteredBullseye)

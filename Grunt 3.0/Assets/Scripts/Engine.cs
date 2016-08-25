@@ -30,7 +30,8 @@ public class Engine : MonoBehaviour
 	public GameObject worldPlayer, battleCharacterPrefab, buttonPrefab, dropDownPrefab,
 	rapidCommandPrefab, precisionCommandPrefab, chargeCommandPrefab, pressCommandPrefab, pipeCommandPrefab, clickableBullseyePrefab,
 	damagePrefab, tombStonePrefab, playerHudPrefab,
-	pipeRatPrefab,
+	pipeRatPrefab, echoPrefab,
+	dizzyStarsPrefab,
 	explosionPrefab, spoilsPrefab, pauseMenuPrefab, plusPrefab, statusEffectPrefab, dialogueBoxPrefab, shopPrefab;
 
 	public Sprite poisonIcon, paralysisIcon, shieldIcon, swordIcon;

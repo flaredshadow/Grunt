@@ -27,6 +27,17 @@ public class BattleCharacter : MonoBehaviour {
 		}
 	}
 
+	bool loseTurn;
+
+	public bool LoseTurn {
+		get {
+			return loseTurn;
+		}
+		set {
+			loseTurn = value;
+		}
+	}
+
 	GameObject hitGameObject;
 
 	public GameObject HitGameObject {

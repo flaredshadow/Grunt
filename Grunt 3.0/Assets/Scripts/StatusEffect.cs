@@ -180,3 +180,38 @@ public class Ravenous : StatusEffect
 		//pow is buffed based on bonus
 	}
 }
+
+public class Dizzy : StatusEffect
+{
+	public Dizzy()
+	{
+		statusName = "Dizzy";
+		icon = Engine.self.paralysisIcon;
+		transform.GetChild(0).GetComponent<Image>().sprite = icon;
+	}
+
+	public override void _applyInitChildEffect()
+	{
+		base._applyInitChildEffect();
+		owner.LoseTurn = Random.Range(0,2) == 0 ? false : true;
+		DizzyStars stars = (Instantiate(Engine.self.dizzyStarsPrefab, owner.transform.position + Vector3.up, Quaternion.identity) as GameObject).GetComponent<DizzyStars>();
+		stars.transform.position = owner.transform.position + Vector3.up;
+		stars.DizzyBattleCharacter = owner;
+
+	}
+
+	public override void _applyActivelyChildEffect()
+	{
+		if(!FindObjectOfType<DizzyStars>())
+		{
+			base._applyActivelyChildEffect();
+		}
+	}
+
+	public override void _applyFinishChildEffect()
+	{
+		//Debug.Log("waiting on effect resolution");
+		BattleManager.self._setWait(BattleStateEnum.ResolveStatusEffects, .5f);
+		base._applyFinishChildEffect();
+	}
+}
