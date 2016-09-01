@@ -8,10 +8,11 @@ public class ChargeCommand : ActionCommand
 
 	bool releasable = true;
 
-	float arrowSpeed = 2f, acceleration = 1f;
+	float arrowSpeed = 2f, acceleration = 1f, reverseRate, arrowStartX;
 
 	public override void _childStart()
 	{
+		arrowStartX = arrow.rectTransform.anchoredPosition.x;
 	}
 
 	public override void _activeChildUpdate()
@@ -20,15 +21,20 @@ public class ChargeCommand : ActionCommand
 		float bullseyeRightEdge = bullseye.rectTransform.anchoredPosition.x + bullseye.rectTransform.rect.width/2f;
 		float barRightEdge = bar.rectTransform.rect.xMax - bar.rectTransform.rect.width/64f;
 
-		if(Input.GetKeyUp(ActionKey))
+		if(Input.GetKeyUp(actionKey))
 		{
-			Debug.Log("release");
+			//Debug.Log("release");
 		}
 
-		if(Input.GetKey(ActionKey) && arrowTip < barRightEdge)
+		if(Input.GetKey(actionKey) && arrowTip < barRightEdge)
 		{
 			arrow.rectTransform.anchoredPosition += Vector2.right * arrowSpeed;
 			arrowSpeed *= acceleration;
+		}
+
+		if(arrow.rectTransform.anchoredPosition.x - reverseRate > arrowStartX)
+		{
+			arrow.rectTransform.anchoredPosition -= Vector2.right * reverseRate;
 		}
 
 		if(BattleManager.self.Bonus > -1)
@@ -51,10 +57,11 @@ public class ChargeCommand : ActionCommand
 
 	}
 
-	public void _setAttributes(bool givenReleasable, float givenAcceleration, bool rightCenteredBullseye)
+	public void _setChargeSpecificAttributes(bool givenReleasable, float givenAcceleration, bool rightCenteredBullseye, float givenReverseRate)
 	{
 		releasable = givenReleasable;
 		acceleration = givenAcceleration;
+		reverseRate = givenReverseRate;
 		if (rightCenteredBullseye)
 		{
 			bullseye.rectTransform.anchoredPosition += Vector2.right * bar.rectTransform.rect.width/3f;

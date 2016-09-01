@@ -5,6 +5,10 @@ using System.Collections.Generic;
 
 public class BattleCharacter : MonoBehaviour {
 
+	public SpriteRenderer spRenderer;
+	public Rigidbody rBody;
+	public Collider bcCollider;
+
 	CharacterSheet sheet;
 
 	public CharacterSheet Sheet {
@@ -13,6 +17,17 @@ public class BattleCharacter : MonoBehaviour {
 		}
 		set {
 			sheet = value;
+		}
+	}
+
+	float pointFoundThresh = .2f;
+
+	public float PointFoundThresh {
+		get {
+			return pointFoundThresh;
+		}
+		set {
+			pointFoundThresh = value;
 		}
 	}
 
@@ -95,7 +110,7 @@ public class BattleCharacter : MonoBehaviour {
 
 	public void updateCollider()
 	{
-		gameObject.GetComponent<BoxCollider>().size = gameObject.GetComponent<SpriteRenderer>().sprite.bounds.size;
+		gameObject.GetComponent<BoxCollider>().size = spRenderer.sprite.bounds.size;
 	}
 
 	public Vector3 _calcHudPosition()
@@ -107,8 +122,6 @@ public class BattleCharacter : MonoBehaviour {
 
 	public bool _approach(Vector3 givenDestination, float givenSpeed) // returns true to designate arrival at destination
 	{
-		float pointFoundThresh = .2f;
-
 		if(Vector3.Distance(transform.position, givenDestination) <= pointFoundThresh)
 		{
 			transform.position = givenDestination;

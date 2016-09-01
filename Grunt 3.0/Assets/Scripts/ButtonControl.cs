@@ -65,7 +65,7 @@ public class ButtonControl : MonoBehaviour {
 					b.onClick.AddListener(
 						delegate
 							{
-								charSheet._initRank(rankTypeEnum.Bat);
+								charSheet._initRank(rankTypeEnum.Boar);
 								Engine.self.CurrentSaveInstance.savedPlayerSheets = Engine.DeepClone<List<CharacterSheet>>(Engine.self.PlayerSheets); // damn deep clones
 								/*
 								CharacterSheet charSheet2 = new CharacterSheet();// only for testing purposes

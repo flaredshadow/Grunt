@@ -39,6 +39,7 @@ public class EchoBlast : MonoBehaviour {
 			Dizzy effect = Instantiate (Engine.self.statusEffectPrefab).AddComponent<Dizzy> ();
 			effect.Turns = 3;
 			hitBC._addStatusEffect (effect);
+			BattleManager.self._damageTarget(hitBC, 1);
 		}
 	}
 }

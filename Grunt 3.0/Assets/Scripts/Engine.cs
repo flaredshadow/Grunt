@@ -10,7 +10,7 @@ using System.Runtime.Serialization;
 public enum GameStateEnum {BeginGame, Dialogue, Paused, CutScene, OverWorldPlay, BattlePlay, EnterScene, ExitScene, Ending}
 public enum BattleStateEnum {InitPlayerDecide, PlayerDecide, InitPlayerAttack, PlayerAttack, EnemyDecide, EnemyAttack, PlayerWin, PlayerLose, Flee, InitKill, AdjustLineUp, Wait,
 ResolveStatusEffects}
-public enum CharacterAttackStateEnum {InitAttack, MovePreAction, ActionCommand,  ApplyAttack, HandleFail, MovePostAction}
+public enum AttackStateEnum {InitAttack, MovePreAction, ActionState,  ApplyAttack, HandleFail, MovePostAction}
 public enum WorldPlayerStateEnum {Grounded, Airborne, TakeAction}
 public enum SpoilsStateEnum {AddExp, AddCoins, RankUp, Wait}
 public enum StatusEffectStateEnum {InitApply, ActivelyApply, FinishApply}
@@ -28,7 +28,7 @@ public class Engine : MonoBehaviour
 	public static List<string> visitedScenes = new List<string>();
 
 	public GameObject worldPlayer, battleCharacterPrefab, buttonPrefab, dropDownPrefab,
-	rapidCommandPrefab, precisionCommandPrefab, chargeCommandPrefab, pressCommandPrefab, pipeCommandPrefab, clickableBullseyePrefab,
+	rapidCommandPrefab, precisionCommandPrefab, chargeCommandPrefab, pressCommandPrefab, pipeCommandPrefab, clickableBullseyePrefab, aimerPrefab,
 	damagePrefab, tombStonePrefab, playerHudPrefab,
 	pipeRatPrefab, echoPrefab,
 	dizzyStarsPrefab,
@@ -587,7 +587,7 @@ public class Engine : MonoBehaviour
 			if (i == 0)
 			{
 				// need condition in other for loop to check if enemy should be first turn instead. 
-				BattleManager.self.CurrentCharacter = bc;
+				BattleManager.self.CurrentBC = bc;
 			}
 		}
 		for (int i = 0; i < totalEnemies; i++)

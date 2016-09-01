@@ -4,28 +4,6 @@ using UnityEngine.UI;
 
 public class PressCommand : ActionCommand
 {
-	float prePressWaitTime = 1f;
-
-	public float PrePressWaitTime {
-		get {
-			return prePressWaitTime;
-		}
-		set {
-			prePressWaitTime = value;
-		}
-	}
-
-	bool destroyOnWrongKeyPress = true;
-
-	public bool DestroyOnWrongKeyPress {
-		get {
-			return destroyOnWrongKeyPress;
-		}
-		set {
-			destroyOnWrongKeyPress = value;
-		}
-	}
-
 	public override void _activeChildUpdate()
 	{
 		if(!IsInvoking("_switchSprite") && commandImage.sprite == keyUpSprite)
@@ -33,12 +11,12 @@ public class PressCommand : ActionCommand
 			Invoke("_switchSprite", prePressWaitTime);
 		}
 
-		if(Input.GetKeyDown(ActionKey) && commandImage.sprite == keyDownSprite)
+		if(Input.GetKeyDown(actionKey) && commandImage.sprite == keyDownSprite)
 		{
 			BattleManager.self.Bonus += 1;
 			Destroy(gameObject);
 		}
-		else if(Input.anyKeyDown && destroyOnWrongKeyPress == true)
+		else if(Input.anyKeyDown && (destroyOnWrongKeyPress == true || commandImage.sprite == keyUpSprite))
 		{
 			Destroy(gameObject);
 		}

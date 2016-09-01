@@ -31,13 +31,13 @@ public class TombStone : MonoBehaviour {
 	{
 		BattleCharacter bc = deadCharacter.GetComponent<BattleCharacter>();
 
-		if(BattleManager.self.CurrentCharacter == deadCharacter.GetComponent<BattleCharacter>() && BattleManager.self.PreGotNextCharInLine == false)
+		if(BattleManager.self.CurrentBC == deadCharacter.GetComponent<BattleCharacter>() && BattleManager.self.PreGotNextCharInLine == false)
 		{
 			BattleManager.self.PreGotNextCharInLine = true;
-			while(BattleManager.self.CurrentCharacter.Sheet.hp <= 0)
+			while(BattleManager.self.CurrentBC.Sheet.hp <= 0)
 			{
-				BattleManager.self.CurrentCharacter = BattleManager.self._getNextInLineForTurn(bc);
-				if(BattleManager.self.CurrentCharacter == deadCharacter.GetComponent<BattleCharacter>())
+				BattleManager.self.CurrentBC = BattleManager.self._getNextInLineForTurn(bc);
+				if(BattleManager.self.CurrentBC == deadCharacter.GetComponent<BattleCharacter>())
 				{
 					Debug.Log("Everyone is dead");
 					break;

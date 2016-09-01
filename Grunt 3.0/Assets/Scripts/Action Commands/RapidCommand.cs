@@ -14,7 +14,7 @@ public class RapidCommand : ActionCommand
 			isAnimating = true;
 		}
 
-		if(Input.GetKeyDown(ActionKey))
+		if(Input.GetKeyDown(actionKey))
 		{
 			BattleManager.self.Bonus += 1;
 		}

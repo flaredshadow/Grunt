@@ -230,17 +230,77 @@ public class NightFlight : Attack
 	public NightFlight()
 	{
 		attackName = "Night Flight";
-		baseDamage = 3;
-		baseHealing = 0;
+		baseDamage = 50;
+		baseHealing = 8;
 		spCost = 1;
-		numberOfTargets = 4;
-		targetType = attackTargetEnum.AllEnemies;
+		numberOfTargets = 1;
+		targetType = attackTargetEnum.FirstEnemy;
 
 	}
 
 	public override void _battleFunction()
 	{
 		BattleManager.self._nightFlight();
+	}
+}
+
+[Serializable]
+public class TuskFling : Attack
+{
+	public TuskFling()
+	{
+		attackName = "Tusk Fling";
+		baseDamage = 2;
+		baseHealing = 0;
+		spCost = 1;
+		numberOfTargets = 1;
+		targetType = attackTargetEnum.FirstEnemy;
+
+	}
+
+	public override void _battleFunction()
+	{
+		BattleManager.self._tuskFling();
+	}
+}
+
+[Serializable]
+public class BodySlam : Attack
+{
+	public BodySlam()
+	{
+		attackName = "Body Slam";
+		baseDamage = 2;
+		baseHealing = 0;
+		spCost = 1;
+		numberOfTargets = 1;
+		targetType = attackTargetEnum.ChooseEnemy;
+
+	}
+
+	public override void _battleFunction()
+	{
+		BattleManager.self._bodySlam();
+	}
+}
+
+[Serializable]
+public class MudCannonBall : Attack
+{
+	public MudCannonBall()
+	{
+		attackName = "Mud Cannon Ball";
+		baseDamage = 2;
+		baseHealing = 2;
+		spCost = 1;
+		numberOfTargets = 8;
+		targetType = attackTargetEnum.AllCharacters;
+
+	}
+
+	public override void _battleFunction()
+	{
+		BattleManager.self._mudCannonBall();
 	}
 }
 

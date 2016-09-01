@@ -9,42 +9,24 @@ public class ActionCommand : MonoBehaviour
 
 	protected Image commandImage;
 
-	public Image CommandImage {
-		get {
-			return commandImage;
-		}
-		set {
-			commandImage = value;
-		}
-	}
+	protected string actionKey;
 
-	string actionKey;
+	protected float destroyTime = -1, prePressWaitTime = 1f;
 
-	public string ActionKey {
-		get {
-			return actionKey;
-		}
-		set {
-			actionKey = value;
-		}
-	}
+	protected bool destroyOnWrongKeyPress = true;
 
-	float destroyTime = -1;
-
-	public float DestroyTime {
-		get {
-			return destroyTime;
-		}
-		set {
-			destroyTime = value;
-		}
-	}
-
-
+	protected int enemyBonus;
 
 	// Use this for initialization
 	void Start ()
 	{
+		if(BattleManager.self.CurrentBattleState == BattleStateEnum.EnemyAttack)
+		{
+			BattleManager.self.Bonus = enemyBonus;
+			Destroy(gameObject);
+			return;
+		}
+
 		transform.SetParent (Engine.self.CoreCanvas.transform, false);
 		commandImage = GetComponent<Image> ();
 		commandImage.sprite = keyUpSprite;
@@ -89,7 +71,7 @@ public class ActionCommand : MonoBehaviour
 
 		if (BattleManager.self.CurrentBattleState == BattleStateEnum.PlayerAttack)
 		{
-			if (BattleManager.self.CurrentCharacterAttackState == CharacterAttackStateEnum.ActionCommand)
+			if (BattleManager.self.CurrentCharacterAttackState == AttackStateEnum.ActionState)
 			{
 				if(destroyTime >= 0)
 				{
@@ -98,7 +80,7 @@ public class ActionCommand : MonoBehaviour
 				_activeChildUpdate ();
 			}
 
-			if (BattleManager.self.CurrentCharacterAttackState == CharacterAttackStateEnum.ApplyAttack || BattleManager.self.CurrentCharacterAttackState == CharacterAttackStateEnum.MovePostAction)
+			if (BattleManager.self.CurrentCharacterAttackState == AttackStateEnum.ApplyAttack || BattleManager.self.CurrentCharacterAttackState == AttackStateEnum.MovePostAction)
 			{
 				Destroy (gameObject);
 			}
@@ -125,5 +107,19 @@ public class ActionCommand : MonoBehaviour
 		{
 			commandImage.sprite = keyUpSprite;
 		}
+	}
+
+	public void _setAttributes(string givenKey, float givenDestroyTime, float givenPrePressWaitTime, bool givenDestroyOnWrongKeyPress, int givenEnemyBonus)
+	{
+		actionKey = givenKey;
+		destroyTime = givenDestroyTime;
+		prePressWaitTime = givenPrePressWaitTime;
+		destroyOnWrongKeyPress = givenDestroyOnWrongKeyPress;
+		enemyBonus = givenEnemyBonus;
+	}
+
+	void OnDestroy()
+	{
+		BattleManager.self.CommandsDestroyed += 1;
 	}
 }

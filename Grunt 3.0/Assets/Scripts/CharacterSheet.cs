@@ -22,6 +22,7 @@ public class CharacterSheet
 	public void _initRank(rankTypeEnum givenRankType)
 	{
 		retreat = new Flee();
+		rankType = givenRankType;
 		switch(givenRankType)
 		{
 			case rankTypeEnum.Rat:
@@ -41,7 +42,6 @@ public class CharacterSheet
 				expWorth = 1 * rank;
 				coinWorth = 2;
 				form = formEnum.Animal;
-				rankType = rankTypeEnum.Rat;
 				abilities.Add(new SquirmingClaws());
 				abilities.Add(new PiedPiper());
 				abilities.Add(new PoisonTest());
@@ -68,16 +68,34 @@ public class CharacterSheet
 				expWorth = 3 * rank;
 				coinWorth = 2;
 				form = formEnum.Animal;
-				rankType = rankTypeEnum.Bat;
 				abilities.Add(new NightFlight());
 				abilities.Add(new EchoScreech());
 				abilities.Add(new ScentOfBlood());
 				abilities.Add(new Swoop());
-				abilities.Add(new PiedPiper());
-				abilities.Add(new PoisonTest());
-				abilities.Add(new SquirmingClaws());
-				spells.Add(new PlagueBite());
-				spells.Add(new SewerStench());
+				potentialItems.Add(new Potion());
+				potentialItemsChances.Add(.5f);
+				break;
+
+			case rankTypeEnum.Boar:
+				maxHp = 4;
+				hp = maxHp;
+				maxSp = 10;
+				sp = maxSp;
+				pow = 3;
+				def = 1;
+				hpGain = 2;
+				spGain = 2;
+				powGain = 1;
+				defGain = 1;
+				electivePointsGain = 2;
+				characterName = "Boar";
+				hasFlight = false;
+				expWorth = 3 * rank;
+				coinWorth = 2;
+				form = formEnum.Animal;
+				abilities.Add(new MudCannonBall());
+				abilities.Add(new BodySlam());
+				abilities.Add(new TuskFling());
 				potentialItems.Add(new Potion());
 				potentialItemsChances.Add(.5f);
 				break;

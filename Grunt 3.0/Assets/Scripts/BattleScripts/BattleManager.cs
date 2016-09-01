@@ -44,31 +44,31 @@ public partial class BattleManager : MonoBehaviour
 		}
 	}
 
-	BattleCharacter currentCharacter;
+	BattleCharacter currentBC;
 
-	public BattleCharacter CurrentCharacter {
+	public BattleCharacter CurrentBC {
 		get {
-			return currentCharacter;
+			return currentBC;
 		}
 		set {
-			currentCharacter = value;
+			currentBC = value;
 		}
 	}
 
-	CharacterAttackStateEnum? currentCharacterAttackState;
+	AttackStateEnum? currentAttackState;
 
-	public CharacterAttackStateEnum? CurrentCharacterAttackState {
+	public AttackStateEnum? CurrentCharacterAttackState {
 		get {
-			return currentCharacterAttackState;
+			return currentAttackState;
 		}
 		set {
-			currentCharacterAttackState = value;
+			currentAttackState = value;
 		}
 	}
 
-	CharacterAttackStateEnum? postWaitCharacterAttackState;
+	AttackStateEnum? postWaitCharacterAttackState;
 
-	public CharacterAttackStateEnum? PostWaitCharacterAttackState {
+	public AttackStateEnum? PostWaitCharacterAttackState {
 		get {
 			return postWaitCharacterAttackState;
 		}
@@ -77,9 +77,9 @@ public partial class BattleManager : MonoBehaviour
 		}
 	}
 
-	CharacterAttackStateEnum? delayedCharacterAttackState;
+	AttackStateEnum? delayedCharacterAttackState;
 
-	public CharacterAttackStateEnum? DelayedCharacterAttackState {
+	public AttackStateEnum? DelayedCharacterAttackState {
 		get {
 			return delayedCharacterAttackState;
 		}
@@ -87,6 +87,8 @@ public partial class BattleManager : MonoBehaviour
 			delayedCharacterAttackState = value;
 		}
 	}
+
+	int attackSubState = 0;
 
 	Attack activeAttack;
 
@@ -178,7 +180,7 @@ public partial class BattleManager : MonoBehaviour
 
 	#endregion
 
-	int statusEffectsResolved = 0;
+	int statusEffectsResolved;
 
 	public int StatusEffectsResolved {
 		get {
@@ -188,17 +190,28 @@ public partial class BattleManager : MonoBehaviour
 			statusEffectsResolved = value;
 		}
 	}
+		
+	int commandsDestroyed;
+
+	public int CommandsDestroyed {
+		get {
+			return commandsDestroyed;
+		}
+		set {
+			commandsDestroyed = value;
+		}
+	}
 
 	Item itemToBeUsed;
 
-	List<BattleCharacter> targetUnfriendlies = new List<BattleCharacter> ();
+	List<BattleCharacter> targOpposed = new List<BattleCharacter> ();
 
 	public List<BattleCharacter> TargetUnfriendlies {
 		get {
-			return targetUnfriendlies;
+			return targOpposed;
 		}
 		set {
-			targetUnfriendlies = value;
+			targOpposed = value;
 		}
 	}
 
@@ -213,9 +226,7 @@ public partial class BattleManager : MonoBehaviour
 		}
 	}
 
-	Vector3 mainDDPosition = new Vector3 (0, 20, 0);
-	Vector3 buttonOffsetPosition = new Vector3 (0, 40, 0);
-	Vector3 ddOffsetPosition = new Vector3 (200, 0, 0);
+	Vector3 mainDDPosition = new Vector3 (0, 20, 0), buttonOffsetPosition = new Vector3 (0, 40, 0), ddOffsetPosition = new Vector3 (200, 0, 0), fallVelocity = Vector3.down * 20f;
 	//to be used as sideways adjustment for Spells, Items, and Fleeing dropdowns
 
 	float walkSpeed = .1f, standardWaitTime = .5f;
@@ -232,16 +243,17 @@ public partial class BattleManager : MonoBehaviour
 		enemyCharacters.Clear();
 		Engine.self.EnemyUsableItems.Clear();
 		activeAttack = null;
+		attackSubState = 0;
 		statusEffectsResolved = 0;
 		bonus = 0;
 		coinsEarned = 0;
-		currentCharacter = null;
+		currentBC = null;
 		expEarned = 0;
 		itemsEarned.Clear ();
 		preGotNextCharInLine = false;
 		itemToBeUsed = null;
 		targetFriendlies.Clear ();
-		targetUnfriendlies.Clear ();
+		targOpposed.Clear ();
 	}
 	
 	// Update is called once per frame
@@ -252,12 +264,12 @@ public partial class BattleManager : MonoBehaviour
 			switch (currentBattleState)
 			{
 				case BattleStateEnum.ResolveStatusEffects:
-					if (statusEffectsResolved == currentCharacter.StatusEffectsList.Count) // when all effects have been resolved
+					if (statusEffectsResolved == currentBC.StatusEffectsList.Count) // when all effects have been resolved
 					{
 						statusEffectsResolved = 0;
 						List<StatusEffect> removeEffectsList = new List<StatusEffect> ();
 
-						foreach (StatusEffect effectIter in currentCharacter.StatusEffectsList)
+						foreach (StatusEffect effectIter in currentBC.StatusEffectsList)
 						{
 							if (effectIter.Turns == 0)
 							{
@@ -267,13 +279,13 @@ public partial class BattleManager : MonoBehaviour
 
 						foreach (StatusEffect removeEffectIter in removeEffectsList)
 						{
-							currentCharacter.StatusEffectsList.Remove (removeEffectIter);
+							currentBC.StatusEffectsList.Remove (removeEffectIter);
 							Destroy (removeEffectIter.gameObject);
 						}
 
-						if (currentCharacter.Sheet.hp > 0 && currentCharacter.LoseTurn == false)
+						if (currentBC.Sheet.hp > 0 && currentBC.LoseTurn == false)
 						{
-							if (playerCharacters.Contains (currentCharacter))
+							if (playerCharacters.Contains (currentBC))
 							{
 								currentBattleState = BattleStateEnum.InitPlayerDecide;
 							}
@@ -284,13 +296,13 @@ public partial class BattleManager : MonoBehaviour
 						}
 						else
 						{
-							currentCharacter.LoseTurn = false;
+							currentBC.LoseTurn = false;
 							currentBattleState = BattleStateEnum.InitKill;
 						}
 					}
 					else
 					{
-						currentCharacter.StatusEffectsList [statusEffectsResolved]._applyEffect ();
+						currentBC.StatusEffectsList [statusEffectsResolved]._applyEffect ();
 					}
 					break;
 				case BattleStateEnum.InitPlayerDecide:
@@ -301,9 +313,9 @@ public partial class BattleManager : MonoBehaviour
 					break;
 				case BattleStateEnum.InitPlayerAttack:
 					_destroyAllButtonsAndDropDowns ();
-					if (currentCharacter.Sheet.spells.Contains (activeAttack))
+					if (currentBC.Sheet.spells.Contains (activeAttack))
 					{
-						currentCharacter.Sheet.sp -= activeAttack.SpCost;
+						currentBC.Sheet.sp -= activeAttack.SpCost;
 					}
 
 					if (itemToBeUsed != null)
@@ -311,15 +323,15 @@ public partial class BattleManager : MonoBehaviour
 						Engine.self._removeItem (itemToBeUsed, 1);
 					}
 					_setWait (BattleStateEnum.PlayerAttack, standardWaitTime);//slight pause before executing any attack
-					currentCharacterAttackState = CharacterAttackStateEnum.InitAttack;
+					currentAttackState = AttackStateEnum.InitAttack;
 					break;
 				case BattleStateEnum.PlayerAttack:
 					activeAttack._battleFunction ();
 					break;
 				case BattleStateEnum.EnemyDecide:
-					currentCharacterAttackState = CharacterAttackStateEnum.InitAttack;
+					currentAttackState = AttackStateEnum.InitAttack;
 					//need Ai for enemies ***
-					activeAttack = currentCharacter.Sheet.abilities [0];
+					activeAttack = currentBC.Sheet.abilities [0];
 					//need Ai for enemies ***
 					switch (activeAttack.TargetType)
 					{
@@ -333,7 +345,7 @@ public partial class BattleManager : MonoBehaviour
 						case attackTargetEnum.ChooseEnemy:
 							for (int i = 0; i < activeAttack.NumberOfTargets && i < playerCharacters.Count; i++)
 							{ //need Ai
-								targetUnfriendlies.Add (playerCharacters [i]);
+								targOpposed.Add (playerCharacters [i]);
 							}
 							break;
 						
@@ -342,19 +354,19 @@ public partial class BattleManager : MonoBehaviour
 							break;
 						case attackTargetEnum.AllCharacters:
 							targetFriendlies.AddRange (enemyCharacters);
-							targetUnfriendlies.AddRange (playerCharacters);
+							targOpposed.AddRange (playerCharacters);
 							break;
 						case attackTargetEnum.AllEnemies:
-							targetUnfriendlies.AddRange (playerCharacters);
+							targOpposed.AddRange (playerCharacters);
 							break;
 						case attackTargetEnum.FirstAlly:
 							targetFriendlies.Add (enemyCharacters [0]);
 							break;
 						case attackTargetEnum.FirstEnemy:
-							targetUnfriendlies.Add (playerCharacters [0]);
+							targOpposed.Add (playerCharacters [0]);
 							break;
 						case attackTargetEnum.Self:
-							targetFriendlies.Add (currentCharacter);
+							targetFriendlies.Add (currentBC);
 							break;
 					}
 					currentBattleState = BattleStateEnum.EnemyAttack;
@@ -363,10 +375,12 @@ public partial class BattleManager : MonoBehaviour
 					activeAttack._battleFunction ();
 					break;
 				case BattleStateEnum.InitKill:
-					targetUnfriendlies.Clear ();
+					targOpposed.Clear ();
 					targetFriendlies.Clear ();
 					activeAttack = null;
+					attackSubState = 0;
 					bonus = 0;
+					commandsDestroyed = 0;
 					bool madeExplosion = false;
 					float tombStoneHeight = 17.75f;
 					foreach (BattleCharacter playerC in playerCharacters)
@@ -464,7 +478,7 @@ public partial class BattleManager : MonoBehaviour
 	{
 		if (PreGotNextCharInLine == false)
 		{
-			currentCharacter = _getNextInLineForTurn (currentCharacter);
+			currentBC = _getNextInLineForTurn (currentBC);
 		}
 		PreGotNextCharInLine = false;
 		_setWait (BattleStateEnum.ResolveStatusEffects, standardWaitTime);
@@ -502,7 +516,7 @@ public partial class BattleManager : MonoBehaviour
 		Invoke ("_finishWait", waitTime);
 	}
 
-	public void _setWait (CharacterAttackStateEnum? givenNextState, float waitTime)
+	public void _setWait (AttackStateEnum? givenNextState, float waitTime)
 	{
 		postWaitBattleState = currentBattleState;
 		currentBattleState = BattleStateEnum.Wait;
@@ -515,7 +529,7 @@ public partial class BattleManager : MonoBehaviour
 		currentBattleState = postWaitBattleState;
 		if (postWaitCharacterAttackState != null)
 		{
-			currentCharacterAttackState = postWaitCharacterAttackState;
+			currentAttackState = postWaitCharacterAttackState;
 		}
 
 		postWaitBattleState = null;
@@ -528,7 +542,7 @@ public partial class BattleManager : MonoBehaviour
 		Invoke ("_finishDelay", waitTime);
 	}
 
-	public void _setDelayedStateChange (CharacterAttackStateEnum? givenNextState, float waitTime)
+	public void _setDelayedStateChange (AttackStateEnum? givenNextState, float waitTime)
 	{
 		delayedBattleState = currentBattleState;
 		delayedCharacterAttackState = givenNextState;
@@ -540,7 +554,7 @@ public partial class BattleManager : MonoBehaviour
 		currentBattleState = delayedBattleState;
 		if (delayedCharacterAttackState != null)
 		{
-			currentCharacterAttackState = delayedCharacterAttackState;
+			currentAttackState = delayedCharacterAttackState;
 		}
 
 		delayedBattleState = null;
@@ -552,11 +566,11 @@ public partial class BattleManager : MonoBehaviour
 
 		Dropdown abilityDD = (Instantiate (Engine.self.dropDownPrefab, mainDDPosition, Quaternion.identity) as GameObject).GetComponent<Dropdown> ();
 		abilityDD.transform.SetParent (Engine.self.CoreCanvas.transform, false);
-		abilityDD.AddOptions (currentCharacter.Sheet._attacksToOptions (currentCharacter.Sheet.abilities));
+		abilityDD.AddOptions (currentBC.Sheet._attacksToOptions (currentBC.Sheet.abilities));
 
 		Dropdown spellDD = (Instantiate (Engine.self.dropDownPrefab, mainDDPosition + ddOffsetPosition, Quaternion.identity) as GameObject).GetComponent<Dropdown> ();
 		spellDD.transform.SetParent (Engine.self.CoreCanvas.transform, false);
-		spellDD.AddOptions (currentCharacter.Sheet._attacksToOptions (currentCharacter.Sheet.spells));
+		spellDD.AddOptions (currentBC.Sheet._attacksToOptions (currentBC.Sheet.spells));
 
 		Dropdown itemDD = (Instantiate (Engine.self.dropDownPrefab, mainDDPosition - ddOffsetPosition, Quaternion.identity) as GameObject).GetComponent<Dropdown> ();
 		itemDD.transform.SetParent (Engine.self.CoreCanvas.transform, false);
@@ -583,9 +597,9 @@ public partial class BattleManager : MonoBehaviour
 
 		abilityButton.onClick.AddListener (
 			delegate {
-				if (currentCharacter.Sheet.abilities.Count > 0)
+				if (currentBC.Sheet.abilities.Count > 0)
 				{
-					_activateOption (currentCharacter.Sheet.abilities [abilityDD.value]);
+					_activateOption (currentBC.Sheet.abilities [abilityDD.value]);
 				}
 				else
 				{
@@ -595,9 +609,9 @@ public partial class BattleManager : MonoBehaviour
 
 		spellButton.onClick.AddListener (
 			delegate {
-				if (currentCharacter.Sheet.spells.Count > 0 && currentCharacter.Sheet.sp >= currentCharacter.Sheet.spells [spellDD.value].SpCost)
+				if (currentBC.Sheet.spells.Count > 0 && currentBC.Sheet.sp >= currentBC.Sheet.spells [spellDD.value].SpCost)
 				{
-					_activateOption (currentCharacter.Sheet.spells [spellDD.value]);
+					_activateOption (currentBC.Sheet.spells [spellDD.value]);
 				}
 				else
 				{
@@ -618,7 +632,7 @@ public partial class BattleManager : MonoBehaviour
 			});
 		fleeButton.onClick.AddListener (
 			delegate {
-				_activateOption (currentCharacter.Sheet.retreat);
+				_activateOption (currentBC.Sheet.retreat);
 			});
 	}
 
@@ -652,19 +666,19 @@ public partial class BattleManager : MonoBehaviour
 					break;
 				case attackTargetEnum.AllCharacters:
 					targetFriendlies.AddRange (playerCharacters);
-					targetUnfriendlies.AddRange (enemyCharacters);
+					targOpposed.AddRange (enemyCharacters);
 					break;
 				case attackTargetEnum.AllEnemies:
-					targetUnfriendlies.AddRange (enemyCharacters);
+					targOpposed.AddRange (enemyCharacters);
 					break;
 				case attackTargetEnum.FirstAlly:
 					targetFriendlies.Add (playerCharacters [0]);
 					break;
 				case attackTargetEnum.FirstEnemy:
-					targetUnfriendlies.Add (enemyCharacters [0]);
+					targOpposed.Add (enemyCharacters [0]);
 					break;
 				case attackTargetEnum.Self:
-					targetFriendlies.Add (currentCharacter);
+					targetFriendlies.Add (currentBC);
 					break;
 			}
 			activeAttack = attackInQuestion;
@@ -688,7 +702,7 @@ public partial class BattleManager : MonoBehaviour
 	void _generateTargetChoiceButton (BattleCharacter givenTarget, Attack selectedAttack)
 	{
 		Vector3 buttonOffset = new Vector3 (0, 2, 0);
-		Vector3 targetButtonPosition = RectTransformUtility.WorldToScreenPoint (Engine.self.cam, givenTarget.transform.localPosition + buttonOffset);
+		Vector3 targetButtonPosition = RectTransformUtility.WorldToScreenPoint (Engine.self.cam, givenTarget.transform.position + buttonOffset);
 		Button targetButton = (Instantiate (Engine.self.buttonPrefab, targetButtonPosition, Quaternion.identity) as GameObject).GetComponent<Button> ();
 		targetButton.transform.SetParent (Engine.self.CoreCanvas.transform, true);
 		targetButton.transform.localScale = Vector3.one;//when setting the parent, true keeps the position correct, but enlargers the scale, this is an easy fix
@@ -697,8 +711,8 @@ public partial class BattleManager : MonoBehaviour
 			delegate {
 				if (enemyCharacters.Contains (givenTarget))
 				{
-					targetUnfriendlies.Add (givenTarget);
-					if (selectedAttack.NumberOfTargets == targetUnfriendlies.Count || targetUnfriendlies.Count == enemyCharacters.Count)
+					targOpposed.Add (givenTarget);
+					if (selectedAttack.NumberOfTargets == targOpposed.Count || targOpposed.Count == enemyCharacters.Count)
 					{
 						activeAttack = selectedAttack;
 						currentBattleState = BattleStateEnum.InitPlayerAttack;
@@ -727,15 +741,15 @@ public partial class BattleManager : MonoBehaviour
 		backButton.GetComponentInChildren<Text> ().text = "Back";
 		backButton.onClick.AddListener (
 			delegate {
-				if (targetUnfriendlies.Count > 0)
+				if (targOpposed.Count > 0)
 				{
-					_generateTargetChoiceButton (targetUnfriendlies [targetUnfriendlies.Count - 1], selectedAttack);
-					targetUnfriendlies.RemoveAt (targetUnfriendlies.Count - 1);
+					_generateTargetChoiceButton (targOpposed [targOpposed.Count - 1], selectedAttack);
+					targOpposed.RemoveAt (targOpposed.Count - 1);
 				}
 				else if (targetFriendlies.Count > 0)
 				{
 					_generateTargetChoiceButton (targetFriendlies [targetFriendlies.Count - 1], selectedAttack);
-					targetUnfriendlies.RemoveAt (targetFriendlies.Count - 1);
+					targOpposed.RemoveAt (targetFriendlies.Count - 1);
 				}
 				else
 				{
@@ -752,7 +766,7 @@ public partial class BattleManager : MonoBehaviour
 		int damageTaken = Mathf.Max (1, damageDealt - targ._calcBattleDef()); // minimum 1 damage is always taken
 		targ.Sheet.hp -= damageTaken;
 		targ.Sheet.hp = Mathf.Max (0, targ.Sheet.hp);//minimum hp is 0
-		Vector3 damagePosition = RectTransformUtility.WorldToScreenPoint (Engine.self.cam, targ.transform.localPosition);
+		Vector3 damagePosition = RectTransformUtility.WorldToScreenPoint (Engine.self.cam, targ.transform.position);
 		Damage damageScript = (Instantiate (Engine.self.damagePrefab) as GameObject).GetComponent<Damage> ();
 		if (playerCharacters.Contains (targ))
 		{
@@ -768,7 +782,7 @@ public partial class BattleManager : MonoBehaviour
 	{
 		targ.Sheet.hp += givenHealing;
 		targ.Sheet.hp = Mathf.Min (targ.Sheet.hp, targ._calcBattleMaxHp());
-		Vector3 damagePosition = RectTransformUtility.WorldToScreenPoint (Engine.self.cam, targ.transform.localPosition);
+		Vector3 damagePosition = RectTransformUtility.WorldToScreenPoint (Engine.self.cam, targ.transform.position);
 		Damage damageScript = (Instantiate (Engine.self.damagePrefab) as GameObject).GetComponent<Damage> ();
 		damageScript._setToHeal();
 		if (playerCharacters.Contains (targ))
@@ -783,6 +797,11 @@ public partial class BattleManager : MonoBehaviour
 
 	void _goToStart (BattleCharacter givenBC)
 	{
+		if(currentBattleState == BattleStateEnum.AdjustLineUp)
+		{
+			givenBC.Hud.transform.position = givenBC._calcHudPosition();
+		}
+
 		Vector3 lineUpPos = Engine.self._getLineUpPosition (givenBC);
 		if(givenBC._approach(lineUpPos, walkSpeed))
 		{
@@ -790,135 +809,126 @@ public partial class BattleManager : MonoBehaviour
 			if (currentBattleState == BattleStateEnum.PlayerAttack || currentBattleState == BattleStateEnum.EnemyAttack)
 			{
 				currentBattleState = BattleStateEnum.InitKill;
-				bool shouldFlipPlayer = currentCharacter.transform.localEulerAngles.y != 0 && playerCharacters.Contains (currentCharacter);
-				bool shouldFlipEnemy = Mathf.RoundToInt (currentCharacter.transform.localEulerAngles.y) != 180 && enemyCharacters.Contains (currentCharacter);
+				bool shouldFlipPlayer = currentBC.transform.localEulerAngles.y != 0 && playerCharacters.Contains (currentBC);
+				bool shouldFlipEnemy = Mathf.RoundToInt (currentBC.transform.localEulerAngles.y) != 180 && enemyCharacters.Contains (currentBC);
 				if (shouldFlipPlayer || shouldFlipEnemy)
 				{
-					currentCharacter.transform.Rotate (0, 180, 0);
+					currentBC.transform.Rotate (0, 180, 0);
 				}
 			}
 		}
 	}
 
-	public void _squirmingClaws ()//need to decide how to handle flying target eventually
+	public void _squirmingClaws ()
 	{
-		switch (currentCharacterAttackState)
+		switch (currentAttackState)
 		{
-			case CharacterAttackStateEnum.InitAttack:
-				if (playerCharacters.Contains (currentCharacter))
-				{
-					RapidCommand command = (Instantiate (Engine.self.rapidCommandPrefab, Vector3.one, Quaternion.identity) as GameObject).GetComponent<RapidCommand> ();
-					command.ActionKey = "z";
-					command.DestroyTime = 3;
-				}
-				currentCharacterAttackState = CharacterAttackStateEnum.MovePreAction;
+			case AttackStateEnum.InitAttack:
+				RapidCommand command = (Instantiate (Engine.self.rapidCommandPrefab, Vector3.up+Vector3.right, Quaternion.identity) as GameObject).GetComponent<RapidCommand> ();
+				command._setAttributes("z", 3f, -1, true, Random.Range(0, 22));
+				currentAttackState = AttackStateEnum.MovePreAction;
 				break;
-			case CharacterAttackStateEnum.MovePreAction:
-
-				Vector3 preSquirmDestination = new Vector3(targetUnfriendlies[0].transform.position.x, currentCharacter.transform.position.y, currentCharacter.transform.position.z);
-				if(currentCharacter._approach(preSquirmDestination, walkSpeed))
+			case AttackStateEnum.MovePreAction:
+				Vector3 preSquirmDestination = new Vector3(targOpposed[0].transform.position.x, currentBC.transform.position.y, currentBC.transform.position.z);
+				if(currentBC._approach(preSquirmDestination, walkSpeed))
 				{
-					currentCharacter.transform.Rotate (0, 180, 0);
-					_setWait (CharacterAttackStateEnum.MovePostAction, standardWaitTime); // pause briefly before returning due to non-contact
+					currentBC.transform.Rotate (0, 180, 0);
+					_setWait (AttackStateEnum.MovePostAction, standardWaitTime); // pause briefly before returning due to non-contact
 				}
 
-				if (currentCharacter.HitGameObject == targetUnfriendlies [0].gameObject)
+				if (currentBC.HitGameObject == targOpposed [0].gameObject)
 				{
-					_setWait (CharacterAttackStateEnum.ActionCommand, standardWaitTime); // pause briefly before swiping at enemy
+					_setWait (AttackStateEnum.ActionState, standardWaitTime); // pause briefly before swiping at enemy
 				}
 				break;
-			case CharacterAttackStateEnum.ActionCommand:
-				if (!FindObjectOfType<RapidCommand> ())
+			case AttackStateEnum.ActionState:
+				if (commandsDestroyed > 0)
 				{
-					currentCharacterAttackState = CharacterAttackStateEnum.ApplyAttack;
+					currentAttackState = AttackStateEnum.ApplyAttack;
 					bonus = bonus / 6; // 6 is an arbitrarily choesn number
 				}
 				break;
-			case CharacterAttackStateEnum.ApplyAttack:
+			case AttackStateEnum.ApplyAttack:
 				bool mystics = false;
 
 				if (mystics == true)
 				{
-					_damageTarget (currentCharacter, 1);
-					_setWait (CharacterAttackStateEnum.HandleFail, Damage.popTime + standardWaitTime);
+					_damageTarget (currentBC, 1);
+					_setWait (AttackStateEnum.HandleFail, Damage.popTime + standardWaitTime);
 					break;
 				}
 
 				if (bonus > -1)
 				{
 					bonus -= 1;
-					_damageTarget (targetUnfriendlies [0], activeAttack.BaseDamage + currentCharacter._calcBattlePow());
-					_setWait (CharacterAttackStateEnum.ApplyAttack, Damage.popTime + 2*standardWaitTime); // pause then swing, this will happen repeatedly until player runs out of bonus
+					_damageTarget (targOpposed [0], activeAttack.BaseDamage + currentBC._calcBattlePow());
+					_setWait (AttackStateEnum.ApplyAttack, Damage.popTime + 2*standardWaitTime); // pause then swing, this will happen repeatedly until player runs out of bonus
 				}
 				else
 				{
-					currentCharacter.transform.Rotate (0, 180, 0);
-					_setWait (CharacterAttackStateEnum.MovePostAction, standardWaitTime); // small wait to visually seperate attacking from returning
+					currentBC.transform.Rotate (0, 180, 0);
+					_setWait (AttackStateEnum.MovePostAction, standardWaitTime); // small wait to visually seperate attacking from returning
 				}
 				break;
-			case CharacterAttackStateEnum.HandleFail:
-				currentCharacter.transform.Rotate (0, 180, 0);
-				currentCharacterAttackState = CharacterAttackStateEnum.MovePostAction;
+			case AttackStateEnum.HandleFail:
+				currentBC.transform.Rotate (0, 180, 0);
+				currentAttackState = AttackStateEnum.MovePostAction;
 				break;
-			case CharacterAttackStateEnum.MovePostAction:
-				_goToStart (currentCharacter);
+			case AttackStateEnum.MovePostAction:
+				_goToStart (currentBC);
 				break;
 		}
 	}
 
 	public void _plagueBite ()
 	{
-		switch (currentCharacterAttackState)
+		switch (currentAttackState)
 		{
-			case CharacterAttackStateEnum.InitAttack:
-				currentCharacterAttackState = CharacterAttackStateEnum.ApplyAttack;
+			case AttackStateEnum.InitAttack:
+				currentAttackState = AttackStateEnum.ApplyAttack;
 				break;
-			case CharacterAttackStateEnum.MovePreAction:
+			case AttackStateEnum.MovePreAction:
 				break;
-			case CharacterAttackStateEnum.ActionCommand:
+			case AttackStateEnum.ActionState:
 				break;
-			case CharacterAttackStateEnum.ApplyAttack:
-				_damageTarget (targetUnfriendlies [0], activeAttack.BaseDamage + currentCharacter._calcBattlePow());
+			case AttackStateEnum.ApplyAttack:
+				_damageTarget (targOpposed [0], activeAttack.BaseDamage + currentBC._calcBattlePow());
 				//_damageTarget(targetUnfriendlies[1], activeAttack.BaseDamage + currentCharacter._calcBattlePow());
 				//_damageTarget(targetUnfriendlies[2], activeAttack.BaseDamage + currentCharacter._calcBattlePow());
-				_setWait (CharacterAttackStateEnum.MovePostAction, Damage.popTime + 2*standardWaitTime);
+				_setWait (AttackStateEnum.MovePostAction, Damage.popTime + 2*standardWaitTime);
 				break;
-			case CharacterAttackStateEnum.MovePostAction:
-				_goToStart (currentCharacter);
+			case AttackStateEnum.MovePostAction:
+				_goToStart (currentBC);
 				break;
 		}
 	}
 
 	public void _sewerStench ()
 	{
-		switch (currentCharacterAttackState)
+		switch (currentAttackState)
 		{
-			case CharacterAttackStateEnum.InitAttack:
-				if (playerCharacters.Contains (currentCharacter))
-				{
-					ChargeCommand command = (Instantiate (Engine.self.chargeCommandPrefab) as GameObject).GetComponent<ChargeCommand> ();
-					command._setAttributes(true, 1f, true);
-					command.ActionKey = "z";
-					command.DestroyTime = 6;
-				}
-				currentCharacterAttackState = CharacterAttackStateEnum.ActionCommand;
+			case AttackStateEnum.InitAttack:
+				ChargeCommand command = (Instantiate (Engine.self.chargeCommandPrefab) as GameObject).GetComponent<ChargeCommand> ();
+				command._setAttributes("z", 6f, -1, true, Random.Range(-1, 3));
+				command._setChargeSpecificAttributes(true, 1f, true, 0f);
+				currentAttackState = AttackStateEnum.ActionState;
 				break;
-			case CharacterAttackStateEnum.MovePreAction:
+			case AttackStateEnum.MovePreAction:
 				break;
-			case CharacterAttackStateEnum.ActionCommand:
-				if (!FindObjectOfType<ChargeCommand> ())
+			case AttackStateEnum.ActionState:
+				if (commandsDestroyed > 0)
 				{
-					currentCharacterAttackState = CharacterAttackStateEnum.ApplyAttack;
+					currentAttackState = AttackStateEnum.ApplyAttack;
 				}
 				break;
-			case CharacterAttackStateEnum.ApplyAttack:
+			case AttackStateEnum.ApplyAttack:
 				Stench effect = Instantiate (Engine.self.statusEffectPrefab).AddComponent<Stench> ();
 				effect.Turns = 1 + Mathf.Max(0, bonus);
 				targetFriendlies [0]._addStatusEffect (effect);
-				currentCharacterAttackState = CharacterAttackStateEnum.MovePostAction;
-				_goToStart (currentCharacter);
+				currentAttackState = AttackStateEnum.MovePostAction;
 				break;
-			case CharacterAttackStateEnum.MovePostAction:
+			case AttackStateEnum.MovePostAction:
+				_goToStart (currentBC);
 				break;
 		}
 	}
@@ -926,45 +936,45 @@ public partial class BattleManager : MonoBehaviour
 	public void _piedPiper()
 	{
 		int ratSpawns = (bonus+1)/2;
-		switch (currentCharacterAttackState)
+		switch (currentAttackState)
 		{
-			case CharacterAttackStateEnum.InitAttack:
+			case AttackStateEnum.InitAttack:
 				
 				Instantiate (Engine.self.pipeCommandPrefab);
-				_setWait(CharacterAttackStateEnum.ActionCommand, standardWaitTime);
+				_setWait(AttackStateEnum.ActionState, standardWaitTime);
 				break;
-			case CharacterAttackStateEnum.MovePreAction:
+			case AttackStateEnum.MovePreAction:
 				break;
-			case CharacterAttackStateEnum.ActionCommand:
+			case AttackStateEnum.ActionState:
 				if (!FindObjectOfType<PipeCommand> ())
 				{
 					for(int i = 0; i < ratSpawns; i++)
 					{
-						float xOffset = (currentCharacter.transform.right.x * i * 1.5f) + (-3f * currentCharacter.transform.right.x);
+						float xOffset = (currentBC.transform.right.x * i * 1.5f) + (-3f * currentBC.transform.right.x);
 						GameObject pRat = Instantiate(Engine.self.pipeRatPrefab);
-						pRat.transform.position = new Vector3(xOffset, currentCharacter.transform.position.y, 0);
-						pRat.transform.rotation = currentCharacter.transform.rotation;
+						pRat.transform.position = new Vector3(xOffset, currentBC.transform.position.y, 0);
+						pRat.transform.rotation = currentBC.transform.rotation;
 					}
-					currentCharacterAttackState = CharacterAttackStateEnum.ApplyAttack;
+					currentAttackState = AttackStateEnum.ApplyAttack;
 				}
 				break;
-			case CharacterAttackStateEnum.ApplyAttack:
+			case AttackStateEnum.ApplyAttack:
 				if (!FindObjectOfType<PipeRat> ())
 				{
 					if(bonus > 0)
 					{
-						foreach(BattleCharacter enemyIter in targetUnfriendlies)
+						foreach(BattleCharacter enemyIter in targOpposed)
 						{
 							_damageTarget(enemyIter, activeAttack.BaseDamage + ratSpawns);
 						}
 					}
-					currentCharacterAttackState = CharacterAttackStateEnum.MovePostAction;
+					currentAttackState = AttackStateEnum.MovePostAction;
 				}
 				break;
-			case CharacterAttackStateEnum.MovePostAction:
+			case AttackStateEnum.MovePostAction:
 				if (!FindObjectOfType<Damage> ())
 				{
-					_goToStart (currentCharacter);
+					_goToStart (currentBC);
 				}
 				break;
 		}
@@ -973,45 +983,37 @@ public partial class BattleManager : MonoBehaviour
 	public void _swoop()
 	{
 		float preSwoopSpacing = 3f;
-		Vector3 preSwoopVertOffset = Vector3.up*preSwoopSpacing, preSwoopHorizOffset = targetUnfriendlies[0].transform.right*preSwoopSpacing,
-		acPosition = Vector3.one + Vector3.up*100 + targetUnfriendlies[0].transform.right*100;
-		Vector3 preSwoopDestination = targetUnfriendlies[0].transform.position + preSwoopHorizOffset + preSwoopVertOffset;
-		switch (currentCharacterAttackState)
+		Vector3 preSwoopVertOffset = Vector3.up*preSwoopSpacing, preSwoopHorizOffset = targOpposed[0].transform.right*preSwoopSpacing,
+		acPosition = Vector3.one + Vector3.up*100 + targOpposed[0].transform.right*100;
+		Vector3 preSwoopDestination = targOpposed[0].transform.position + preSwoopHorizOffset + preSwoopVertOffset;
+		switch (currentAttackState)
 		{
-			case CharacterAttackStateEnum.InitAttack:
-				if (playerCharacters.Contains (currentCharacter))
-				{
-					PressCommand command = (Instantiate (Engine.self.pressCommandPrefab, acPosition, Quaternion.identity) as GameObject).GetComponent<PressCommand> ();
-					command.ActionKey = "z";
-					command.PrePressWaitTime = .1f;
-				}
-				else
-				{
-					bonus = Random.Range(0,2);
-				}
-				_setWait(CharacterAttackStateEnum.MovePreAction, standardWaitTime);
+			case AttackStateEnum.InitAttack:
+				PressCommand command = (Instantiate (Engine.self.pressCommandPrefab, acPosition, Quaternion.identity) as GameObject).GetComponent<PressCommand> ();
+				command._setAttributes("z", -1, .1f, true, Random.Range(0, 2));
+				_setWait(AttackStateEnum.MovePreAction, standardWaitTime);
 				break;
-			case CharacterAttackStateEnum.MovePreAction:
+			case AttackStateEnum.MovePreAction:
 				float initialRotationSpeed = -4f, noseDiveAngle = 300, initRotateThresh = preSwoopSpacing + .75f;
-				bool preSwoopThreshMet = Mathf.Abs(currentCharacter.transform.position.x - targetUnfriendlies[0].transform.position.x) < initRotateThresh;
-				if(currentCharacter._approach(preSwoopDestination, walkSpeed))
+				bool preSwoopThreshMet = Mathf.Abs(currentBC.transform.position.x - targOpposed[0].transform.position.x) < initRotateThresh;
+				if(currentBC._approach(preSwoopDestination, walkSpeed))
 				{
-					currentCharacter.transform.eulerAngles = new Vector3(currentCharacter.transform.eulerAngles.x, currentCharacter.transform.eulerAngles.y, noseDiveAngle);
-					_setWait(CharacterAttackStateEnum.ActionCommand, standardWaitTime);
+					currentBC.transform.eulerAngles = new Vector3(currentBC.transform.eulerAngles.x, currentBC.transform.eulerAngles.y, noseDiveAngle);
+					_setWait(AttackStateEnum.ActionState, standardWaitTime);
 				}
-				else if(preSwoopThreshMet == true && (currentCharacter.transform.eulerAngles.z  > noseDiveAngle || currentCharacter.transform.eulerAngles.z  == 0))
+				else if(preSwoopThreshMet == true && (currentBC.transform.eulerAngles.z  > noseDiveAngle || currentBC.transform.eulerAngles.z  == 0))
 				{
-					currentCharacter.transform.Rotate(0, 0, initialRotationSpeed);
+					currentBC.transform.Rotate(0, 0, initialRotationSpeed);
 				}
 				break;
-			case CharacterAttackStateEnum.ActionCommand:
+			case AttackStateEnum.ActionState:
 				float rotationSpeed = 2f, postSwoopYThresh = preSwoopVertOffset.y + .5f;
-				Vector3 swoopHitPoint = preSwoopVertOffset + targetUnfriendlies[0].transform.position + Vector3.up*targetUnfriendlies[0].GetComponent<Collider>().bounds.max.y*.25f;
-				currentCharacter.transform.RotateAround(swoopHitPoint, currentCharacter.transform.forward, rotationSpeed);
+				Vector3 swoopHitPoint = preSwoopVertOffset + targOpposed[0].transform.position + Vector3.up*targOpposed[0].bcCollider.bounds.max.y*.25f;
+				currentBC.transform.RotateAround(swoopHitPoint, currentBC.transform.forward, rotationSpeed);
 
-				if(currentCharacter.HitGameObject == targetUnfriendlies[0].gameObject)
+				if(currentBC.HitGameObject == targOpposed[0].gameObject)
 				{
-					_damageTarget(targetUnfriendlies[0], activeAttack.BaseDamage + currentCharacter._calcBattlePow() + bonus);
+					_damageTarget(targOpposed[0], activeAttack.BaseDamage + currentBC._calcBattlePow() + bonus);
 					PressCommand foundCommand = FindObjectOfType<PressCommand>();
 					if(foundCommand != null)
 					{
@@ -1020,31 +1022,23 @@ public partial class BattleManager : MonoBehaviour
 					bonus *= 2;
 					if(bonus == 2)
 					{
-						if (playerCharacters.Contains (currentCharacter))
-						{
-							PressCommand command = (Instantiate (Engine.self.pressCommandPrefab, acPosition, Quaternion.identity) as GameObject).GetComponent<PressCommand> ();
-							command.ActionKey = "z";
-							command.PrePressWaitTime = 1f;
-						}
-						else
-						{
-							bonus = Random.Range(2, 4);
-						}
+						command = (Instantiate (Engine.self.pressCommandPrefab, acPosition, Quaternion.identity) as GameObject).GetComponent<PressCommand> ();
+						command._setAttributes("z", -1, 1f, true, Random.Range(2, 4));
 					}
 				}
-				if(currentCharacter.transform.position.y >= targetUnfriendlies[0].transform.position.y + postSwoopYThresh && (bonus == 0 || bonus > 3))
+				if(currentBC.transform.position.y >= targOpposed[0].transform.position.y + postSwoopYThresh && (bonus == 0 || bonus > 3))
 				{
-					Vector3 finalSwoopRotation = new Vector3(0, currentCharacter.transform.rotation.eulerAngles.y+180, 0);
-					currentCharacter.transform.rotation = Quaternion.Euler(finalSwoopRotation); // set z to 0 without altering the y;
-					_setWait(CharacterAttackStateEnum.MovePostAction, standardWaitTime);
+					Vector3 finalSwoopRotation = new Vector3(0, currentBC.transform.rotation.eulerAngles.y+180, 0);
+					currentBC.transform.rotation = Quaternion.Euler(finalSwoopRotation); // set z to 0 without altering the y;
+					_setWait(AttackStateEnum.MovePostAction, standardWaitTime);
 				}
 				break;
-			case CharacterAttackStateEnum.ApplyAttack:
+			case AttackStateEnum.ApplyAttack:
 				break;
-			case CharacterAttackStateEnum.MovePostAction:
+			case AttackStateEnum.MovePostAction:
 				if (!FindObjectOfType<Damage> ())
 				{
-					_goToStart (currentCharacter);
+					_goToStart (currentBC);
 				}
 				break;
 		}
@@ -1053,96 +1047,93 @@ public partial class BattleManager : MonoBehaviour
 	public void _scentOfBlood()
 	{
 		float bullseyeVertOffset =  1.5f;
-		float actionTime = 3f;
-		switch (currentCharacterAttackState)
+		switch (currentAttackState)
 		{
-			case CharacterAttackStateEnum.InitAttack:
-				if(enemyCharacters.Contains(currentCharacter))
+			case AttackStateEnum.InitAttack:
+				if(enemyCharacters.Contains(currentBC))
 				{
 					bonus = Random.Range(0, playerCharacters.Count+1);
-					currentCharacterAttackState = CharacterAttackStateEnum.ActionCommand;
+					currentAttackState = AttackStateEnum.ActionState;
 					break;
 				}
 
 				foreach(BattleCharacter enemyIter in enemyCharacters)
 				{
-					Vector3 bullseyePosition = enemyIter.transform.position + Vector3.up*(enemyIter.GetComponent<Collider>().bounds.max.y + bullseyeVertOffset);
-					ClickableBullseye cBullseye = Instantiate(Engine.self.clickableBullseyePrefab).GetComponent<ClickableBullseye>();
-					Destroy(cBullseye.gameObject, actionTime);
-					cBullseye.transform.position = bullseyePosition;
-					cBullseye.Durability = 10 * enemyIter.Sheet.hp / enemyIter._calcBattleMaxHp();
+					Vector3 bullseyePosition = enemyIter.transform.position + Vector3.up*(enemyIter.bcCollider.bounds.max.y + bullseyeVertOffset);
+					BullseyeCommand instBullseye = Instantiate(Engine.self.clickableBullseyePrefab).GetComponent<BullseyeCommand>();
+					instBullseye.transform.position = bullseyePosition;
+					instBullseye._setAttributes(10 * enemyIter.Sheet.hp / enemyIter._calcBattleMaxHp(), 3f, true, false);
 				}
-				currentCharacterAttackState = CharacterAttackStateEnum.ActionCommand;
+				currentAttackState = AttackStateEnum.ActionState;
 				break;
-			case CharacterAttackStateEnum.MovePreAction:
+			case AttackStateEnum.MovePreAction:
 				break;
-			case CharacterAttackStateEnum.ActionCommand:
-				if (!FindObjectOfType<ClickableBullseye> ())
+			case AttackStateEnum.ActionState:
+				if (!FindObjectOfType<BullseyeCommand> ())
 				{
 					Ravenous effect = Instantiate (Engine.self.statusEffectPrefab).AddComponent<Ravenous> ();
 					effect.PowBuff = 3 + bonus;
 					effect.Turns = 3;
 					targetFriendlies [0]._addStatusEffect (effect);
-					_setWait(CharacterAttackStateEnum.MovePostAction, standardWaitTime);
+					_setWait(AttackStateEnum.MovePostAction, standardWaitTime);
 				}
 				break;
-			case CharacterAttackStateEnum.ApplyAttack:
+			case AttackStateEnum.ApplyAttack:
 				break;
-			case CharacterAttackStateEnum.MovePostAction:
-				_goToStart (currentCharacter);
+			case AttackStateEnum.MovePostAction:
+				_goToStart (currentBC);
 				break;
 		}
 	}
 
 	public void _echoScreech()
 	{
-		switch (currentCharacterAttackState)
+		switch (currentAttackState)
 		{
-			case CharacterAttackStateEnum.InitAttack:
-				_setWait(CharacterAttackStateEnum.MovePreAction, standardWaitTime);
+			case AttackStateEnum.InitAttack:
+				_setWait(AttackStateEnum.MovePreAction, standardWaitTime);
 				break;
-			case CharacterAttackStateEnum.MovePreAction:
-				float avrgX = (targetUnfriendlies[0].transform.position.x + targetUnfriendlies[targetUnfriendlies.Count-1].transform.position.x)/2f, actionWindow = 3.5f;
+			case AttackStateEnum.MovePreAction:
+				float avrgX = (targOpposed[0].transform.position.x + targOpposed[targOpposed.Count-1].transform.position.x)/2f, actionWindow = 3.5f;
 				Vector3 targetCenterDestination = new Vector3(avrgX, 8, 0);
 
-				if(currentCharacter._approach(targetCenterDestination, walkSpeed))
+				if(currentBC._approach(targetCenterDestination, walkSpeed))
 				{
-					if(playerCharacters.Contains(currentCharacter))
+					if(currentBattleState == BattleStateEnum.PlayerAttack)
 					{
-						_setDelayedStateChange(CharacterAttackStateEnum.ApplyAttack, actionWindow);
-						_setWait(CharacterAttackStateEnum.ActionCommand, standardWaitTime);
+						_setDelayedStateChange(AttackStateEnum.ApplyAttack, actionWindow);
+						_setWait(AttackStateEnum.ActionState, standardWaitTime);
 					}
 					else
 					{
 						bonus = Random.Range(0, 10) + 3;
-						_setWait(CharacterAttackStateEnum.ApplyAttack, standardWaitTime);
+						_setWait(AttackStateEnum.ApplyAttack, standardWaitTime);
 					}
 				}
 				break;
-			case CharacterAttackStateEnum.ActionCommand:
-				Vector3 acPosition = currentCharacter.transform.position + Vector3.up*3;
+			case AttackStateEnum.ActionState:
+				Vector3 acPosition = currentBC.transform.position + Vector3.up*3;
 				if(!FindObjectOfType<PressCommand>())
 				{
 					PressCommand command = (Instantiate (Engine.self.pressCommandPrefab, acPosition, Quaternion.identity) as GameObject).GetComponent<PressCommand> ();
 					if(bonus % 2 == 0)
 					{
-						command.ActionKey = "left";
+						command._setAttributes("z", -1, .2f, true, -1); // enemyBonus should bare no effect
 					}
 					else
 					{
-						command.ActionKey = "right";
+						command._setAttributes("z", -1, .2f, true, -1); // enemyBonus should bare no effect
 					}
-					command.PrePressWaitTime = .2f;
 				}
 				break;
-			case CharacterAttackStateEnum.ApplyAttack:
-				Instantiate(Engine.self.echoPrefab,currentCharacter.transform.position -Vector3.up, Quaternion.identity);
-				currentCharacterAttackState = CharacterAttackStateEnum.MovePostAction;
+			case AttackStateEnum.ApplyAttack:
+				Instantiate(Engine.self.echoPrefab,currentBC.transform.position -Vector3.up, Quaternion.identity);
+				currentAttackState = AttackStateEnum.MovePostAction;
 				break;
-			case CharacterAttackStateEnum.MovePostAction:
+			case AttackStateEnum.MovePostAction:
 				if(!FindObjectOfType<EchoBlast>())
 				{
-					_goToStart (currentCharacter);
+					_goToStart (currentBC);
 				}
 				break;
 		}
@@ -1150,110 +1141,372 @@ public partial class BattleManager : MonoBehaviour
 
 	public void _nightFlight()
 	{
-		switch (currentCharacterAttackState)
+		float bullseyeVertOffset = 1f, maxBullseyeHeight = 5.5f, bullseyeSpeed = 10.5f, darkeningSpeed = .01f, darkeningTime = 3.5f;
+		Vector3 bullseyeStartPosition = targOpposed[0].transform.position + Vector3.up*(targOpposed[0].bcCollider.bounds.max.y + bullseyeVertOffset);
+		switch (currentAttackState)
 		{
-			case CharacterAttackStateEnum.InitAttack:
+			case AttackStateEnum.InitAttack:
 				Engine.self.transitionImage.transform.parent.gameObject.SetActive(true);
-				PressCommand command = (Instantiate (Engine.self.pressCommandPrefab) as GameObject).GetComponent<PressCommand> ();
-				command.ActionKey = "z";
-				command.PrePressWaitTime = .1f;
-				currentCharacterAttackState = CharacterAttackStateEnum.MovePreAction;
+				if(playerCharacters.Contains(currentBC))
+				{
+					BullseyeCommand instBullseye = Instantiate(Engine.self.clickableBullseyePrefab).GetComponent<BullseyeCommand>();
+					instBullseye.transform.position = bullseyeStartPosition;
+					instBullseye._setAttributes(1, 3f, true, false);
+					instBullseye._beginVerticalBounce(bullseyeSpeed, bullseyeStartPosition.y, bullseyeStartPosition.y + maxBullseyeHeight);
+				}
+				else
+				{
+					bonus = Random.Range(1, activeAttack.BaseDamage+activeAttack.BaseHealing+2);
+				}
+				_setDelayedStateChange(AttackStateEnum.ActionState, darkeningTime);
+				currentAttackState = AttackStateEnum.MovePreAction;
 				break;
-			case CharacterAttackStateEnum.MovePreAction:
-				float darknessSpeed = .03f;
-				//Engine.self.transitionImage.color += new Color (0, 0, 0, darknessSpeed);
-				currentCharacter.transform.position = Engine.self.cam.ScreenToWorldPoint(new Vector3(Input.mousePosition.x, Input.mousePosition.y, -Engine.self.cam.transform.position.z));
+			case AttackStateEnum.MovePreAction:
+				Engine.self.transitionImage.color += new Color (0, 0, 0, darkeningSpeed);
+				break;
+			case AttackStateEnum.ActionState:
+				if(Input.GetKeyDown(KeyCode.Mouse0) || !FindObjectOfType<BullseyeCommand>())
+				{
+					Debug.Log(bonus);
+					currentAttackState = AttackStateEnum.ApplyAttack;
+					break;	
+				}
+				break;
+			case AttackStateEnum.ApplyAttack:
+				Engine.self.transitionImage.color -= new Color (0, 0, 0, darkeningSpeed);
+				if(Engine.self.transitionImage.color.a <= 0)
+				{
+					Engine.self.transitionImage.color = new Color (Engine.self.transitionImage.color.r, Engine.self.transitionImage.color.g, Engine.self.transitionImage.color.b, 0);
+					Engine.self.transitionImage.transform.parent.gameObject.SetActive(false);
+					if(bonus == 1)
+					{
+						_damageTarget(targOpposed[0], activeAttack.BaseDamage);
+					}
+					else
+					{
+						_healTarget(currentBC, activeAttack.BaseHealing);
+					}
+					currentAttackState = AttackStateEnum.MovePostAction;
+				}
+				break;
+			case AttackStateEnum.MovePostAction:
+				if(!FindObjectOfType<Damage>())
+				{
+					_goToStart (currentBC);
+				}
+				break;
+		}
+	}
 
+	public void _tuskFling()
+	{
+		Vector3 acPosition = currentBC.transform.position + Vector3.up*3;
+		switch (currentAttackState)
+		{
+			case AttackStateEnum.InitAttack:
+				PressCommand command = (Instantiate (Engine.self.pressCommandPrefab, acPosition, Quaternion.identity) as GameObject).GetComponent<PressCommand> ();
+				command._setAttributes("z", -1, .1f, false, Random.Range(0, 2));
+				currentAttackState = AttackStateEnum.MovePreAction;
 				break;
-			case CharacterAttackStateEnum.ActionCommand:
+			case AttackStateEnum.MovePreAction:
+				Vector3 preSquirmDestination = new Vector3(targOpposed[0].transform.position.x, currentBC.transform.position.y, currentBC.transform.position.z);
+				if(currentBC._approach(preSquirmDestination, walkSpeed))
+				{
+					currentBC.transform.Rotate (0, 180, 0);
+					_setWait (AttackStateEnum.MovePostAction, standardWaitTime); // pause briefly before returning due to non-contact
+				}
+
+				if (currentBC.HitGameObject == targOpposed [0].gameObject)
+				{
+					_setWait (AttackStateEnum.ActionState, standardWaitTime); // pause briefly before swiping at enemy
+				}
 				break;
-			case CharacterAttackStateEnum.ApplyAttack:
+			case AttackStateEnum.ActionState:
+				if(!FindObjectOfType<PressCommand>())
+				{
+					if(bonus == 0 || commandsDestroyed == 2)
+					{
+						_setWait (AttackStateEnum.ApplyAttack, standardWaitTime);
+					}
+					else
+					{
+						
+						command = (Instantiate (Engine.self.pressCommandPrefab, acPosition + Vector3.right, Quaternion.identity) as GameObject).GetComponent<PressCommand> ();
+						command._setAttributes("right", 2f, .1f, false, Random.Range(bonus, bonus+2));
+					}
+				}
 				break;
-			case CharacterAttackStateEnum.MovePostAction:
-				_goToStart (currentCharacter);
+			case AttackStateEnum.ApplyAttack:
+				float returnOffset = 500;
+				if(bonus < 2)
+				{
+					_damageTarget(targOpposed[0], activeAttack.BaseDamage + bonus);
+					_setWait(AttackStateEnum.MovePostAction, standardWaitTime);
+				}
+				if(bonus == 2)
+				{
+					targOpposed[0].Hud.transform.position = targOpposed[0]._calcHudPosition();
+					targOpposed[0].rBody.velocity = new Vector3(14,18,0);
+					if((targOpposed[0].Hud.transform as RectTransform).anchoredPosition.x > Screen.width + returnOffset)
+					{
+						targOpposed[0].rBody.velocity = Vector3.zero;
+						currentBC.transform.Rotate(0, 180, 0);
+						Vector3 returnToScreenPos = new Vector3(0, Engine.self._getLineUpPosition(targOpposed[0]).y, Engine.self._getLineUpPosition(targOpposed[0]).z);
+						returnToScreenPos.x = targOpposed[0].transform.position.x;
+						targOpposed[0].transform.position = returnToScreenPos;
+						enemyCharacters.RemoveAt(0);
+						enemyCharacters.Add(targOpposed[0]);
+						bonus = 3;
+					}
+				}
+				else if(bonus == 3) // keeping the else to make sure the update loop adjusts the transform positions before checking
+				{
+					if(currentBC._approach(Engine.self._getLineUpPosition(currentBC), walkSpeed))
+					{
+						if(currentBattleState == BattleStateEnum.PlayerAttack)
+						{
+							currentBC.transform.rotation = Quaternion.Euler(Vector3.zero);
+						}
+						else
+						{
+							currentBC.transform.rotation = Quaternion.Euler(new Vector3(0, 180, 0));
+						}
+					}
+					foreach(BattleCharacter enemyIter in enemyCharacters)
+					{
+						enemyIter.Hud.transform.position = enemyIter._calcHudPosition();
+						if(enemyIter._approach(Engine.self._getLineUpPosition(enemyIter), walkSpeed) && enemyIter == targOpposed[0])
+						{
+							_damageTarget(targOpposed[0], activeAttack.BaseDamage + 2);
+							_setWait(AttackStateEnum.MovePostAction, standardWaitTime);
+						}
+					}
+				}
+				break;
+			case AttackStateEnum.MovePostAction:
+				if(!FindObjectOfType<Damage>())
+				{
+					_goToStart (currentBC);
+				}
+				break;
+		}
+	}
+
+	public void _bodySlam ()
+	{
+		float bullseyeVertOffset = 1f, maxBullseyeHeight = 5.5f, bullseyeSpeed = 10.5f, actionWindow = 7f, jumpSpeed = 10f;
+		Vector3 bullseyeStartPosition = targOpposed[0].transform.position + Vector3.up*(targOpposed[0].bcCollider.bounds.max.y + bullseyeVertOffset),
+		preJumpDestination = new Vector3(0-currentBC.transform.right.x*2, currentBC.transform.position.y, currentBC.transform.position.z),
+		acPosition = currentBC.transform.position + Vector3.up*3;
+
+		switch (currentAttackState)
+		{
+			case AttackStateEnum.InitAttack:
+				PressCommand command = (Instantiate (Engine.self.pressCommandPrefab, acPosition, Quaternion.identity) as GameObject).GetComponent<PressCommand> ();
+				command._setAttributes("z", actionWindow, 0f, false, Random.Range(0, 2));
+
+				BullseyeCommand instBullseye = Instantiate(Engine.self.clickableBullseyePrefab).GetComponent<BullseyeCommand>();
+				instBullseye.transform.position = bullseyeStartPosition;
+				instBullseye._setAttributes(1, -1f, false, true);
+				instBullseye._beginVerticalBounce(bullseyeSpeed, bullseyeStartPosition.y, bullseyeStartPosition.y + maxBullseyeHeight);
+
+				currentAttackState = AttackStateEnum.MovePreAction;
+				break;
+			case AttackStateEnum.MovePreAction:
+				if(currentBC._approach(preJumpDestination, walkSpeed))
+				{
+					Vector3 aimerPos = RectTransformUtility.WorldToScreenPoint (Engine.self.cam, currentBC.transform.position);
+					Aimer aimerInst = (Instantiate(Engine.self.aimerPrefab, aimerPos, Quaternion.identity) as GameObject).GetComponent<Aimer>();
+					if(currentBattleState == BattleStateEnum.EnemyAttack)
+					{
+						aimerInst.GetComponent<Image>().enabled = false;
+					}
+					aimerInst.transform.SetParent(Engine.self.coreCanvas.transform, true);
+					aimerInst.transform.localScale = Vector3.one;
+					float minAngle = 12f, maxAngle = 50f - Mathf.Abs(targOpposed[0].transform.position.x);
+					aimerInst._setAimer(1f, maxAngle, minAngle, Random.Range(minAngle, maxAngle));
+					currentAttackState = AttackStateEnum.ActionState;
+				}
+				break;
+			case AttackStateEnum.ActionState:
+				if(commandsDestroyed > 0)
+				{
+					FindObjectOfType<BullseyeCommand>().rBody.velocity = Vector3.zero;
+					currentBC.transform.Rotate(0, 0, FindObjectOfType<Aimer>().transform.rotation.eulerAngles.z);
+					currentBC.rBody.velocity = currentBC.transform.right * jumpSpeed;
+					bonus = 0;
+					currentAttackState = AttackStateEnum.ApplyAttack;
+				}
+				break;
+			case AttackStateEnum.ApplyAttack:
+				if(currentBC.HitGameObject != null && currentBC.HitGameObject.GetComponent<BullseyeCommand>() != null)
+				{
+					bonus = 1;
+					Destroy(currentBC.HitGameObject);
+				}
+
+				if(Mathf.Abs(currentBC.transform.position.x-targOpposed[0].transform.position.x) <= currentBC.PointFoundThresh)
+				{
+					BullseyeCommand foundBullseye = FindObjectOfType<BullseyeCommand>();
+					if(foundBullseye != null)
+					{
+						bonus = 0;
+						Destroy(foundBullseye.gameObject);
+					}
+
+					currentBC.rBody.velocity = fallVelocity;
+
+					if(currentBC.transform.position.y <= targOpposed[0].bcCollider.bounds.max.y)
+					{
+						_damageTarget(targOpposed[0], activeAttack.BaseDamage + bonus*3);
+						currentBC.rBody.velocity = Vector3.zero;
+						currentAttackState = AttackStateEnum.MovePostAction;
+					}
+				}
+				break;
+			case AttackStateEnum.MovePostAction:
+				float lineUpY = Engine.self._getLineUpPosition(currentBC).y;
+				if(currentBC.transform.position.y <= lineUpY)
+				{
+					Vector3 walkingPosition = currentBC.transform.position;
+					walkingPosition.y = lineUpY;
+					currentBC.transform.position = walkingPosition;
+					if(attackSubState == 0)
+					{
+						attackSubState = 1;
+						currentBC.transform.Rotate(0, 180, 0);
+					}
+					_goToStart (currentBC);
+				}
+				else
+				{
+					Vector3 testPos = targOpposed[0].transform.position *.5f;
+					int indexNo = Mathf.Max(playerCharacters.IndexOf(targOpposed[0]), enemyCharacters.IndexOf(targOpposed[0]));
+					float bounceBackSpeed = 2f - indexNo/3f;
+					currentBC.transform.rotation = Quaternion.Euler(0, currentBC.transform.eulerAngles.y, 0);
+					currentBC.transform.RotateAround(testPos, currentBC.transform.forward, bounceBackSpeed);
+				}
+				break;
+		}
+	}
+
+	public void _mudCannonBall()
+	{
+		Vector3 jumpPeak = Vector3.up * 6f, landPos = new Vector3(0, Engine.self._getLineUpPosition(currentBC).y, 0);
+		switch (currentAttackState)
+		{
+			case AttackStateEnum.InitAttack:
+				RapidCommand command = (Instantiate (Engine.self.rapidCommandPrefab, Vector3.up*100, Quaternion.identity) as GameObject).GetComponent<RapidCommand> ();
+				command._setAttributes("z", -1, -1, false, Random.Range(0, 22)); 
+				currentAttackState = AttackStateEnum.MovePreAction;
+				break;
+			case AttackStateEnum.MovePreAction:
+				if(currentBC._approach(landPos, walkSpeed))
+				{
+					currentBC.rBody.useGravity = true;
+					currentAttackState = AttackStateEnum.ActionState;
+				}
+				break;
+			case AttackStateEnum.ActionState:
+				float jumpSpeed = .1f;
+				if(attackSubState == 0 && currentBC._approach(jumpPeak, jumpSpeed))
+				{
+					attackSubState  = 1;
+				}
+				if(attackSubState == 1 && currentBC._approach(landPos, jumpSpeed/2.5f))
+				{
+					currentBC.rBody.useGravity = false;
+					currentBC.rBody.velocity = Vector3.zero;
+					currentBC.transform.position = landPos;
+					currentAttackState = AttackStateEnum.ApplyAttack;
+				}
+				break;
+			case AttackStateEnum.ApplyAttack:
+				break;
+			case AttackStateEnum.MovePostAction:
+				_goToStart (currentBC);
 				break;
 		}
 	}
 
 	public void _flee ()
 	{
-		switch (currentCharacterAttackState)
+		switch (currentAttackState)
 		{
-			case CharacterAttackStateEnum.InitAttack:
+			case AttackStateEnum.InitAttack:
 				PrecisionCommand command = (Instantiate (Engine.self.precisionCommandPrefab) as GameObject).GetComponent<PrecisionCommand> ();
-				command.ActionKey = "v";
-				command.DestroyTime = 10;
+				command._setAttributes("v", 10f, -1, true, Random.Range(0, 2));
 				command._randomizeArrowPos ();
 
-				currentCharacterAttackState = CharacterAttackStateEnum.ActionCommand;
+				currentAttackState = AttackStateEnum.ActionState;
 				break;
-			case CharacterAttackStateEnum.MovePreAction:
+			case AttackStateEnum.MovePreAction:
 				break;
-			case CharacterAttackStateEnum.ActionCommand:
-				if (!FindObjectOfType<PrecisionCommand> ())
+			case AttackStateEnum.ActionState:
+				if (commandsDestroyed > 0)
 				{
 					if (bonus == 0)
 					{
-						currentCharacterAttackState = CharacterAttackStateEnum.MovePostAction;
+						currentAttackState = AttackStateEnum.MovePostAction;
 						Engine.self.AudioSource.PlayOneShot (Engine.self.BuzzClip);
 					}
 					else
 					{
 						//signify success
-						_setWait (CharacterAttackStateEnum.ApplyAttack, standardWaitTime);
+						_setWait (AttackStateEnum.ApplyAttack, standardWaitTime);
 					}
 				}
 				break;
-			case CharacterAttackStateEnum.ApplyAttack:
+			case AttackStateEnum.ApplyAttack:
 				Engine.self.Fleeing = true;
 				Engine.self._initiateSceneChange (Engine.self.CurrentWorldSceneName, doorEnum.ReturnFromBattle);
 				currentBattleState = BattleStateEnum.Flee;
 				break;
-			case CharacterAttackStateEnum.MovePostAction:
-				_goToStart (currentCharacter);
+			case AttackStateEnum.MovePostAction:
+				_goToStart (currentBC);
 				break;
 		}
 	}
 
 	public void _poisonTest ()
 	{
-		switch (currentCharacterAttackState)
+		switch (currentAttackState)
 		{
-			case CharacterAttackStateEnum.InitAttack:
+			case AttackStateEnum.InitAttack:
 				Poison effect = Instantiate (Engine.self.statusEffectPrefab).AddComponent<Poison> ();
 				effect.Turns = 2;
-				targetUnfriendlies [0]._addStatusEffect (effect);
-				currentCharacterAttackState = CharacterAttackStateEnum.MovePreAction;
+				targOpposed [0]._addStatusEffect (effect);
+				currentAttackState = AttackStateEnum.MovePreAction;
 				break;
-			case CharacterAttackStateEnum.MovePreAction:
-				_goToStart (currentCharacter);
+			case AttackStateEnum.MovePreAction:
+				_goToStart (currentBC);
 				break;
-			case CharacterAttackStateEnum.ActionCommand:
+			case AttackStateEnum.ActionState:
 				break;
-			case CharacterAttackStateEnum.ApplyAttack:
+			case AttackStateEnum.ApplyAttack:
 				break;
-			case CharacterAttackStateEnum.MovePostAction:
+			case AttackStateEnum.MovePostAction:
 				break;
 		}
 	}
 
 	public void _healTest()
 	{
-		switch (currentCharacterAttackState)
+		switch (currentAttackState)
 		{
-			case CharacterAttackStateEnum.InitAttack:
+			case AttackStateEnum.InitAttack:
 				_healTarget (targetFriendlies [0], activeAttack.BaseHealing);
-				currentCharacterAttackState = CharacterAttackStateEnum.MovePreAction;
+				currentAttackState = AttackStateEnum.MovePreAction;
 
 				break;
-			case CharacterAttackStateEnum.MovePreAction:
-				_goToStart (currentCharacter);
+			case AttackStateEnum.MovePreAction:
+				_goToStart (currentBC);
 				break;
-			case CharacterAttackStateEnum.ActionCommand:
+			case AttackStateEnum.ActionState:
 				break;
-			case CharacterAttackStateEnum.ApplyAttack:
+			case AttackStateEnum.ApplyAttack:
 				break;
-			case CharacterAttackStateEnum.MovePostAction:
+			case AttackStateEnum.MovePostAction:
 				break;
 		}
 	}

@@ -53,7 +53,7 @@ public class PrecisionCommand : ActionCommand
 			commandImage.sprite = keyUpSprite;
 		}
 
-		if(Input.GetKeyDown(ActionKey))
+		if(Input.GetKeyDown(actionKey))
 		{
 			if(commandImage.sprite == keyDownSprite)
 			{
