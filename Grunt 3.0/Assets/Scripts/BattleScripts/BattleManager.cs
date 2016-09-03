@@ -57,7 +57,7 @@ public partial class BattleManager : MonoBehaviour
 
 	AttackStateEnum? currentAttackState;
 
-	public AttackStateEnum? CurrentCharacterAttackState {
+	public AttackStateEnum? CurrentAttackState {
 		get {
 			return currentAttackState;
 		}
@@ -66,29 +66,38 @@ public partial class BattleManager : MonoBehaviour
 		}
 	}
 
-	AttackStateEnum? postWaitCharacterAttackState;
+	AttackStateEnum? postWaitAttackState;
 
-	public AttackStateEnum? PostWaitCharacterAttackState {
+	public AttackStateEnum? PostWaitAttackState {
 		get {
-			return postWaitCharacterAttackState;
+			return postWaitAttackState;
 		}
 		set {
-			postWaitCharacterAttackState = value;
+			postWaitAttackState = value;
 		}
 	}
 
-	AttackStateEnum? delayedCharacterAttackState;
+	AttackStateEnum? delayedAttackState;
 
-	public AttackStateEnum? DelayedCharacterAttackState {
+	public AttackStateEnum? DelayedAttackState {
 		get {
-			return delayedCharacterAttackState;
+			return delayedAttackState;
 		}
 		set {
-			delayedCharacterAttackState = value;
+			delayedAttackState = value;
 		}
 	}
 
 	int attackSubState = 0;
+
+	public int AttackSubState {
+		get {
+			return attackSubState;
+		}
+		set {
+			attackSubState = value;
+		}
+	}
 
 	Attack activeAttack;
 
@@ -206,7 +215,7 @@ public partial class BattleManager : MonoBehaviour
 
 	List<BattleCharacter> targOpposed = new List<BattleCharacter> ();
 
-	public List<BattleCharacter> TargetUnfriendlies {
+	public List<BattleCharacter> TargOpposed {
 		get {
 			return targOpposed;
 		}
@@ -520,20 +529,20 @@ public partial class BattleManager : MonoBehaviour
 	{
 		postWaitBattleState = currentBattleState;
 		currentBattleState = BattleStateEnum.Wait;
-		postWaitCharacterAttackState = givenNextState;
+		postWaitAttackState = givenNextState;
 		Invoke ("_finishWait", waitTime);
 	}
 
 	void _finishWait ()
 	{
 		currentBattleState = postWaitBattleState;
-		if (postWaitCharacterAttackState != null)
+		if (postWaitAttackState != null)
 		{
-			currentAttackState = postWaitCharacterAttackState;
+			currentAttackState = postWaitAttackState;
 		}
 
 		postWaitBattleState = null;
-		postWaitCharacterAttackState = null;
+		postWaitAttackState = null;
 	}
 
 	public void _setDelayedStateChange (BattleStateEnum? givenNextState, float waitTime)
@@ -545,20 +554,20 @@ public partial class BattleManager : MonoBehaviour
 	public void _setDelayedStateChange (AttackStateEnum? givenNextState, float waitTime)
 	{
 		delayedBattleState = currentBattleState;
-		delayedCharacterAttackState = givenNextState;
+		delayedAttackState = givenNextState;
 		Invoke ("_finishDelay", waitTime);
 	}
 
 	void _finishDelay ()
 	{
 		currentBattleState = delayedBattleState;
-		if (delayedCharacterAttackState != null)
+		if (delayedAttackState != null)
 		{
-			currentAttackState = delayedCharacterAttackState;
+			currentAttackState = delayedAttackState;
 		}
 
 		delayedBattleState = null;
-		delayedCharacterAttackState = null;
+		delayedAttackState = null;
 	}
 
 	void _initPlayerChoices ()
@@ -893,8 +902,8 @@ public partial class BattleManager : MonoBehaviour
 				break;
 			case AttackStateEnum.ApplyAttack:
 				_damageTarget (targOpposed [0], activeAttack.BaseDamage + currentBC._calcBattlePow());
-				//_damageTarget(targetUnfriendlies[1], activeAttack.BaseDamage + currentCharacter._calcBattlePow());
-				//_damageTarget(targetUnfriendlies[2], activeAttack.BaseDamage + currentCharacter._calcBattlePow());
+				//_damageTarget (targOpposed [1], activeAttack.BaseDamage + currentBC._calcBattlePow());
+				//_damageTarget (targOpposed [2], activeAttack.BaseDamage + currentBC._calcBattlePow());
 				_setWait (AttackStateEnum.MovePostAction, Damage.popTime + 2*standardWaitTime);
 				break;
 			case AttackStateEnum.MovePostAction:
@@ -1392,34 +1401,105 @@ public partial class BattleManager : MonoBehaviour
 
 	public void _mudCannonBall()
 	{
-		Vector3 jumpPeak = Vector3.up * 6f, landPos = new Vector3(0, Engine.self._getLineUpPosition(currentBC).y, 0);
+		Vector3 landPos = new Vector3(0, Engine.self._getLineUpPosition(currentBC).y, 0), acPos = Vector3.up*160;
 		switch (currentAttackState)
 		{
 			case AttackStateEnum.InitAttack:
-				RapidCommand command = (Instantiate (Engine.self.rapidCommandPrefab, Vector3.up*100, Quaternion.identity) as GameObject).GetComponent<RapidCommand> ();
-				command._setAttributes("z", -1, -1, false, Random.Range(0, 22)); 
+				RapidCommand command = (Instantiate (Engine.self.rapidCommandPrefab, acPos, Quaternion.identity) as GameObject).GetComponent<RapidCommand> ();
+				command._setAttributes("z", 3f, -1, false, Random.Range(0, 22)); 
 				currentAttackState = AttackStateEnum.MovePreAction;
 				break;
 			case AttackStateEnum.MovePreAction:
 				if(currentBC._approach(landPos, walkSpeed))
 				{
-					currentBC.rBody.useGravity = true;
 					currentAttackState = AttackStateEnum.ActionState;
 				}
 				break;
 			case AttackStateEnum.ActionState:
-				float jumpSpeed = .1f;
-				if(attackSubState == 0 && currentBC._approach(jumpPeak, jumpSpeed))
+				float fallSpeed = .2f;
+
+				if(commandsDestroyed == 1 &&  attackSubState == 0)
 				{
+					currentBC.rBody.useGravity = true;
+					currentBC.rBody.velocity = Vector3.up * 10 * (1+bonus/75f);
 					attackSubState  = 1;
 				}
-				if(attackSubState == 1 && currentBC._approach(landPos, jumpSpeed/2.5f))
+
+				if(attackSubState > 0 && currentBC.rBody.velocity.y < 0) // the velocity check makes sure "landing" doesn't immediately trigger before you even jump
 				{
-					currentBC.rBody.useGravity = false;
-					currentBC.rBody.velocity = Vector3.zero;
-					currentBC.transform.position = landPos;
-					currentAttackState = AttackStateEnum.ApplyAttack;
+					currentBC.rBody.velocity -= Vector3.up* fallSpeed;
+					if(attackSubState == 1)
+					{
+						command = (Instantiate (Engine.self.rapidCommandPrefab, acPos, Quaternion.identity) as GameObject).GetComponent<RapidCommand> ();
+						command._setAttributes("down", -1, -1, false, Random.Range(0, 22));
+						bonus = 0;
+						attackSubState = 2;
+					}
+
+					if(currentBC.transform.position.y <= landPos.y)
+					{
+						currentBC.rBody.useGravity = false;
+						currentBC.rBody.velocity = Vector3.zero;
+						currentBC.transform.position = landPos;
+						attackSubState = 1;
+						GameObject MudGO = Instantiate(Engine.self.mudWavePrefab, Vector3.up+currentBC.transform.right, Quaternion.identity) as GameObject;
+						if(currentBattleState == BattleStateEnum.EnemyAttack)
+						{
+							MudGO.transform.Rotate(0, 180, 0);
+						}
+						if(bonus > 10)
+						{
+							attackSubState = 2;
+							MudGO = Instantiate(Engine.self.mudWavePrefab, Vector3.up-currentBC.transform.right, Quaternion.identity) as GameObject;
+							if(currentBattleState != BattleStateEnum.EnemyAttack)
+							{
+								MudGO.transform.Rotate(0, 180, 0);
+							}
+						}
+						currentAttackState = AttackStateEnum.ApplyAttack;
+					}
 				}
+				break;
+			case AttackStateEnum.ApplyAttack:
+				foreach(BattleCharacter opposIter in targOpposed)
+				{
+					if(opposIter.HitGameObject != null && opposIter.HitGameObject.GetComponent<MudWave>() != null)
+					{
+						_damageTarget(opposIter, activeAttack.BaseDamage);
+					}
+				}
+
+				foreach(BattleCharacter friendIter in targetFriendlies)
+				{
+					if(friendIter.HitGameObject != null && friendIter.Sheet.rankType == rankTypeEnum.Boar && friendIter.HitGameObject.GetComponent<MudWave>() != null)
+					{
+						_healTarget(friendIter, activeAttack.BaseHealing);
+					}
+				}
+
+				if(attackSubState == 0)
+				{
+					currentAttackState = AttackStateEnum.MovePostAction;
+				}
+				break;
+			case AttackStateEnum.MovePostAction:
+				_goToStart (currentBC);
+				break;
+		}
+	}
+
+	public void _threeLittlePigs()
+	{
+		switch (currentAttackState)
+		{
+			case AttackStateEnum.InitAttack:
+				Instantiate(Engine.self.houseMakerPrefab);
+				currentAttackState = AttackStateEnum.MovePreAction;
+				break;
+			case AttackStateEnum.MovePreAction:
+				
+				break;
+			case AttackStateEnum.ActionState:
 				break;
 			case AttackStateEnum.ApplyAttack:
 				break;

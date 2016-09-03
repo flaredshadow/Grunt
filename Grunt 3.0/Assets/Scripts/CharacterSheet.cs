@@ -93,6 +93,7 @@ public class CharacterSheet
 				expWorth = 3 * rank;
 				coinWorth = 2;
 				form = formEnum.Animal;
+				abilities.Add(new ThreeLittlePigs());
 				abilities.Add(new MudCannonBall());
 				abilities.Add(new BodySlam());
 				abilities.Add(new TuskFling());

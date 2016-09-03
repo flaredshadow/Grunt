@@ -23,7 +23,7 @@ public class Aimer : MonoBehaviour {
 			rotationSpeed *= -1;
 		}
 
-		if(BattleManager.self.CurrentCharacterAttackState == AttackStateEnum.ApplyAttack || BattleManager.self.CurrentCharacterAttackState == AttackStateEnum.MovePostAction)
+		if(BattleManager.self.CurrentAttackState == AttackStateEnum.ApplyAttack || BattleManager.self.CurrentAttackState == AttackStateEnum.MovePostAction)
 		{
 			Destroy(gameObject);
 		}

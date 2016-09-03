@@ -34,7 +34,7 @@ public class EchoBlast : MonoBehaviour {
 	void OnTriggerEnter (Collider other)
 	{
 		BattleCharacter hitBC = other.GetComponent<BattleCharacter>();
-		if(hitBC != null && BattleManager.self.TargetUnfriendlies.Contains(hitBC))
+		if(hitBC != null && BattleManager.self.TargOpposed.Contains(hitBC))
 		{
 			Dizzy effect = Instantiate (Engine.self.statusEffectPrefab).AddComponent<Dizzy> ();
 			effect.Turns = 3;

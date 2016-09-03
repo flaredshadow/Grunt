@@ -17,7 +17,7 @@ public class PipeCommand : MonoBehaviour {
 	// Update is called once per frame
 	void Update ()
 	{
-		if(BattleManager.self.CurrentCharacterAttackState == AttackStateEnum.ActionState && !IsInvoking("makePressCommand"))
+		if(BattleManager.self.CurrentAttackState == AttackStateEnum.ActionState && !IsInvoking("makePressCommand"))
 		{
 			if (!FindObjectOfType<PressCommand>())
 			{

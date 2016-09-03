@@ -305,6 +305,26 @@ public class MudCannonBall : Attack
 }
 
 [Serializable]
+public class ThreeLittlePigs : Attack
+{
+	public ThreeLittlePigs()
+	{
+		attackName = "Three Little Pigs";
+		baseDamage = 0;
+		baseHealing = 0;
+		spCost = 1;
+		numberOfTargets = 4;
+		targetType = attackTargetEnum.AllAllies;
+
+	}
+
+	public override void _battleFunction()
+	{
+		BattleManager.self._threeLittlePigs();
+	}
+}
+
+[Serializable]
 public class Flee : Attack
 {
 	public Flee()

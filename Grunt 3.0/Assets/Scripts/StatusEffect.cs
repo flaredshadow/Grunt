@@ -181,6 +181,17 @@ public class Ravenous : StatusEffect
 	}
 }
 
+public class House : StatusEffect
+{
+	public House()
+	{
+		statusName = "House";
+		icon = Engine.self.shieldIcon;
+		transform.GetChild(0).GetComponent<Image>().sprite = icon;
+		//def is buffed based on bonus
+	}
+}
+
 public class Dizzy : StatusEffect
 {
 	public Dizzy()

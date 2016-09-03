@@ -31,7 +31,7 @@ public class BullseyeCommand : MonoBehaviour {
 
 		if (BattleManager.self.CurrentBattleState == BattleStateEnum.PlayerAttack)
 		{
-			if (BattleManager.self.CurrentCharacterAttackState == AttackStateEnum.ActionState)
+			if (BattleManager.self.CurrentAttackState == AttackStateEnum.ActionState)
 			{
 				if(destroyTime >= 0)
 				{
@@ -39,7 +39,7 @@ public class BullseyeCommand : MonoBehaviour {
 				}
 			}
 
-			if (BattleManager.self.CurrentCharacterAttackState == AttackStateEnum.ApplyAttack || BattleManager.self.CurrentCharacterAttackState == AttackStateEnum.MovePostAction)
+			if (BattleManager.self.CurrentAttackState == AttackStateEnum.ApplyAttack || BattleManager.self.CurrentAttackState == AttackStateEnum.MovePostAction)
 			{
 				if(keepPostAction == false)
 				{
@@ -51,7 +51,7 @@ public class BullseyeCommand : MonoBehaviour {
 
 	void OnMouseDown()
 	{
-		if(clickable == true && BattleManager.self.CurrentBattleState == BattleStateEnum.PlayerAttack && BattleManager.self.CurrentCharacterAttackState == AttackStateEnum.ActionState)
+		if(clickable == true && BattleManager.self.CurrentBattleState == BattleStateEnum.PlayerAttack && BattleManager.self.CurrentAttackState == AttackStateEnum.ActionState)
 		{
 			durability -= 1;
 			if(durability < 1)

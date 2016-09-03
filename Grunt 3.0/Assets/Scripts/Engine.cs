@@ -30,13 +30,13 @@ public class Engine : MonoBehaviour
 	public GameObject worldPlayer, battleCharacterPrefab, buttonPrefab, dropDownPrefab,
 	rapidCommandPrefab, precisionCommandPrefab, chargeCommandPrefab, pressCommandPrefab, pipeCommandPrefab, clickableBullseyePrefab, aimerPrefab,
 	damagePrefab, tombStonePrefab, playerHudPrefab,
-	pipeRatPrefab, echoPrefab,
+	pipeRatPrefab, echoPrefab, mudWavePrefab, houseMakerPrefab,
 	dizzyStarsPrefab,
 	explosionPrefab, spoilsPrefab, pauseMenuPrefab, plusPrefab, statusEffectPrefab, dialogueBoxPrefab, shopPrefab;
 
 	public Sprite poisonIcon, paralysisIcon, shieldIcon, swordIcon;
 
-	public Material blueSwapMat, yellowSwapMat, greenSwapMat, purpleSwapMat, darkGraySwapMat;
+	public Material redSwapMat, blueSwapMat, yellowSwapMat, greenSwapMat, purpleSwapMat, darkGraySwapMat, whiteSwapMat, tanSwapMat;
 
 	public Canvas coreCanvas;
 
@@ -405,7 +405,7 @@ public class Engine : MonoBehaviour
 					if (!nextSceneName.Equals (battleSceneName))
 					{
 						// only activate the worldplayer and snap on the camera if the game is not going into a battle
-						_camToWorldPlayer ();
+						cam.GetComponent<CamControl>().inBattle = false;
 						worldPlayer.SetActive (true); // the worldPlayer needs to be active for the Camera's sake, depend on state machines to make the worldPlayer time-locked
 						BattleManager.self._resetVariables();
 					}
@@ -496,14 +496,6 @@ public class Engine : MonoBehaviour
 		}
 	}
 
-	public void _camToWorldPlayer ()//attach Camera to worldPlayer so it follows him
-	{
-		Vector3 camOffset = new Vector3 (0, 3, -10);
-		cam.transform.SetParent (worldPlayer.transform);
-		cam.transform.localPosition = camOffset;
-
-	}
-
 	public void _initiateSceneChange (string givenNextScene, doorEnum givenNextDoorEnum)//called to prep for ExitScene game state
 	{
 		_prepTransition ();
@@ -548,7 +540,7 @@ public class Engine : MonoBehaviour
 
 	void _camToBattle ()
 	{
-		cam.transform.SetParent (null);
+		cam.GetComponent<CamControl>().inBattle = true;
 		cam.transform.localPosition = new Vector3 (0, 6, -14);
 	}
 

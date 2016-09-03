@@ -72,6 +72,10 @@ public class WorldPlayer : MonoBehaviour {
 
 	void FixedUpdate ()
 	{
+		float uprightTorque = 100;
+		Quaternion rot = Quaternion.FromToRotation(transform.up, Vector3.up);
+		rBody.AddTorque(new Vector3(rot.x, rot.y, rot.z)*uprightTorque);
+		transform.Rotate(0, -transform.rotation.eulerAngles.y, 0);
 		rBody.AddForce(Physics.gravity*playerGravity, ForceMode.Acceleration);
 	}
 
@@ -161,7 +165,7 @@ public class WorldPlayer : MonoBehaviour {
 	void _checkAirborne()
 	{
 		RaycastHit onGround;
-		float castDistance = .5f;
+		float castDistance = .75f;
 		if(!Physics.Raycast(transform.position, Vector3.down, out onGround, castDistance))
 		{
 			currentWorldPlayerState = WorldPlayerStateEnum.Airborne;

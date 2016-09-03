@@ -50,7 +50,15 @@ public class ActionCommand : MonoBehaviour
 				break;
 			case "left":
 				keyLabel.text = "➔";
-				keyLabel.transform.Rotate(new Vector3(0, 180, 0));
+				keyLabel.transform.Rotate(new Vector3(0, 0, 180));
+				break;
+			case "up":
+				keyLabel.text = "➔";
+				keyLabel.transform.Rotate(new Vector3(0, 0, 90));
+				break;
+			case "down":
+				keyLabel.text = "➔";
+				keyLabel.transform.Rotate(new Vector3(0, 0, 270));
 				break;
 		}
 
@@ -71,7 +79,7 @@ public class ActionCommand : MonoBehaviour
 
 		if (BattleManager.self.CurrentBattleState == BattleStateEnum.PlayerAttack)
 		{
-			if (BattleManager.self.CurrentCharacterAttackState == AttackStateEnum.ActionState)
+			if (BattleManager.self.CurrentAttackState == AttackStateEnum.ActionState)
 			{
 				if(destroyTime >= 0)
 				{
@@ -80,7 +88,7 @@ public class ActionCommand : MonoBehaviour
 				_activeChildUpdate ();
 			}
 
-			if (BattleManager.self.CurrentCharacterAttackState == AttackStateEnum.ApplyAttack || BattleManager.self.CurrentCharacterAttackState == AttackStateEnum.MovePostAction)
+			if (BattleManager.self.CurrentAttackState == AttackStateEnum.ApplyAttack || BattleManager.self.CurrentAttackState == AttackStateEnum.MovePostAction)
 			{
 				Destroy (gameObject);
 			}
