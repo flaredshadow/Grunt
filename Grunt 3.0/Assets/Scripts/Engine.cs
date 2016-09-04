@@ -325,7 +325,7 @@ public class Engine : MonoBehaviour
 
 	#endregion
 
-	float spaceFromDoor = .551f, transitionSpeed = .03f;
+	float spaceFromDoor = 1f, transitionSpeed = .03f;
 
 	// Use this for initialization
 	void Start ()
