@@ -23,8 +23,8 @@ public enum attackTargetEnum {FirstEnemy, ChooseEnemy, Self, FirstAlly, ChooseAl
 public class Engine : MonoBehaviour
 {
 	public static Engine self;
-	public static Vector3 firstSpawnPoint = Vector3.up;
-	public static string startingSceneName = "StartingAreaScene";
+	public static Vector3 firstSpawnPoint = new Vector3(0, 1, -200);
+	public static string startingSceneName = "CapitalScene";
 	public static List<string> visitedScenes = new List<string>();
 
 	public GameObject worldPlayer, battleCharacterPrefab, buttonPrefab, dropDownPrefab,
@@ -486,18 +486,26 @@ public class Engine : MonoBehaviour
 
 	public void _reactivateScene ()
 	{
-		foreach (GameObject go in SceneManager.GetSceneByName(nextSceneName).GetRootGameObjects()) {
+		foreach (GameObject go in SceneManager.GetSceneByName(nextSceneName).GetRootGameObjects())
+		{
 			go.SetActive (true);
 		}
 	}
 
 	public void _deactivateNonCoreObjects ()
 	{
-		foreach (GameObject go in FindObjectsOfType<GameObject>()) {
-			if (!go.scene.name.Equals (coreSceneName)) {
+		foreach (GameObject go in SceneManager.GetSceneByName(currentSceneName).GetRootGameObjects())
+		{
+			if (!go.scene.name.Equals (coreSceneName))
+			{
 				go.SetActive (false);
 			}
 		}
+		/*foreach (GameObject go in FindObjectsOfType<GameObject>()) {
+			if (!go.scene.name.Equals (coreSceneName)) {
+				go.SetActive (false);
+			}
+		}*/
 	}
 
 	public void _initiateSceneChange (string givenNextScene, doorEnum givenNextDoorEnum)//called to prep for ExitScene game state
@@ -524,8 +532,10 @@ public class Engine : MonoBehaviour
 
 	void _spawnByDoor ()
 	{
-		if (nextDoorEnum == doorEnum.None) {
+		if (nextDoorEnum == doorEnum.None)
+		{
 			worldPlayer.transform.localPosition = firstSpawnPoint;
+			SceneManager.UnloadScene(pickFileSceneName);
 		}
 		else if (nextDoorEnum == doorEnum.SavePoint)
 		{
