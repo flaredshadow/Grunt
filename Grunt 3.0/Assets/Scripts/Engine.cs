@@ -376,7 +376,7 @@ public class Engine : MonoBehaviour
 					}
 					else
 					{
-						_camToBattle ();
+						cam.GetComponent<CamControl>()._toBattle();
 						worldPlayer.SetActive (false);
 						_initializeBattle ();
 					}
@@ -400,13 +400,17 @@ public class Engine : MonoBehaviour
 				break;
 			case GameStateEnum.ExitScene://timescale should already be equal to 0
 				transitionImage.color += new Color (0, 0, 0, transitionSpeed); // fade in the transitionImage
-				if (transitionImage.color.a >= 1) { // once the screen is pitch-black we will transition the level, this way it doesn't look choppy
+				if (transitionImage.color.a >= 1)// once the screen is pitch-black we will transition the level, this way it doesn't look choppy
+				{ 
 					transitionImage.color = new Color (transitionImage.color.r, transitionImage.color.g, transitionImage.color.b, 1);
-					if (!nextSceneName.Equals (battleSceneName))
+					if (!nextSceneName.Equals (battleSceneName)) // only activate the worldplayer if the game is not going into a battle
 					{
-						// only activate the worldplayer and snap on the camera if the game is not going into a battle
-						cam.GetComponent<CamControl>().inBattle = false;
-						worldPlayer.SetActive (true); // the worldPlayer needs to be active for the Camera's sake, depend on state machines to make the worldPlayer time-locked
+						worldPlayer.SetActive (true);
+
+					}
+					if(currentSceneName.Equals(battleSceneName))
+					{
+						cam.GetComponent<CamControl>()._toWorld();
 						BattleManager.self._resetVariables();
 					}
 					_deactivateNonCoreObjects ();
@@ -536,12 +540,6 @@ public class Engine : MonoBehaviour
 				}
 			}
 		}
-	}
-
-	void _camToBattle ()
-	{
-		cam.GetComponent<CamControl>().inBattle = true;
-		cam.transform.localPosition = new Vector3 (0, 6, -14);
 	}
 
 	public Vector3 _getLineUpPosition(BattleCharacter givenBC)

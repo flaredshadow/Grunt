@@ -255,6 +255,7 @@ public partial class BattleManager : MonoBehaviour
 		attackSubState = 0;
 		statusEffectsResolved = 0;
 		bonus = 0;
+		commandsDestroyed = 0;
 		coinsEarned = 0;
 		currentBC = null;
 		expEarned = 0;
