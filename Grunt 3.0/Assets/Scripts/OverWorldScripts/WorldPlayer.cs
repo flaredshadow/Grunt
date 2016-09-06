@@ -162,7 +162,7 @@ public class WorldPlayer : MonoBehaviour {
 
 	void _movePlayer()
 	{
-		Vector3 rightMotion = transform.right * Input.GetAxis("Horizontal"), forwardMotion = transform.forward * Input.GetAxis("Vertical");
+		Vector3 rightMotion = Camera.main.transform.right * Input.GetAxis("Horizontal"), forwardMotion = Camera.main.transform.forward * Input.GetAxis("Vertical");
 		rBody.velocity = (rightMotion + forwardMotion) * walkingSpeed + Vector3.up*rBody.velocity.y;
 			//new Vector3(transform.right.Input.GetAxis("Horizontal") * walkingSpeed, rBody.velocity.y, Input.GetAxis("Vertical") * walkingSpeed);
 		if(Input.GetKey("c"))
