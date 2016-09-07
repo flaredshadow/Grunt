@@ -5,7 +5,6 @@ using System.Collections;
 public class WorldPlayer : MonoBehaviour {
 
 	public static WorldPlayer self;
-	public float walkingSpeed, jumpingSpeed, playerGravity;
 
 	bool invincible = false;
 
@@ -29,7 +28,6 @@ public class WorldPlayer : MonoBehaviour {
 	void Start ()
 	{
 		self = this;
-		rBody = GetComponent<Rigidbody>();
 		if(Engine.self != null )
 		Engine.self.CurrentSaveInstance._uploadValues();//load in the player file once, at the beginning of the game
 	}
@@ -43,25 +41,14 @@ public class WorldPlayer : MonoBehaviour {
 
 		if(Engine.self == null || Engine.self.CurrentGameState == GameStateEnum.OverWorldPlay)
 		{
-			_movePlayer();
-			_checkAirborne();
 			float rotationSpeed = 3f;
-			if(Input.GetKey(KeyCode.PageUp))
-			{
-				Camera.main.transform.RotateAround(transform.position, Vector3.up, -rotationSpeed);
-				yRotation -= rotationSpeed;
-			}
-			if(Input.GetKey(KeyCode.PageDown))
-			{
-				Camera.main.transform.RotateAround(transform.position, Vector3.up, rotationSpeed);
-				yRotation += rotationSpeed;
-			}
+
 			switch(currentWorldPlayerState)
 			{
 				case WorldPlayerStateEnum.Grounded:
 					if(touchingNPC == null)
 					{
-						_jump();
+						//_jump();
 					}
 					else if (Input.GetKeyDown("z"))
 					{
@@ -78,16 +65,6 @@ public class WorldPlayer : MonoBehaviour {
 				_pause();
 			}
 		}
-	}
-
-	void FixedUpdate ()
-	{
-		float uprightTorque = 100;
-		Quaternion rot = Quaternion.FromToRotation(transform.up, Vector3.up);
-		rBody.AddTorque(new Vector3(rot.x, rot.y, rot.z)*uprightTorque);
-
-		transform.rotation = Quaternion.Euler(transform.rotation.eulerAngles.x, yRotation, transform.rotation.eulerAngles.z);
-		rBody.AddForce(Physics.gravity*playerGravity, ForceMode.Acceleration);
 	}
 
 	void OnTriggerStay (Collider other)
@@ -160,36 +137,7 @@ public class WorldPlayer : MonoBehaviour {
 		}
 	}
 
-	void _movePlayer()
-	{
-		Vector3 rightMotion = Camera.main.transform.right * Input.GetAxis("Horizontal"), forwardMotion = Camera.main.transform.forward * Input.GetAxis("Vertical");
-		rBody.velocity = (rightMotion + forwardMotion) * walkingSpeed + Vector3.up*rBody.velocity.y;
-			//new Vector3(transform.right.Input.GetAxis("Horizontal") * walkingSpeed, rBody.velocity.y, Input.GetAxis("Vertical") * walkingSpeed);
-		if(Input.GetKey("c"))
-			rBody.velocity = new Vector3(rBody.velocity.x*6, rBody.velocity.y, rBody.velocity.z*6);
-	}
 
-	void _jump()
-	{
-		if(Input.GetKeyDown("z"))
-		{
-			rBody.velocity = new Vector3(rBody.velocity.x, jumpingSpeed, rBody.velocity.z);
-		}
-	}
-
-	void _checkAirborne()
-	{
-		RaycastHit onGround;
-		float castDistance = .75f;
-		if(!Physics.Raycast(transform.position, Vector3.down, out onGround, castDistance))
-		{
-			currentWorldPlayerState = WorldPlayerStateEnum.Airborne;
-		}
-		else
-		{
-			currentWorldPlayerState = WorldPlayerStateEnum.Grounded;
-		}
-	}
 
 	void _pause()
 	{

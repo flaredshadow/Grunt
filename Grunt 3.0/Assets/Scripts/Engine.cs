@@ -27,7 +27,7 @@ public class Engine : MonoBehaviour
 	public static string startingSceneName = "CapitalScene";
 	public static List<string> visitedScenes = new List<string>();
 
-	public GameObject worldPlayer, battleCharacterPrefab, buttonPrefab, dropDownPrefab,
+	public GameObject worldPlayer, battleCharacterPrefab, ratBodyPrefab, buttonPrefab, dropDownPrefab,
 	rapidCommandPrefab, precisionCommandPrefab, chargeCommandPrefab, pressCommandPrefab, pipeCommandPrefab, clickableBullseyePrefab, aimerPrefab,
 	damagePrefab, tombStonePrefab, playerHudPrefab,
 	pipeRatPrefab, echoPrefab, mudWavePrefab, houseMakerPrefab,
