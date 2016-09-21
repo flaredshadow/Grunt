@@ -8,12 +8,10 @@ public class WorldPlayer : MonoBehaviour {
 
 	bool invincible = false;
 
-	float totalInvincibleTime = 3.0f, yRotation = 0;
+	float totalInvincibleTime = 3.0f;
 
 	WorldPlayerStateEnum currentWorldPlayerState = WorldPlayerStateEnum.Grounded;
-	Rigidbody rBody;
-
-	GameObject touchingNPC = null;
+	GameObject animatedBody = null, touchingNPC = null;
 
 	public GameObject TouchingNPC {
 		get {
@@ -28,6 +26,13 @@ public class WorldPlayer : MonoBehaviour {
 	void Start ()
 	{
 		self = this;
+		switch(Engine.self.MainCharacterSheet.rankType)
+		{
+			case rankTypeEnum.Rat:
+				animatedBody = MonoBehaviour.Instantiate(Engine.self.ratBodyPrefab);
+				animatedBody.transform.SetParent(WorldPlayer.self.transform.GetChild(0), false);
+				break;
+		}
 		if(Engine.self != null )
 		Engine.self.CurrentSaveInstance._uploadValues();//load in the player file once, at the beginning of the game
 	}
@@ -41,8 +46,6 @@ public class WorldPlayer : MonoBehaviour {
 
 		if(Engine.self == null || Engine.self.CurrentGameState == GameStateEnum.OverWorldPlay)
 		{
-			float rotationSpeed = 3f;
-
 			switch(currentWorldPlayerState)
 			{
 				case WorldPlayerStateEnum.Grounded:

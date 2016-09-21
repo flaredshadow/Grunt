@@ -837,6 +837,7 @@ public partial class BattleManager : MonoBehaviour
 				RapidCommand command = (Instantiate (Engine.self.rapidCommandPrefab, Vector3.up+Vector3.right, Quaternion.identity) as GameObject).GetComponent<RapidCommand> ();
 				command._setAttributes("z", 3f, -1, true, Random.Range(0, 22));
 				currentAttackState = AttackStateEnum.MovePreAction;
+				currentBC.BodyAnimation.Play("Rat_Walk", PlayMode.StopAll);
 				break;
 			case AttackStateEnum.MovePreAction:
 				Vector3 preSquirmDestination = new Vector3(targOpposed[0].transform.position.x, currentBC.transform.position.y, currentBC.transform.position.z);
@@ -872,11 +873,13 @@ public partial class BattleManager : MonoBehaviour
 				{
 					bonus -= 1;
 					_damageTarget (targOpposed [0], activeAttack.BaseDamage + currentBC._calcBattlePow());
+					currentBC.BodyAnimation.Play("Rat_Attack", PlayMode.StopAll);
 					_setWait (AttackStateEnum.ApplyAttack, Damage.popTime + 2*standardWaitTime); // pause then swing, this will happen repeatedly until player runs out of bonus
 				}
 				else
 				{
 					currentBC.transform.Rotate (0, 180, 0);
+					currentBC.BodyAnimation.Play("Rat_Walk", PlayMode.StopAll);
 					_setWait (AttackStateEnum.MovePostAction, standardWaitTime); // small wait to visually seperate attacking from returning
 				}
 				break;

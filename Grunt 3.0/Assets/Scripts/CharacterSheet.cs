@@ -23,6 +23,7 @@ public class CharacterSheet
 	{
 		retreat = new Flee();
 		rankType = givenRankType;
+
 		switch(givenRankType)
 		{
 			case rankTypeEnum.Rat:

@@ -23,8 +23,8 @@ public enum attackTargetEnum {FirstEnemy, ChooseEnemy, Self, FirstAlly, ChooseAl
 public class Engine : MonoBehaviour
 {
 	public static Engine self;
-	public static Vector3 firstSpawnPoint = new Vector3(0, 1, -200);
-	public static string startingSceneName = "CapitalScene";
+	public static Vector3 firstSpawnPoint = new Vector3(0, 1, 0);
+	public static string startingSceneName = "StartingAreaScene";
 	public static List<string> visitedScenes = new List<string>();
 
 	public GameObject worldPlayer, battleCharacterPrefab, ratBodyPrefab, buttonPrefab, dropDownPrefab,

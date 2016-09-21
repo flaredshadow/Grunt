@@ -9,6 +9,17 @@ public class BattleCharacter : MonoBehaviour {
 	public Rigidbody rBody;
 	public Collider bcCollider;
 
+	Animation bodyAnimation;
+
+	public Animation BodyAnimation {
+		get {
+			return bodyAnimation;
+		}
+		set {
+			bodyAnimation = value;
+		}
+	}
+
 	CharacterSheet sheet;
 
 	public CharacterSheet Sheet {
@@ -96,6 +107,14 @@ public class BattleCharacter : MonoBehaviour {
 		hud.transform.localScale = Vector3.one;
 		hud.Sheet = sheet;
 		hud.OwningBattleCharacter = this;
+
+		switch(Engine.self.MainCharacterSheet.rankType)
+		{
+			case rankTypeEnum.Rat:
+				bodyAnimation = MonoBehaviour.Instantiate(Engine.self.ratBodyPrefab).GetComponent<Animation>();
+				bodyAnimation.transform.SetParent(transform, false);
+				break;
+		}
 	}
 	
 	// Update is called once per frame

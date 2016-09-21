@@ -5,7 +5,7 @@ using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 using System.IO;
 
-public class ButtonControl : MonoBehaviour {
+public class SpeciesButton : MonoBehaviour {
 
 	public int fileNumber;
 
@@ -50,7 +50,7 @@ public class ButtonControl : MonoBehaviour {
 		foreach(Button b in FindObjectsOfType<Button>())
 		{
 			b.onClick.RemoveAllListeners();
-			ButtonControl bControl = b.gameObject.GetComponent<ButtonControl>();
+			SpeciesButton bControl = b.gameObject.GetComponent<SpeciesButton>();
 			Text bText = b.GetComponentInChildren<Text>();
 			b.onClick.AddListener(
 				delegate
@@ -65,7 +65,7 @@ public class ButtonControl : MonoBehaviour {
 					b.onClick.AddListener(
 						delegate
 							{
-								charSheet._initRank(rankTypeEnum.Boar);
+								charSheet._initRank(rankTypeEnum.Rat);
 								Engine.self.CurrentSaveInstance.savedPlayerSheets = Engine.DeepClone<List<CharacterSheet>>(Engine.self.PlayerSheets); // damn deep clones
 								/*
 								CharacterSheet charSheet2 = new CharacterSheet();// only for testing purposes
