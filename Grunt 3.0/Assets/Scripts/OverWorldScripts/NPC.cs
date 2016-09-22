@@ -3,9 +3,8 @@ using System.Collections;
 
 public class NPC : MonoBehaviour {
 
-	public string[] dialogue;
+	public string[] dialogue, itemsClassNames;
 	public bool isShopOwner;
-	public string[] itemsClassNames;
 	Item[] itemsForSaleInstances;
 
 	public Item[] ItemsForSaleInstances {

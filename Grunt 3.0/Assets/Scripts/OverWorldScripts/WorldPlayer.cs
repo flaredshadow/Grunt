@@ -6,6 +6,9 @@ public class WorldPlayer : MonoBehaviour {
 
 	public static WorldPlayer self;
 
+	public UnityStandardAssets.Characters.ThirdPerson.ThirdPersonCharacter thirdPersonChar;
+	public UnityStandardAssets.Characters.ThirdPerson.ThirdPersonUserControl uControl;
+
 	bool invincible = false;
 
 	float totalInvincibleTime = 3.0f;
@@ -29,6 +32,7 @@ public class WorldPlayer : MonoBehaviour {
 		switch(Engine.self.MainCharacterSheet.rankType)
 		{
 			case rankTypeEnum.Rat:
+			case rankTypeEnum.Falcon:
 				animatedBody = MonoBehaviour.Instantiate(Engine.self.ratBodyPrefab);
 				animatedBody.transform.SetParent(WorldPlayer.self.transform.GetChild(0), false);
 				break;
@@ -56,6 +60,9 @@ public class WorldPlayer : MonoBehaviour {
 					else if (Input.GetKeyDown("z"))
 					{
 						_chatNPC();
+						GetComponent<Rigidbody>().velocity = Vector3.zero;
+						uControl.enabled = false;
+						thirdPersonChar.enabled = false;
 					}
 					break;
 

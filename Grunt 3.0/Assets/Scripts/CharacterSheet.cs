@@ -101,6 +101,28 @@ public class CharacterSheet
 				potentialItems.Add(new Potion());
 				potentialItemsChances.Add(.5f);
 				break;
+
+			case rankTypeEnum.Falcon:
+				maxHp = 4;
+				hp = maxHp;
+				maxSp = 10;
+				sp = maxSp;
+				pow = 3;
+				def = 1;
+				hpGain = 2;
+				spGain = 2;
+				powGain = 1;
+				defGain = 1;
+				electivePointsGain = 2;
+				characterName = "Falcon";
+				hasFlight = true;
+				expWorth = 3 * rank;
+				coinWorth = 2;
+				form = formEnum.Animal;
+				abilities.Add(new TalonDrop());
+				potentialItems.Add(new Potion());
+				potentialItemsChances.Add(.5f);
+				break;
 		}
 	}
 

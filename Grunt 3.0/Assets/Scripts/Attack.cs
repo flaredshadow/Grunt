@@ -325,6 +325,26 @@ public class ThreeLittlePigs : Attack
 }
 
 [Serializable]
+public class TalonDrop : Attack
+{
+	public TalonDrop()
+	{
+		attackName = "Talon Drop";
+		baseDamage = 0;
+		baseHealing = 0;
+		spCost = 1;
+		numberOfTargets = 1;
+		targetType = attackTargetEnum.ChooseEnemy;
+
+	}
+
+	public override void _battleFunction()
+	{
+		BattleManager.self._talonDrop();
+	}
+}
+
+[Serializable]
 public class Flee : Attack
 {
 	public Flee()

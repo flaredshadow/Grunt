@@ -80,6 +80,8 @@ public class Shop : MonoBehaviour {
 	void _endShop()
 	{
 		Engine.self.CurrentGameState = GameStateEnum.OverWorldPlay;
+		WorldPlayer.self.uControl.enabled = true;
+		WorldPlayer.self.thirdPersonChar.enabled = true;
 		//Time.timeScale = 1; // not sure if I want this
 		Destroy(gameObject);
 	}

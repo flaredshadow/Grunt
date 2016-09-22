@@ -86,7 +86,7 @@ public class StatusEffect : MonoBehaviour {
 
 	// Use this for initialization
 	void Start () {
-	
+		transform.GetChild(0).GetComponent<Image>().sprite = icon;
 	}
 	
 	// Update is called once per frame
@@ -134,7 +134,6 @@ public class Poison : StatusEffect
 	{
 		statusName = "Poisoned";
 		icon = Engine.self.poisonIcon;
-		transform.GetChild(0).GetComponent<Image>().sprite = icon;
 	}
 
 	public override void _applyInitChildEffect()
@@ -165,7 +164,6 @@ public class Stench : StatusEffect
 	{
 		statusName = "Stench";
 		icon = Engine.self.shieldIcon;
-		transform.GetChild(0).GetComponent<Image>().sprite = icon;
 		defBuff = 2;
 	}
 }
@@ -176,7 +174,6 @@ public class Ravenous : StatusEffect
 	{
 		statusName = "Ravenous";
 		icon = Engine.self.swordIcon;
-		transform.GetChild(0).GetComponent<Image>().sprite = icon;
 		//pow is buffed based on bonus
 	}
 }
@@ -187,7 +184,6 @@ public class House : StatusEffect
 	{
 		statusName = "House";
 		icon = Engine.self.shieldIcon;
-		transform.GetChild(0).GetComponent<Image>().sprite = icon;
 		//def is buffed based on bonus
 	}
 }
@@ -198,7 +194,6 @@ public class Dizzy : StatusEffect
 	{
 		statusName = "Dizzy";
 		icon = Engine.self.paralysisIcon;
-		transform.GetChild(0).GetComponent<Image>().sprite = icon;
 	}
 
 	public override void _applyInitChildEffect()

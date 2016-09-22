@@ -46,17 +46,21 @@ public class ActionCommand : MonoBehaviour
 				commandImage.material = Engine.self.purpleSwapMat;
 				break;
 			case "right":
+				commandImage.material = Engine.self.darkGraySwapMat;
 				keyLabel.text = "➔";
 				break;
 			case "left":
+				commandImage.material = Engine.self.darkGraySwapMat;
 				keyLabel.text = "➔";
 				keyLabel.transform.Rotate(new Vector3(0, 0, 180));
 				break;
 			case "up":
+				commandImage.material = Engine.self.darkGraySwapMat;
 				keyLabel.text = "➔";
 				keyLabel.transform.Rotate(new Vector3(0, 0, 90));
 				break;
 			case "down":
+				commandImage.material = Engine.self.darkGraySwapMat;
 				keyLabel.text = "➔";
 				keyLabel.transform.Rotate(new Vector3(0, 0, 270));
 				break;

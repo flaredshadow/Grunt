@@ -8,6 +8,7 @@ using System.IO;
 public class SpeciesButton : MonoBehaviour {
 
 	public int fileNumber;
+	public rankTypeEnum startingAnimal;
 
 	Button buttonComponent;
 
@@ -65,7 +66,7 @@ public class SpeciesButton : MonoBehaviour {
 					b.onClick.AddListener(
 						delegate
 							{
-								charSheet._initRank(rankTypeEnum.Rat);
+								charSheet._initRank(startingAnimal);
 								Engine.self.CurrentSaveInstance.savedPlayerSheets = Engine.DeepClone<List<CharacterSheet>>(Engine.self.PlayerSheets); // damn deep clones
 								/*
 								CharacterSheet charSheet2 = new CharacterSheet();// only for testing purposes

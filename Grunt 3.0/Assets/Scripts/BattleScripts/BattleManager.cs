@@ -246,10 +246,22 @@ public partial class BattleManager : MonoBehaviour
 		self = this;
 	}
 
+	void resetVarsForTurnEnd()
+	{
+		targOpposed.Clear ();
+		targetFriendlies.Clear ();
+		activeAttack = null;
+		repeatAction = null;
+		attackSubState = 0;
+		bonus = 0;
+		commandsDestroyed = 0;
+	}
+
 	public void _resetVariables ()//does not reset the states, maybe it should?
 	{
 		playerCharacters.Clear();
 		enemyCharacters.Clear();
+		repeatAction = null;
 		Engine.self.EnemyUsableItems.Clear();
 		activeAttack = null;
 		attackSubState = 0;
@@ -385,12 +397,7 @@ public partial class BattleManager : MonoBehaviour
 					activeAttack._battleFunction ();
 					break;
 				case BattleStateEnum.InitKill:
-					targOpposed.Clear ();
-					targetFriendlies.Clear ();
-					activeAttack = null;
-					attackSubState = 0;
-					bonus = 0;
-					commandsDestroyed = 0;
+					resetVarsForTurnEnd();
 					bool madeExplosion = false;
 					float tombStoneHeight = 17.75f;
 					foreach (BattleCharacter playerC in playerCharacters)
@@ -827,6 +834,12 @@ public partial class BattleManager : MonoBehaviour
 				}
 			}
 		}
+	}
+
+	System.Action repeatAction;
+	void repeatableDelegate()
+	{
+		repeatAction();
 	}
 
 	public void _squirmingClaws ()
@@ -1504,6 +1517,72 @@ public partial class BattleManager : MonoBehaviour
 				
 				break;
 			case AttackStateEnum.ActionState:
+				break;
+			case AttackStateEnum.ApplyAttack:
+				break;
+			case AttackStateEnum.MovePostAction:
+				_goToStart (currentBC);
+				break;
+		}
+	}
+
+	public void _talonDrop()
+	{
+		switch (currentAttackState)
+		{
+			case AttackStateEnum.InitAttack:
+				RapidCommand command = (Instantiate (Engine.self.rapidCommandPrefab, Vector3.zero, Quaternion.identity) as GameObject).GetComponent<RapidCommand> ();
+				command._setAttributes("up", 5f, -1, false, Random.Range(0, 22));
+				PressCommand pCommand = Instantiate (Engine.self.pressCommandPrefab).GetComponent<PressCommand> ();
+				pCommand.transform.position = new Vector2(0, 150);
+				pCommand._setAttributes("z", 5f, .1f, false, Random.Range(0, 2));
+				currentAttackState = AttackStateEnum.MovePreAction;
+
+				break;
+			case AttackStateEnum.MovePreAction:
+				if(attackSubState == 0 && currentBC._approach(targOpposed[0].transform.position + Vector3.up *3, walkSpeed))
+				{
+					attackSubState = 1;
+					_setWait(AttackStateEnum.MovePreAction, standardWaitTime);
+				}
+				if(attackSubState == 1 && currentBC._approach(targOpposed[0].transform.position + Vector3.up, walkSpeed))
+				{
+					attackSubState = 0;
+					if(currentBattleState == BattleStateEnum.PlayerAttack)
+					{
+						repeatAction = delegate{
+							if(attackSubState == enemyCharacters.Count-1)
+							{
+								attackSubState = 0;
+							}
+							else
+							{
+								attackSubState += 1;
+							}
+
+							Vector2 nextACPosition = RectTransformUtility.WorldToScreenPoint (Engine.self.cam, enemyCharacters[attackSubState].transform.position + Vector3.up*4);
+
+							if(FindObjectOfType<PressCommand>())
+							{
+								FindObjectOfType<PressCommand>().transform.position = nextACPosition;
+							}
+
+							if(currentAttackState == AttackStateEnum.ApplyAttack)
+							{
+								repeatAction = null;
+								CancelInvoke("repeatableDelegate");
+							}
+						};
+						InvokeRepeating("repeatableDelegate",  0, .5f);
+					}
+					_setWait(AttackStateEnum.ActionState, standardWaitTime);
+				}
+				break;
+			case AttackStateEnum.ActionState:
+				if(commandsDestroyed > 0)
+				{
+					_setWait(AttackStateEnum.ApplyAttack, standardWaitTime);
+				}
 				break;
 			case AttackStateEnum.ApplyAttack:
 				break;
